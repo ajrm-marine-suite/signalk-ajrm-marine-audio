@@ -203,7 +203,7 @@ function renderStatus(status) {
     lastAnnouncement.classList.remove("muted");
     lastAnnouncement.textContent = status.lastAnnouncement.message;
     const announcementAudioUrl =
-      status.lastAnnouncement.publicAudioUrl || status.lastAnnouncement.audioUrl;
+      status.lastAnnouncement.audioUrl || status.lastAnnouncement.publicAudioUrl;
     if (announcementAudioUrl) {
       lastAudio.hidden = false;
       if (lastAudio.getAttribute("src") !== announcementAudioUrl) {

@@ -195,6 +195,13 @@ module.exports = function ajrmMarineAudio(app) {
         minimum: 1024,
         maximum: 65535,
       },
+      publicStreamHost: {
+        type: "string",
+        title: "Public stream host",
+        description:
+          "Optional hostname or IP address used when showing radio stream URLs. Leave blank to use EXTERNALHOST or this Pi's hostname.",
+        default: "",
+      },
       publicStreamUseHttps: {
         type: "boolean",
         title: "Use HTTPS for local stream port",
@@ -623,6 +630,7 @@ module.exports = function ajrmMarineAudio(app) {
       liveStream: value.liveStream !== false,
       publicHttpStream: value.publicHttpStream !== false,
       publicHttpStreamPort: clampInteger(value.publicHttpStreamPort, 1024, 65535, 3445),
+      publicStreamHost: String(value.publicStreamHost || "").trim(),
       publicStreamUseHttps: value.publicStreamUseHttps !== false,
       piperBinary: expandHome(String(value.piperBinary || "piper")),
       ffmpegBinary: expandHome(String(value.ffmpegBinary || "ffmpeg")),
@@ -1303,6 +1311,7 @@ module.exports = function ajrmMarineAudio(app) {
       playlistUrl: `/plugins/${PLUGIN_ID}/live.m3u`,
       publicHttpStream: options.publicHttpStream,
       publicHttpStreamPort: options.publicHttpStreamPort,
+      publicStreamHost: publicStreamHost(),
       publicStreamUseHttps: options.publicStreamUseHttps,
       publicStreamProtocol: publicStreamProtocol(),
       publicStreamUrl: publicStreamBase ? `${publicStreamBase}/live.mp3` : "",
@@ -1873,7 +1882,15 @@ module.exports = function ajrmMarineAudio(app) {
     if (!options.publicHttpStream) return "";
     const port = Number(options.publicHttpStreamPort);
     if (!Number.isInteger(port) || port < 1 || port > 65535) return "";
-    return `${publicStreamProtocol()}://${process.env.EXTERNALHOST || "nemo3.local"}:${port}`;
+    return `${publicStreamProtocol()}://${publicStreamHost()}:${port}`;
+  }
+
+  function publicStreamHost() {
+    if (options.publicStreamHost) return options.publicStreamHost;
+    if (process.env.EXTERNALHOST) return process.env.EXTERNALHOST;
+    const hostname = String(os.hostname?.() || "localhost").trim();
+    if (!hostname || hostname === "localhost") return "localhost";
+    return hostname.includes(".") ? hostname : `${hostname}.local`;
   }
 
   async function playLocalWav(file, entry = null) {

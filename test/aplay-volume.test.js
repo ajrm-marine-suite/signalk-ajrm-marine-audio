@@ -67,6 +67,31 @@ function withPlatform(platform, fn) {
   }
 }
 
+function withHostname(hostname, fn) {
+  const original = os.hostname;
+  os.hostname = () => hostname;
+  try {
+    return fn();
+  } finally {
+    os.hostname = original;
+  }
+}
+
+function withoutExternalHost(fn) {
+  const hadValue = Object.prototype.hasOwnProperty.call(process.env, "EXTERNALHOST");
+  const original = process.env.EXTERNALHOST;
+  delete process.env.EXTERNALHOST;
+  try {
+    return fn();
+  } finally {
+    if (hadValue) {
+      process.env.EXTERNALHOST = original;
+    } else {
+      delete process.env.EXTERNALHOST;
+    }
+  }
+}
+
 function statusOf(harness) {
   let status;
   harness.gets.get("/status")({}, { json(body) { status = body; } });
@@ -348,6 +373,10 @@ async function postRepeatLast(harness) {
   assert.match(browserApp, /postJson\("outputs"/);
   assert.match(browserApp, /installPiperWithPiController/);
   assert.match(browserApp, /signalk-ajrm-marine-pi-controller\/actions\/install-piper/);
+  assert.match(
+    browserApp,
+    /status\.lastAnnouncement\.audioUrl \|\| status\.lastAnnouncement\.publicAudioUrl/,
+  );
   assert.match(browserCss, /button\.command-sent/);
   assert.match(browserCss, /dependency-panel/);
   assert.match(browserCss, /transform:\s*translateY\(4px\)/);
@@ -888,6 +917,36 @@ async function postRepeatLast(harness) {
     "provider mute does not log a no-op queue clear when nothing was pending",
   );
   emptyProviderMute.plugin.stop();
+
+  withoutExternalHost(() => withHostname("nemo", () => {
+    const streamHost = createHarness({
+      publicHttpStream: true,
+      publicHttpStreamPort: 3456,
+      publicStreamUseHttps: false,
+    });
+    try {
+      assert.equal(statusOf(streamHost).publicStreamUrl, "http://nemo.local:3456/live.mp3");
+      assert.equal(statusOf(streamHost).publicStreamHost, "nemo.local");
+      assert.doesNotMatch(statusOf(streamHost).publicStreamUrl, /nemo3/);
+    } finally {
+      streamHost.plugin.stop();
+    }
+  }));
+
+  const numericStreamHost = createHarness({
+    publicHttpStream: true,
+    publicHttpStreamPort: 3457,
+    publicStreamUseHttps: false,
+    publicStreamHost: "192.168.3.50",
+  });
+  try {
+    assert.equal(
+      statusOf(numericStreamHost).publicStreamUrl,
+      "http://192.168.3.50:3457/live.mp3",
+    );
+  } finally {
+    numericStreamHost.plugin.stop();
+  }
 })().catch((error) => {
   console.error(error);
   process.exitCode = 1;

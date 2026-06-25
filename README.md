@@ -114,7 +114,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+ssh://git@ssh.github.com:443/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.1 --omit=dev --no-package-lock
+npm install git+ssh://git@ssh.github.com:443/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.2 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
@@ -139,7 +139,7 @@ The radio stream is the best iPhone/iPad option when the screen may be locked. B
 Use this local stream URL in a radio player app:
 
 ```text
-https://nemo3.local:3445/live.mp3
+https://<your-pi-hostname>.local:3445/live.mp3
 ```
 
 Station name:
@@ -151,21 +151,23 @@ AJRM Marine Audio
 Some apps prefer an M3U playlist:
 
 ```text
-https://nemo3.local:3445/live.m3u
+https://<your-pi-hostname>.local:3445/live.m3u
 ```
 
 The local stream port serves only the generated audio stream, so native radio player apps do not need a Signal K login cookie. It uses the same `ssl-cert.pem` and `ssl-key.pem` as Signal K when they are available. The stream sends silence between announcements and writes each rendered AJRM Marine announcement into the stream as it is produced.
 
+If `.local` hostnames are not suitable, set **Public stream host** in the plugin configuration to a numeric address or VPN hostname, for example `192.168.3.50`.
+
 ### iPhone/iPad Setup
 
 1. Install a radio stream player app.
-2. Add a custom station using `https://nemo3.local:3445/live.mp3`.
+2. Add a custom station using `https://<your-pi-hostname>.local:3445/live.mp3`.
 3. Name it `AJRM Marine Audio`.
 4. Start the station while connected to the boat Wi-Fi.
 5. Trigger **Sound check** in the AJRM Marine Audio webapp.
 6. Lock the phone and trigger another **Sound check** to confirm background playback.
 
-If the app asks for a playlist rather than a direct stream, use `https://nemo3.local:3445/live.m3u`.
+If the app asks for a playlist rather than a direct stream, use `https://<your-pi-hostname>.local:3445/live.m3u`.
 
 ### Network Use
 
@@ -199,7 +201,7 @@ The interval is configurable as **Live stream time-check interval (minutes)**. T
 
 The AJRM Marine Audio webapp shows current stream clients, total connects/disconnects, client uptime, server-side write buffer size, and the last disconnect reason. The stream also sends basic ICY radio headers (`icy-name`, `icy-genre`, `icy-br`) so native radio players can recognise it as a radio-style stream.
 
-This traffic should stay on the local boat LAN when the stream URL uses the local hostname `nemo3.local`. It should not use the boat router's cellular data unless the phone is no longer on the boat Wi-Fi, the hostname is being resolved through a remote/VPN route, or the router is configured to hairpin local traffic through an internet service.
+This traffic should stay on the local boat LAN when the stream URL uses the local Pi hostname, for example `nemo.local`. It should not use the boat router's cellular data unless the phone is no longer on the boat Wi-Fi, the hostname is being resolved through a remote/VPN route, or the router is configured to hairpin local traffic through an internet service.
 
 For normal use, keep the phone on the boat Wi-Fi and use the local `.local` address. Do not publish or port-forward the stream port to the internet.
 

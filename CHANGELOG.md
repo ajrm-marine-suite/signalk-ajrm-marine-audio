@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.2
+
+- Prefer the authenticated Signal K audio route for browser playback inside the Audio webapp.
+- Derive public stream URLs from an optional configured host, `EXTERNALHOST`, or the Pi hostname instead of falling back to `nemo3.local`.
+
 ## 0.5.1
 
 - Enable AJRM Marine Audio by default for fresh Signal K installs.
