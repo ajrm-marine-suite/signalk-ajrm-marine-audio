@@ -113,7 +113,7 @@ async function refresh() {
   } catch (error) {
     statusPill.textContent = "Offline";
     statusPill.className = "status-pill bad";
-    renderEvents([{ event: "error", message: error.message, ts: new Date().toISOString() }]);
+    renderEvents([{ event: "error", message: audioOfflineMessage(error), ts: new Date().toISOString() }]);
   }
 }
 
@@ -123,8 +123,18 @@ async function getJson(path) {
     cache: "no-store",
     headers: authHeaders(),
   });
-  if (!response.ok) throw new Error(`${path} failed: HTTP ${response.status}`);
-  return response.json();
+  return readResponse(response, path);
+}
+
+function audioOfflineMessage(error) {
+  const message = String(error?.message || error || "Audio status request failed");
+  if (/HTTP 404|Cannot GET|not found/i.test(message)) {
+    return `${message}. AJRM Marine Audio is installed but its Signal K plugin route is not active; enable the AJRM Marine Audio plugin and restart Signal K.`;
+  }
+  if (/HTTP 401|HTTP 403|read\/write|admin|access/i.test(message)) {
+    return message;
+  }
+  return `${message}. Check that the AJRM Marine Audio plugin is enabled and Signal K has restarted.`;
 }
 
 async function postJson(path, body = null) {

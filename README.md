@@ -114,7 +114,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+ssh://git@ssh.github.com:443/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.0 --omit=dev --no-package-lock
+npm install git+ssh://git@ssh.github.com:443/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.1 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
