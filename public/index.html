@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AJRM Marine Audio</title>
+    <link rel="stylesheet" href="/signalk-ajrm-marine-audio/styles.css?v=2.3.16" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <p class="eyebrow">AJRM Marine Audio</p>
+          <h1>Announcement audio</h1>
+        </div>
+        <div class="status-pill" id="statusPill">Loading</div>
+      </header>
+
+      <section class="panel">
+        <h2>Playback</h2>
+        <div class="button-row">
+          <button type="button" id="buttonSoundCheck">Sound check</button>
+          <button type="button" id="buttonRepeatLast" class="secondary">Repeat last</button>
+          <button type="button" id="buttonClearQueue" class="secondary">Clear queue</button>
+          <button type="button" id="buttonRestartStreams" class="secondary">Restart streams</button>
+          <button type="button" id="buttonStreamTimeCheck" class="secondary">Stream time check</button>
+        </div>
+        <label class="toggle-row">
+          <input id="checkPingEnabled" type="checkbox" />
+          <span>Enable directional ping</span>
+        </label>
+        <div class="output-routing">
+          <h3>Output routing</h3>
+          <p class="muted">
+            Choose where rendered AJRM Marine Audio announcements are allowed to play.
+            Browser output is local to this browser; Pi speaker and radio stream
+            are saved on the Signal K server.
+          </p>
+          <fieldset class="toggle-group" id="browserOutputMode">
+            <legend>Browser output on this device</legend>
+            <label class="toggle-row">
+              <input id="browserOutputOff" name="browserOutputMode" type="radio" value="off" />
+              <span>Off</span>
+            </label>
+            <label class="toggle-row">
+              <input id="browserOutputSpeech" name="browserOutputMode" type="radio" value="speech" />
+              <span>Browser speech synthesis</span>
+            </label>
+            <label class="toggle-row">
+              <input id="browserOutputPiper" name="browserOutputMode" type="radio" value="piper" />
+              <span>AJRM Marine Piper playback</span>
+            </label>
+          </fieldset>
+          <label class="toggle-row">
+            <input id="checkPiOutput" type="checkbox" />
+            <span>Pi speaker output</span>
+          </label>
+          <label class="toggle-row">
+            <input id="checkStreamOutput" type="checkbox" />
+            <span>Radio stream output</span>
+          </label>
+          <label class="toggle-row">
+            <input id="checkMuteAll" type="checkbox" />
+            <span>Mute all AJRM Marine Audio outputs</span>
+          </label>
+          <p class="muted" id="outputStatus">Output routing waiting for Audio status.</p>
+        </div>
+        <div class="dependency-panel" id="dependencyPanel">
+          <h3>Renderer dependencies</h3>
+          <p id="dependencyStatus" class="muted">Checking Piper renderer dependencies.</p>
+          <button type="button" id="buttonInstallPiper" class="secondary" hidden>
+            Install Piper with AJRM Marine Pi Controller
+          </button>
+        </div>
+        <div class="slider-control">
+          <label for="aplayVolumeRange">
+            <span>Local speaker level</span>
+            <output id="aplayVolumeValue">--%</output>
+          </label>
+          <input id="aplayVolumeRange" type="range" min="0" max="100" step="1" value="53" />
+          <p class="muted" id="aplayVolumeStatus">Startup level for local aplay output.</p>
+        </div>
+        <dl class="stats">
+          <div>
+            <dt>Queue</dt>
+            <dd id="queueLength">0</dd>
+          </div>
+          <div>
+            <dt>Rendered</dt>
+            <dd id="renderedCount">0</dd>
+          </div>
+          <div>
+            <dt>Filtered</dt>
+            <dd id="filteredCount">0</dd>
+          </div>
+          <div>
+            <dt>Stream</dt>
+            <dd id="streamCount">0</dd>
+          </div>
+          <div>
+            <dt>Dropped</dt>
+            <dd id="droppedStreamCount">0</dd>
+          </div>
+          <div>
+            <dt>Server time</dt>
+            <dd id="serverTime">--:--:--</dd>
+          </div>
+          <div>
+            <dt>Connected</dt>
+            <dd id="streamConnectedTotal">0</dd>
+          </div>
+          <div>
+            <dt>Disconnected</dt>
+            <dd id="streamDisconnectedTotal">0</dd>
+          </div>
+        </dl>
+      </section>
+
+      <section class="panel">
+        <h2>Radio stream</h2>
+        <p class="muted">
+          Use the local stream URL in a radio player app to keep AJRM Marine Audio
+          playing while a phone or tablet is locked.
+        </p>
+        <p class="path" id="streamUrl"></p>
+        <p class="muted" id="streamDiagnostics">No stream diagnostics yet.</p>
+      </section>
+
+      <section class="panel">
+        <h2>Last announcement</h2>
+        <p id="lastAnnouncement" class="message muted">No announcement received yet.</p>
+        <audio id="lastAudio" class="audio-player" controls hidden></audio>
+      </section>
+
+      <section class="panel">
+        <h2>Renderer</h2>
+        <p class="muted">
+          This version renders Piper speech, optionally adds the stereo directional ping,
+          creates a browser-friendly MP3, and can play the combined WAV locally
+          on the Signal K server.
+        </p>
+        <p class="path" id="audioDirectory"></p>
+      </section>
+
+      <section class="panel">
+        <h2>Recent events</h2>
+        <div id="events" class="events empty">No events yet.</div>
+      </section>
+    </main>
+    <script>
+      window.__ajrmMarineAudioAppStarted = false;
+      window.setTimeout(function () {
+        var pill = document.getElementById("statusPill");
+        var events = document.getElementById("events");
+        if (!window.__ajrmMarineAudioAppStarted && pill && pill.textContent === "Loading") {
+          pill.textContent = "Error";
+          pill.className = "status-pill bad";
+          if (events) {
+            events.className = "events";
+            events.textContent = "AJRM Marine Audio page script did not start. Hard refresh this page, then check that JavaScript is allowed for this Signal K site.";
+          }
+        }
+      }, 3000);
+    </script>
+    <script src="/signalk-ajrm-marine-audio/app.js?v=2.3.16"></script>
+  </body>
+</html>

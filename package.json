@@ -1,0 +1,45 @@
+{
+  "name": "signalk-ajrm-marine-audio",
+  "version": "0.5.0",
+  "description": "Speech and audio delivery for AJRM Marine Suite notifications.",
+  "main": "plugin/index.js",
+  "scripts": {
+    "test": "node --check plugin/index.js && node --check public/app.js && node --check test/aplay-volume.test.js && node test/aplay-volume.test.js"
+  },
+  "keywords": [
+    "signalk-node-server-plugin",
+    "signalk-webapp",
+    "signalk-category-ais",
+    "piper",
+    "tts",
+    "signal-k",
+    "signalk",
+    "ajrm-marine-suite",
+    "marine",
+    "navigation"
+  ],
+  "author": "Anthony McDonald, with assistance from William McAusland",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio/issues"
+  },
+  "homepage": "https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio#readme",
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "plugin",
+    "public",
+    "README.md",
+    "icon.svg"
+  ],
+  "signalk-plugin-enabled-by-default": false,
+  "signalk": {
+    "displayName": "AJRM Marine Audio",
+    "appIcon": "./icon-120.png"
+  }
+}

@@ -1,0 +1,301 @@
+:root {
+  color-scheme: dark;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #07111f;
+  color: #eef6ff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: #07111f;
+}
+
+main {
+  max-width: 56rem;
+  margin: 0 auto;
+  padding: 24px 16px 36px;
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+h1,
+h2,
+p {
+  margin: 0;
+}
+
+h1 {
+  font-size: clamp(1.8rem, 5vw, 3rem);
+}
+
+h2 {
+  font-size: 1rem;
+  margin-bottom: 12px;
+}
+
+h3 {
+  font-size: 0.92rem;
+  margin: 0 0 6px;
+}
+
+.eyebrow {
+  color: #67e8f9;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.panel {
+  background: #101b2c;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px 0;
+}
+
+.status-pill {
+  border-radius: 999px;
+  border: 1px solid rgb(255 255 255 / 18%);
+  color: #dbeafe;
+  font-weight: 800;
+  min-width: 6rem;
+  padding: 8px 12px;
+  text-align: center;
+}
+
+.status-pill.good {
+  background: #064e3b;
+}
+
+.status-pill.warn {
+  background: #78350f;
+}
+
+.status-pill.bad {
+  background: #7f1d1d;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+button {
+  appearance: none;
+  background: linear-gradient(180deg, #7dd3fc 0%, #38bdf8 48%, #0284c7 100%);
+  border: 1px solid #7dd3fc;
+  border-bottom-color: #075985;
+  border-radius: 10px;
+  color: #06111f;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 900;
+  padding: 11px 14px;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 55%),
+    inset 0 -2px 0 rgb(3 105 161 / 50%),
+    0 4px 0 #075985,
+    0 8px 16px rgb(0 0 0 / 28%);
+  transform: translateY(0);
+  transition:
+    background 120ms ease,
+    box-shadow 120ms ease,
+    filter 120ms ease,
+    transform 120ms ease;
+}
+
+button.secondary {
+  background: linear-gradient(180deg, #334155 0%, #1e293b 50%, #0f172a 100%);
+  border-color: #475569;
+  border-bottom-color: #020617;
+  color: #f8fafc;
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 16%),
+    inset 0 -2px 0 rgb(0 0 0 / 40%),
+    0 4px 0 #020617,
+    0 8px 16px rgb(0 0 0 / 30%);
+}
+
+button:active,
+button.command-sent {
+  filter: brightness(1.08);
+  transform: translateY(4px);
+  box-shadow:
+    inset 0 3px 8px rgb(0 0 0 / 35%),
+    inset 0 -1px 0 rgb(255 255 255 / 20%),
+    0 1px 0 #020617,
+    0 3px 8px rgb(0 0 0 / 28%);
+}
+
+button:focus-visible {
+  outline: 3px solid #facc15;
+  outline-offset: 3px;
+}
+
+.toggle-row {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+  color: #e2e8f0;
+  font-weight: 800;
+}
+
+.toggle-row input {
+  inline-size: 1.2rem;
+  block-size: 1.2rem;
+}
+
+.output-routing {
+  background: #0b1423;
+  border: 1px solid rgb(255 255 255 / 8%);
+  border-radius: 10px;
+  display: grid;
+  gap: 2px;
+  margin-top: 14px;
+  padding: 12px;
+}
+
+.dependency-panel {
+  background: #0b1423;
+  border: 1px solid rgb(255 255 255 / 8%);
+  border-radius: 10px;
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px;
+}
+
+.dependency-panel.warn {
+  border-color: rgb(251 191 36 / 48%);
+  background: #231a0b;
+}
+
+.dependency-panel button {
+  justify-self: start;
+}
+
+.output-routing .toggle-row {
+  margin-top: 8px;
+}
+
+.toggle-group {
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 10px;
+  margin: 10px 0 0;
+  padding: 10px 12px 12px;
+}
+
+.toggle-group legend {
+  color: #bae6fd;
+  font-size: 0.86rem;
+  font-weight: 900;
+  padding: 0 6px;
+}
+
+.slider-control {
+  background: #0b1423;
+  border-radius: 10px;
+  display: grid;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 12px;
+}
+
+.slider-control label {
+  align-items: center;
+  color: #e2e8f0;
+  display: flex;
+  font-weight: 800;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.slider-control output {
+  color: #67e8f9;
+  font-weight: 900;
+}
+
+.slider-control input[type="range"] {
+  inline-size: 100%;
+}
+
+.warning {
+  color: #fbbf24;
+}
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0 0;
+}
+
+.stats div {
+  background: #0b1423;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+dt {
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
+
+dd {
+  font-size: 1.6rem;
+  font-weight: 900;
+  margin: 2px 0 0;
+}
+
+.message {
+  font-size: 1.1rem;
+  line-height: 1.45;
+}
+
+.audio-player {
+  margin-top: 12px;
+  width: 100%;
+}
+
+.muted {
+  color: #94a3b8;
+}
+
+.path {
+  color: #67e8f9;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  margin-top: 10px;
+  overflow-wrap: anywhere;
+}
+
+.events {
+  display: grid;
+  gap: 8px;
+}
+
+.events article {
+  display: grid;
+  gap: 3px;
+  background: #0b1423;
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.events time {
+  color: #94a3b8;
+  font-size: 0.8rem;
+}
