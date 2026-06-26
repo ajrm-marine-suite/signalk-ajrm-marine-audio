@@ -802,7 +802,12 @@ module.exports = function ajrmMarineAudio(app) {
       return;
     }
     rememberNotificationsPlusAudioRequests(requestKeys);
-    const message = String(envelope?.presentation?.message || "").trim();
+    const message = String(
+      request?.message ||
+      envelope?.presentation?.audioMessage ||
+      envelope?.presentation?.message ||
+      "",
+    ).trim();
     if (!message || envelope?.delivery?.audio !== true) {
       stats.filtered += 1;
       return;

@@ -426,6 +426,26 @@ async function postRepeatLast(harness) {
   );
   stateOnly.plugin.stop();
 
+  const audioMessageOverride = createHarness();
+  const writtenMmsiNotification = vesselNotification(
+    "235900007",
+    "Traffic advisory. Small craft 235900007 at 1 o'clock.",
+  );
+  writtenMmsiNotification.data.audioRequest = {
+    requestId: "speech-friendly-request",
+    message: "Traffic advisory. Small craft at 1 o'clock.",
+  };
+  sendNotification(
+    audioMessageOverride,
+    "notifications.collision.235900007",
+    writtenMmsiNotification,
+  );
+  assert.equal(
+    statusOf(audioMessageOverride).lastAnnouncement.message,
+    "Traffic advisory. Small craft at 1 o'clock.",
+  );
+  audioMessageOverride.plugin.stop();
+
   const legacyMinimum = createHarness({ aplayVolumePercent: 66 });
   assert.deepEqual(
     {

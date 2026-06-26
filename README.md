@@ -2,6 +2,9 @@
 
 ## Version 2 baseline
 
+`v0.5.3` prefers the broker audio-request message for speech, so written
+notifications can keep identifiers such as MMSI without Piper reading them out.
+
 `v0.5.0` treats GPS received/lost announcements as mutually exclusive GPS
 state messages, so a later GPS lost event drops any stale queued or prepared
 GPS received announcement before it can be spoken.
@@ -114,7 +117,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+ssh://git@ssh.github.com:443/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.2 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.3 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.3
+
+- Prefer the broker audio-request message for speech, allowing providers to keep written notifications detailed while sending shorter spoken text.
+
 ## 0.5.2
 
 - Prefer the authenticated Signal K audio route for browser playback inside the Audio webapp.
