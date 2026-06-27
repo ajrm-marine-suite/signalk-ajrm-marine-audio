@@ -23,7 +23,7 @@ output settings, but suppresses its own iframe playback to avoid double speech.
 Opened directly, AJRM Marine Audio remains fully standalone.
 
 `v0.5.0` makes Audio mute authority explicit: only AJRM Marine Audio's manual
-mute and Traffic Core's Audio Policy can mute playback. Provider
+mute and AJRM Marine Traffic Audio Policy can mute playback. Provider
 `delivery.muteState` flags are ignored by Audio.
 
 `v0.5.0` removes old AJRM Marine wording from visible Audio status and
@@ -53,9 +53,9 @@ not intentionally change runtime behavior from `v0.5.0`.
 timeline as soon as MP3 rendering completes. Pi speaker playback remains on
 the fastest WAV-ready path and is never delayed for Companion.
 
-`v0.5.0` observes the versioned Traffic Core Audio Policy projection.
-Engine mute and stationary automute are enforced only when that projection is
-explicitly authoritative in Engine mode. Shadow policy remains observable but
+`v0.5.0` observes the versioned AJRM Marine Traffic Audio Policy projection.
+Traffic mute and stationary automute are enforced only when that projection is
+explicitly authoritative in Traffic mode. Shadow policy remains observable but
 cannot mute Audio. Session changes reset sequence tracking and stale or
 non-monotonic policy updates are ignored.
 
@@ -220,7 +220,7 @@ For normal use, keep the phone on the boat Wi-Fi and use the local `.local` addr
 
 AJRM Marine Audio keeps the current speaker announcement uninterrupted. When a new vessel announcement is queued, any older queued announcements for the same vessel are dropped before the new one is added. This keeps busy-area speech focused on the latest known state, including de-escalations from collision alarm back to advisory.
 
-When AJRM Marine Audio is manually muted or Traffic Core Audio Policy is muted,
+When AJRM Marine Audio is manually muted or AJRM Marine Traffic Audio Policy is muted,
 AJRM Marine Audio suppresses further non-forced announcements until sounds are
 enabled again. It does not interrupt an announcement already playing on the local
 speaker.

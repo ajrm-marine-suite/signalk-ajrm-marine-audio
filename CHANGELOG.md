@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.5
+
+- Update Audio documentation to use AJRM Marine Traffic audio-policy terminology.
+
 ## 0.5.4
 
 - Prefer AJRM Marine audio contracts, generated-audio defaults, and browser device IDs while accepting legacy Traffic audio-policy contracts during upgrades.
