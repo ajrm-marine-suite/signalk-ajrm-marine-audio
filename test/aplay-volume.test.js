@@ -118,7 +118,7 @@ function sendNotification(
   };
   const audioEvent = {
     schemaVersion: 1,
-    provider: "ais-plus",
+    provider: "ajrm-marine-traffic",
     subjectKey: pathName,
     eventId: alertEvent.id || `${pathName}-${audioSequence}`,
     lifecycle,
@@ -213,7 +213,7 @@ function sendEngineAudioPolicy(harness, {
           {
             path: "plugins.ajrmMarineTraffic.audioPolicy",
             value: {
-              contract: "ais-plus-engine-audio-policy",
+              contract: "ajrm-marine-traffic-audio-policy",
               contractVersion: 1,
               sessionId,
               sequence,
@@ -230,7 +230,7 @@ function sendEngineAudioPolicy(harness, {
 }
 
 function createSlowRenderHarness() {
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "ais-plus-audio-test-"));
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "ajrm-marine-audio-test-"));
   const voicesDir = path.join(tempDir, "voices");
   fs.mkdirSync(voicesDir, { recursive: true });
   fs.writeFileSync(path.join(voicesDir, "en_GB-alan-medium.onnx"), "");
@@ -249,7 +249,7 @@ function createSlowRenderHarness() {
 }
 
 function createPipelineHarness({ piperDelaySeconds = 0 } = {}) {
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "ais-plus-audio-pipeline-"));
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "ajrm-marine-audio-pipeline-"));
   const voicesDir = path.join(tempDir, "voices");
   fs.mkdirSync(voicesDir, { recursive: true });
   fs.writeFileSync(path.join(voicesDir, "en_GB-alan-medium.onnx"), "");
@@ -813,7 +813,7 @@ async function postRepeatLast(harness) {
   const gpsStateSupersede = createPipelineHarness({ piperDelaySeconds: 0.2 });
   sendNotification(
     gpsStateSupersede,
-    "ais-plus:system:gps-received",
+    "ajrm-marine:traffic:system:gps-received",
     {
       state: "alert",
       method: ["sound"],

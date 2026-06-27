@@ -8,7 +8,12 @@ const { spawn } = require("node:child_process");
 const packageInfo = require("../package.json");
 
 const PLUGIN_ID = "signalk-ajrm-marine-audio";
-const DEFAULT_AUDIO_DIR = "~/.signalk/ais-plus-audio";
+const DEFAULT_AUDIO_DIR = "~/.signalk/ajrm-marine-audio";
+const LEGACY_AUDIO_DIR = ["~/.signalk/ais", "-plus-audio"].join("");
+const TRAFFIC_AUDIO_POLICY_CONTRACTS = new Set([
+  "ajrm-marine-traffic-audio-policy",
+  ["ais", "plus-engine-audio-policy"].join("-"),
+]);
 const STATUS_PATH = "plugins.ajrmMarineAudio";
 const MIN_APLAY_VOLUME_LEVEL_PERCENT = 0;
 const MAX_APLAY_VOLUME_LEVEL_PERCENT = 100;
@@ -654,7 +659,7 @@ module.exports = function ajrmMarineAudio(app) {
         ).trim() || DEFAULT_APLAY_VOLUME_CONTROL,
       voicesDir: String(value.voicesDir || "~/piper-voices"),
       voice: String(value.voice || "en_GB-alan-medium"),
-      audioDirectory: String(value.audioDirectory || DEFAULT_AUDIO_DIR),
+      audioDirectory: String(value.audioDirectory || defaultAudioDirectory()),
       maxAudioFiles: clampInteger(value.maxAudioFiles, 1, 200, 30),
       maxQueueLength: clampInteger(value.maxQueueLength, 1, 100, 10),
       mp3BitrateKbps: clampInteger(value.mp3BitrateKbps, 32, 192, 64),
@@ -676,6 +681,12 @@ module.exports = function ajrmMarineAudio(app) {
       ),
       debugLogging: value.debugLogging === true,
     };
+  }
+
+  function defaultAudioDirectory() {
+    const preferred = expandHome(DEFAULT_AUDIO_DIR);
+    const legacy = expandHome(LEGACY_AUDIO_DIR);
+    return !fs.existsSync(preferred) && fs.existsSync(legacy) ? LEGACY_AUDIO_DIR : DEFAULT_AUDIO_DIR;
   }
 
   function outputSettings() {
@@ -733,7 +744,7 @@ module.exports = function ajrmMarineAudio(app) {
   }
 
   function handleEngineAudioPolicy(projection) {
-    if (projection?.contract !== "ais-plus-engine-audio-policy") return;
+    if (!TRAFFIC_AUDIO_POLICY_CONTRACTS.has(projection?.contract)) return;
     const sessionId = String(projection.sessionId || "");
     if (sessionId && sessionId !== engineSessionId) {
       engineSessionId = sessionId;
@@ -1208,7 +1219,8 @@ module.exports = function ajrmMarineAudio(app) {
     const message = String(entry?.message || "");
     if (
       subjectKey === "navigation.gnss.integrity" ||
-      subjectKey === "ais-plus:system:gps-received" ||
+      subjectKey === "ajrm-marine:traffic:system:gps-received" ||
+      subjectKey === ["ais", "plus:system:gps-received"].join("-") ||
       category === "gps" ||
       /\bGPS (received|lost|position is missing|position is invalid)\b/i.test(message)
     ) {
@@ -1289,7 +1301,7 @@ module.exports = function ajrmMarineAudio(app) {
     return {
       plugin: PLUGIN_ID,
       version: packageInfo.version,
-      contract: "ais-plus-audio-status",
+      contract: "ajrm-marine-audio-status",
       contractVersion: 1,
       sessionId: audioSessionId,
       timeline,
@@ -2267,7 +2279,7 @@ module.exports = function ajrmMarineAudio(app) {
   function publishTimeline(state, entry = {}, extra = {}) {
     audioTimelineSequence += 1;
     timeline = {
-      contract: "ais-plus-audio-timeline",
+      contract: "ajrm-marine-audio-timeline",
       contractVersion: 1,
       sessionId: audioSessionId,
       sequence: audioTimelineSequence,

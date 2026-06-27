@@ -716,7 +716,7 @@ function getClientId() {
   const generated = window.crypto && window.crypto.randomUUID
     ? window.crypto.randomUUID()
     : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  const clientId = `ais-plus-audio-${generated}`;
+  const clientId = `ajrm-marine-audio-${generated}`;
   writeStoredValue(CLIENT_ID_STORAGE_KEY, clientId);
   return clientId;
 }

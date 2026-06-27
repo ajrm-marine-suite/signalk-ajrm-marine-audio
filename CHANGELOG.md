@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.4
+
+- Prefer AJRM Marine audio contracts, generated-audio defaults, and browser device IDs while accepting legacy Traffic audio-policy contracts during upgrades.
+
 ## 0.5.3
 
 - Prefer the broker audio-request message for speech, allowing providers to keep written notifications detailed while sending shorter spoken text.
