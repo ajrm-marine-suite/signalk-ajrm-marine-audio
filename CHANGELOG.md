@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.7
+
+- Include the MIT license file in the published package.
+
 ## 0.5.6
 
 - Update public install command to the current release tag.
