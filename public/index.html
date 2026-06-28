@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AJRM Marine Audio</title>
-    <link rel="stylesheet" href="/signalk-ajrm-marine-audio/styles.css?v=0.5.10" />
+    <link rel="stylesheet" href="/signalk-ajrm-marine-audio/styles.css?v=0.5.11" />
   </head>
   <body>
     <main>
@@ -66,8 +66,8 @@
           <p class="muted" id="outputStatus">Output routing waiting for Audio status.</p>
         </div>
         <div class="dependency-panel" id="dependencyPanel">
-          <h3>Renderer dependencies</h3>
-          <p id="dependencyStatus" class="muted">Checking Piper renderer dependencies.</p>
+          <h3>Speech dependencies</h3>
+          <p id="dependencyStatus" class="muted">Checking Piper speech dependencies.</p>
           <button type="button" id="buttonInstallPiper" class="secondary" hidden>
             Install Piper on Raspberry Pi server
           </button>
@@ -133,16 +133,6 @@
       </section>
 
       <section class="panel">
-        <h2>Renderer</h2>
-        <p class="muted">
-          This version renders Piper speech, optionally adds the stereo directional ping,
-          creates a browser-friendly MP3, and can play the combined WAV locally
-          on the Signal K server.
-        </p>
-        <p class="path" id="audioDirectory"></p>
-      </section>
-
-      <section class="panel">
         <h2>Recent events</h2>
         <div id="events" class="events empty">No events yet.</div>
       </section>
@@ -162,6 +152,6 @@
         }
       }, 3000);
     </script>
-    <script src="/signalk-ajrm-marine-audio/app.js?v=0.5.10"></script>
+    <script src="/signalk-ajrm-marine-audio/app.js?v=0.5.11"></script>
   </body>
 </html>

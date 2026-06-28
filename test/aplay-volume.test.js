@@ -361,6 +361,9 @@ async function postRepeatLast(harness) {
   assert.match(html, /checkMuteAll/);
   assert.match(html, /dependencyPanel/);
   assert.match(html, /buttonInstallPiper/);
+  assert.doesNotMatch(html, />Renderer<\/h2>/);
+  assert.doesNotMatch(html, /audioDirectory/);
+  assert.doesNotMatch(browserApp, /audioDirectory/);
   assert.match(browserApp, /BROWSER_OUTPUT_MODE_STORAGE_KEY/);
   assert.match(browserApp, /BROWSER_OUTPUT_MODES/);
   assert.match(browserApp, /CONSOLE_AUDIO_HOSTED/);
@@ -377,6 +380,9 @@ async function postRepeatLast(harness) {
   assert.match(browserApp, /installPiperWithPiController/);
   assert.match(browserApp, /localPlaybackAvailable/);
   assert.match(browserApp, /Server speaker output needs Piper/);
+  assert.match(browserApp, /piperPlaybackAvailable/);
+  assert.match(browserApp, /Piper browser playback is unavailable/);
+  assert.match(browserApp, /aplayVolumeRange\.disabled/);
   assert.match(browserApp, /joinSentences/);
   assert.match(browserApp, /signalk-ajrm-marine-pi-controller\/actions\/install-piper/);
   assert.match(
@@ -393,6 +399,7 @@ async function postRepeatLast(harness) {
   assert.equal(statusOf(defaults).liveStream, false);
   assert.equal(statusOf(defaults).publicHttpStream, false);
   assert.equal(statusOf(defaults).localPlaybackAvailable, false);
+  assert.equal(statusOf(defaults).dependencies.piperPlaybackAvailable, false);
   assert.match(statusOf(defaults).localPlaybackUnavailableReason, /Piper executable/);
   assert.equal(statusOf(defaults).dependencies.install.supportedByPiController, true);
   assert.equal(statusOf(defaults).dependencies.install.piControllerRunning, false);
@@ -555,6 +562,7 @@ async function postRepeatLast(harness) {
 
   const pipeline = createPipelineHarness();
   assert.equal(statusOf(pipeline).dependencies.ok, true);
+  assert.equal(statusOf(pipeline).dependencies.piperPlaybackAvailable, true);
   assert.equal(statusOf(pipeline).dependencies.install.available, false);
   assert.equal(statusOf(pipeline).dependencies.voice.status, "ok");
   sendNotification(

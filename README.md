@@ -2,6 +2,10 @@
 
 ## Version 2 baseline
 
+`v0.5.11` removes the non-actionable Renderer information panel from the Audio
+webapp, renames the remaining dependency heading to Speech dependencies, and
+disables Piper browser playback plus the local speaker level slider until the
+required server-side speech/local playback tools are present.
 `v0.5.10` defaults server speaker and radio stream output to off for fresh
 installs, keeps server speaker unavailable until Piper, a voice model, and a
 local audio player are present, and does not silently enable it after Piper
@@ -126,7 +130,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.10 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.11 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

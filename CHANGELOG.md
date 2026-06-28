@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.11
+
+- Remove the non-actionable Renderer information panel from the Audio webapp
+  and rename the remaining dependency heading to Speech dependencies.
+- Disable browser Piper playback until Piper, a voice model, and FFmpeg are
+  available.
+- Disable the local speaker level slider until server speaker output can work.
+
 ## 0.5.10
 
 - Default server speaker output to off for fresh installs.

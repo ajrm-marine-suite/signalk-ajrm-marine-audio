@@ -25,7 +25,6 @@ const streamConnectedTotal = document.getElementById("streamConnectedTotal");
 const streamDisconnectedTotal = document.getElementById("streamDisconnectedTotal");
 const lastAnnouncement = document.getElementById("lastAnnouncement");
 const lastAudio = document.getElementById("lastAudio");
-const audioDirectory = document.getElementById("audioDirectory");
 const streamUrl = document.getElementById("streamUrl");
 const streamDiagnostics = document.getElementById("streamDiagnostics");
 const events = document.getElementById("events");
@@ -33,6 +32,7 @@ const checkPingEnabled = document.getElementById("checkPingEnabled");
 const browserOutputModeInputs = Array.from(
   document.querySelectorAll('input[name="browserOutputMode"]'),
 );
+const browserOutputPiper = document.getElementById("browserOutputPiper");
 const checkPiOutput = document.getElementById("checkPiOutput");
 const checkStreamOutput = document.getElementById("checkStreamOutput");
 const checkMuteAll = document.getElementById("checkMuteAll");
@@ -73,6 +73,12 @@ checkPingEnabled.addEventListener("change", () => {
 for (const input of browserOutputModeInputs) {
   input.addEventListener("change", () => {
     if (!input.checked) return;
+    if (input.value === "piper" && input.disabled) {
+      renderBrowserOutputMode();
+      outputStatus.textContent =
+        "Piper browser playback is unavailable until Piper, a voice model, and FFmpeg are installed.";
+      return;
+    }
     browserOutputMode = normalizeBrowserOutputMode(input.value);
     saveBrowserOutputMode(browserOutputMode);
     disableCompetingBrowserSpeech();
@@ -193,7 +199,6 @@ function renderStatus(status) {
   renderOutputRouting(status);
   renderDependencies(status.dependencies || null);
   renderAplayVolumeControl(status);
-  audioDirectory.textContent = status.audioDirectory || "";
   streamUrl.textContent =
     status.publicStreamUrl ||
     `${window.location.origin}${status.streamUrl || "/plugins/signalk-ajrm-marine-audio/live.mp3"}`;
@@ -240,7 +245,17 @@ async function saveOutputRouting() {
 
 function renderOutputRouting(status) {
   disableCompetingBrowserSpeech();
+  const piperPlaybackAvailable = status.dependencies?.piperPlaybackAvailable === true;
+  if (browserOutputMode === "piper" && !piperPlaybackAvailable) {
+    browserOutputMode = "off";
+    saveBrowserOutputMode(browserOutputMode);
+    stopBrowserOutputs();
+  }
   renderBrowserOutputMode();
+  browserOutputPiper.disabled = !piperPlaybackAvailable;
+  browserOutputPiper.title = piperPlaybackAvailable
+    ? ""
+    : "Piper browser playback needs Piper, a voice model, and FFmpeg on the Signal K server.";
   if (document.activeElement !== checkPiOutput) {
     checkPiOutput.checked = status.localPlayback !== false;
   }
@@ -273,12 +288,12 @@ function renderOutputRouting(status) {
 function renderDependencies(dependencies) {
   if (!dependencies) {
     dependencyPanel.classList.remove("warn");
-    dependencyStatus.textContent = "Renderer dependency status unavailable.";
+    dependencyStatus.textContent = "Speech dependency status unavailable.";
     buttonInstallPiper.hidden = true;
     return;
   }
   dependencyPanel.classList.toggle("warn", dependencies.ok === false);
-  dependencyStatus.textContent = dependencies.summary || "Renderer dependency status unavailable.";
+  dependencyStatus.textContent = dependencies.summary || "Speech dependency status unavailable.";
   const canInstallPiper = dependencies.install?.available === true;
   if (dependencies.install?.message) {
     dependencyStatus.textContent = joinSentences(
@@ -439,8 +454,19 @@ function renderAplayVolumeControl(status) {
   if (document.activeElement !== aplayVolumeRange) {
     aplayVolumeRange.value = String(Math.round(value));
   }
+  const localSpeakerAvailable = status.localPlaybackAvailable === true;
+  aplayVolumeRange.disabled = !localSpeakerAvailable;
+  aplayVolumeRange.title = localSpeakerAvailable
+    ? ""
+    : status.localPlaybackUnavailableReason ||
+      "Local speaker level needs Piper, a voice model, and a local audio player.";
   renderAplayVolumeValue(aplayVolumeRange.value);
-  if (status.lastAplayVolumeError) {
+  if (!localSpeakerAvailable) {
+    aplayVolumeStatus.textContent =
+      status.localPlaybackUnavailableReason ||
+      "Local speaker level is unavailable until server speaker output can work.";
+    aplayVolumeStatus.classList.remove("warning");
+  } else if (status.lastAplayVolumeError) {
     aplayVolumeStatus.textContent = `Last apply failed: ${status.lastAplayVolumeError}`;
     aplayVolumeStatus.classList.add("warning");
   } else if (!status.aplayVolumeEnabled) {

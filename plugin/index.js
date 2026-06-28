@@ -1403,10 +1403,13 @@ module.exports = function ajrmMarineAudio(app) {
     if (options.localPlayback && audioPlayer.status !== "ok") {
       missing.push("local audio player");
     }
+    const piperPlaybackAvailable =
+      piper.status === "ok" && Boolean(voice) && ffmpeg.status === "ok";
     const piperInstallAvailable = piper.status !== "ok" || !voice;
     return {
       ok: missing.length === 0,
       summary: missing.length ? `${missing.join(", ")} missing` : "Piper renderer ready",
+      piperPlaybackAvailable,
       piper,
       ffmpeg,
       audioPlayer,
