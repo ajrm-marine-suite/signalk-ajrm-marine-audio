@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.22
+
+- Reduce Audio page status polling noise: 5 seconds when opened directly and
+  10 seconds when embedded in Console.
+- Update Audio static asset cache-busting to match the release version.
+
 ## 0.5.21
 
 - Treat announcements as text-only when the Piper render chain is unavailable,

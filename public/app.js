@@ -12,10 +12,10 @@ const BROWSER_OUTPUT_MODE_STORAGE_KEY = "ajrmMarineAudio.browserOutputMode";
 const LEGACY_BROWSER_SPEECH_STORAGE_KEYS = ["checkBrowserSpeech"];
 const BROWSER_OUTPUT_MODES = ["off", "speech", "piper"];
 const SOUND_CHECK_MESSAGE = "Sound Check. Testing 1, 2, 3.";
-const STATUS_REFRESH_MS = 2000;
-const STATUS_AUTH_RETRY_MS = 60000;
 const CONSOLE_AUDIO_HOSTED =
   new URLSearchParams(window.location.search).get("consoleAudioHost") === "1";
+const STATUS_REFRESH_MS = CONSOLE_AUDIO_HOSTED ? 10000 : 5000;
+const STATUS_AUTH_RETRY_MS = 60000;
 const REQUEST_TIMEOUT_MS = 8000;
 const statusPill = document.getElementById("statusPill");
 const queueLength = document.getElementById("queueLength");

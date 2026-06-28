@@ -2,7 +2,8 @@
 
 ## Version 2 baseline
 
-`v0.5.21` treats announcements as text-only when Piper is unavailable, so
+`v0.5.22` reduces Audio page status polling noise and updates the static asset
+cache-busting version. `v0.5.21` treats announcements as text-only when Piper is unavailable, so
 browser-speech-only installs do not fail while trying to spawn the missing
 Piper executable. `v0.5.20` keeps passive status polling away from Signal K login-status checks
 after authentication failures and retries unauthenticated status checks more
