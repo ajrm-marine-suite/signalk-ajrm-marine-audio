@@ -1397,7 +1397,7 @@ module.exports = function ajrmMarineAudio(app) {
       app.getSelfPath?.("plugins.ajrmMarinePiController.version"),
     );
     const missing = [];
-    if (piper.status !== "ok") missing.push("Piper executable");
+    if (piper.status !== "ok") missing.push("Speech engine Piper is not installed yet");
     if (!voice) missing.push("Piper voice model");
     if (ffmpeg.status !== "ok") missing.push("FFmpeg executable");
     if (options.localPlayback && audioPlayer.status !== "ok") {
@@ -1439,7 +1439,7 @@ module.exports = function ajrmMarineAudio(app) {
   function localPlaybackAvailability() {
     const piper = checkExecutable(options.piperBinary);
     if (piper.status !== "ok") {
-      return { available: false, reason: "Piper executable is missing" };
+      return { available: false, reason: "Speech engine Piper is not installed yet" };
     }
     const voice = selectedVoiceFromList(listVoices());
     if (!voice) {

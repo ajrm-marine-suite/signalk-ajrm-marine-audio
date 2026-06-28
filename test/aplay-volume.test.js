@@ -400,7 +400,7 @@ async function postRepeatLast(harness) {
   assert.equal(statusOf(defaults).publicHttpStream, false);
   assert.equal(statusOf(defaults).localPlaybackAvailable, false);
   assert.equal(statusOf(defaults).dependencies.piperPlaybackAvailable, false);
-  assert.match(statusOf(defaults).localPlaybackUnavailableReason, /Piper executable/);
+  assert.match(statusOf(defaults).localPlaybackUnavailableReason, /Speech engine Piper/);
   assert.equal(statusOf(defaults).dependencies.install.supportedByPiController, true);
   assert.equal(statusOf(defaults).dependencies.install.piControllerRunning, false);
   assert.equal(statusOf(defaults).dependencies.install.available, false);

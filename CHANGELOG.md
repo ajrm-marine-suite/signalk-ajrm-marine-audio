@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.12
+
+- Use clearer wording when Piper is missing: "Speech engine Piper is not
+  installed yet."
+
 ## 0.5.11
 
 - Remove the non-actionable Renderer information panel from the Audio webapp
