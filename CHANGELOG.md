@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.8
+
+- Align web asset cache keys and install documentation with the package version.
+
 ## 0.5.7
 
 - Include the MIT license file in the published package.
