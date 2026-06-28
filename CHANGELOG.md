@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.13
+
+- Disable radio stream output until Piper, a voice model, and FFmpeg are
+  available.
+- Reject direct attempts to enable radio stream output when the speech render
+  chain cannot work.
+- Make Sound check report when no browser, server speaker, or radio stream
+  output is selected.
+
 ## 0.5.12
 
 - Use clearer wording when Piper is missing: "Speech engine Piper is not

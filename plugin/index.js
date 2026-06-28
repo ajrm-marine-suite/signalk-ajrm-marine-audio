@@ -545,6 +545,18 @@ module.exports = function ajrmMarineAudio(app) {
         });
         return;
       }
+      if (next.liveStream && !piperPlaybackAvailability().available) {
+        const reason = piperPlaybackAvailability().reason;
+        res.status(409).json({
+          ok: false,
+          error: reason
+            ? `Radio stream output is not available: ${reason}`
+            : "Radio stream output is not available.",
+          outputs: previous,
+          status: buildStatus(),
+        });
+        return;
+      }
       options.muted = next.muted;
       options.localPlayback = next.localPlayback;
       options.liveStream = next.liveStream;
@@ -1403,8 +1415,7 @@ module.exports = function ajrmMarineAudio(app) {
     if (options.localPlayback && audioPlayer.status !== "ok") {
       missing.push("local audio player");
     }
-    const piperPlaybackAvailable =
-      piper.status === "ok" && Boolean(voice) && ffmpeg.status === "ok";
+    const piperPlaybackAvailable = piperPlaybackAvailability().available;
     const piperInstallAvailable = piper.status !== "ok" || !voice;
     return {
       ok: missing.length === 0,
@@ -1448,6 +1459,22 @@ module.exports = function ajrmMarineAudio(app) {
     const audioPlayer = checkExecutable(options.audioPlayer);
     if (audioPlayer.status !== "ok") {
       return { available: false, reason: "local audio player is missing" };
+    }
+    return { available: true, reason: "" };
+  }
+
+  function piperPlaybackAvailability() {
+    const piper = checkExecutable(options.piperBinary);
+    if (piper.status !== "ok") {
+      return { available: false, reason: "Speech engine Piper is not installed yet" };
+    }
+    const voice = selectedVoiceFromList(listVoices());
+    if (!voice) {
+      return { available: false, reason: "Piper voice model is missing" };
+    }
+    const ffmpeg = checkExecutable(options.ffmpegBinary);
+    if (ffmpeg.status !== "ok") {
+      return { available: false, reason: "FFmpeg is missing" };
     }
     return { available: true, reason: "" };
   }

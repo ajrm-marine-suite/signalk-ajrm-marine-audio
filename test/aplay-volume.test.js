@@ -372,6 +372,9 @@ async function postRepeatLast(harness) {
   assert.match(browserApp, /checkBrowserSpeech/);
   assert.match(browserApp, /disableCompetingBrowserSpeech/);
   assert.match(browserApp, /speakLastAnnouncementInBrowser/);
+  assert.match(browserApp, /bindSoundCheckButton/);
+  assert.match(browserApp, /No audio output is selected/);
+  assert.match(browserApp, /hasSoundCheckOutput/);
   assert.doesNotMatch(browserApp, /muted by notification provider/);
   assert.doesNotMatch(browserApp, /muted by AJRM Marine/);
   assert.match(browserApp, /bindCommandButton/);
@@ -541,6 +544,21 @@ async function postRepeatLast(harness) {
   assert.equal(statusOf(unavailableLocalPlayback).localPlayback, false);
   assert.equal(unavailableLocalPlayback.savedOptions.length, 0);
   unavailableLocalPlayback.plugin.stop();
+
+  const unavailableRadioStream = createHarness({
+    muted: false,
+    liveStream: false,
+  });
+  const unavailableRadioStreamBody = await postOutputs(unavailableRadioStream, {
+    muted: false,
+    localPlayback: false,
+    liveStream: true,
+  });
+  assert.equal(unavailableRadioStreamBody.statusCode, 409);
+  assert.match(unavailableRadioStreamBody.error, /Radio stream output is not available/);
+  assert.equal(statusOf(unavailableRadioStream).liveStream, false);
+  assert.equal(unavailableRadioStream.savedOptions.length, 0);
+  unavailableRadioStream.plugin.stop();
 
   const darwinDefault = withPlatform("darwin", () =>
     createHarness({}, { disableMixer: false }),

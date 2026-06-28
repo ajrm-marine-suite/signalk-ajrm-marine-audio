@@ -49,6 +49,7 @@ let localNotice = null;
 let browserOutputMode = initialBrowserOutputMode();
 let lastBrowserAudioUrl = "";
 let lastBrowserSpeechKey = "";
+let lastStatus = null;
 let firstStatusRender = true;
 
 window.addEventListener("error", (event) => {
@@ -59,7 +60,7 @@ window.addEventListener("unhandledrejection", (event) => {
   renderStartupError(reason.message || String(reason) || "AJRM Marine Audio request failed");
 });
 
-bindCommandButton("buttonSoundCheck", "sound-check", "Sound check sent.");
+bindSoundCheckButton();
 bindCommandButton("buttonRepeatLast", "repeat-last", "Repeat last sent.");
 bindCommandButton("buttonClearQueue", "clear-queue", "Clear queue sent.");
 bindCommandButton("buttonRestartStreams", "restart-streams", "Restart streams sent.");
@@ -162,6 +163,39 @@ function bindCommandButton(id, path, message) {
   });
 }
 
+function bindSoundCheckButton() {
+  const button = document.getElementById("buttonSoundCheck");
+  button.addEventListener("click", () => {
+    if (!hasSoundCheckOutput()) {
+      outputStatus.textContent =
+        "No audio output is selected. Choose browser speech, server speaker, or radio stream first.";
+      return;
+    }
+    signalCommandButton(button, "Sound check sent.");
+    postJson("sound-check").catch(renderCommandError);
+  });
+}
+
+function hasSoundCheckOutput() {
+  if (browserOutputMode === "speech") return true;
+  if (
+    browserOutputMode === "piper" &&
+    lastStatus?.dependencies?.piperPlaybackAvailable === true
+  ) {
+    return true;
+  }
+  if (lastStatus?.localPlayback === true && lastStatus?.localPlaybackAvailable === true) {
+    return true;
+  }
+  if (
+    lastStatus?.liveStream === true &&
+    lastStatus?.dependencies?.piperPlaybackAvailable === true
+  ) {
+    return true;
+  }
+  return false;
+}
+
 function signalCommandButton(button, message) {
   button.classList.remove("command-sent");
   void button.offsetWidth;
@@ -183,6 +217,7 @@ async function readResponse(response, path) {
 }
 
 function renderStatus(status) {
+  lastStatus = status;
   statusPill.textContent = status.muted ? "Muted" : status.enabled ? "Ready" : "Disabled";
   statusPill.className = `status-pill ${status.muted || !status.enabled ? "warn" : "good"}`;
   const stats = status.stats || {};
@@ -269,6 +304,11 @@ function renderOutputRouting(status) {
   if (document.activeElement !== checkStreamOutput) {
     checkStreamOutput.checked = status.liveStream !== false;
   }
+  checkStreamOutput.disabled = !piperPlaybackAvailable && !checkStreamOutput.checked;
+  checkStreamOutput.title =
+    piperPlaybackAvailable || checkStreamOutput.checked
+      ? ""
+      : "Radio stream output needs Piper, a voice model, and FFmpeg on the Signal K server.";
   if (document.activeElement !== checkMuteAll) {
     checkMuteAll.checked = status.pluginMuted === true;
   }
@@ -280,7 +320,9 @@ function renderOutputRouting(status) {
     serverSpeakerAvailable
       ? `server speaker ${status.localPlayback !== false ? "on" : "off"}`
       : `server speaker unavailable${status.localPlaybackUnavailableReason ? ` (${status.localPlaybackUnavailableReason})` : ""}`,
-    `radio stream ${status.liveStream !== false ? "on" : "off"}`,
+    piperPlaybackAvailable
+      ? `radio stream ${status.liveStream !== false ? "on" : "off"}`
+      : "radio stream unavailable",
     mutedReasons.length ? mutedReasons.join(", ") : "not muted",
   ].join(" · ");
 }
