@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.6
+
+- Update public install command to the current release tag.
+
 ## 0.5.5
 
 - Update Audio documentation to use AJRM Marine Traffic audio-policy terminology.
@@ -15,7 +19,7 @@
 ## 0.5.2
 
 - Prefer the authenticated Signal K audio route for browser playback inside the Audio webapp.
-- Derive public stream URLs from an optional configured host, `EXTERNALHOST`, or the Pi hostname instead of falling back to `nemo3.local`.
+- Derive public stream URLs from an optional configured host, `EXTERNALHOST`, or the Pi hostname instead of falling back to the previous test hostname.
 
 ## 0.5.1
 
