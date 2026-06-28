@@ -1025,6 +1025,20 @@ module.exports = function ajrmMarineAudio(app) {
     const mp3File = path.join(audioDir, mp3FileName);
     const metadataFile = path.join(audioDir, `${baseName}.json`);
 
+    if (!piperPlaybackAvailability().available) {
+      debug(`Skipping Piper render for "${entry.message}" because the speech render chain is unavailable`);
+      entry.preparedAt = new Date().toISOString();
+      return {
+        entry,
+        combinedWav: null,
+        mp3File: null,
+        mp3FileName: "",
+        metadataFile,
+        mp3Promise: Promise.resolve(null),
+        textOnly: true,
+      };
+    }
+
     entry.synthesisStartedAt = new Date().toISOString();
     publishTimeline("synthesis-started", entry);
     await synthesizePiperWav(formatMessageForSpeech(entry.message), speechWav);
@@ -1076,6 +1090,7 @@ module.exports = function ajrmMarineAudio(app) {
     active = entry;
     try {
       const shouldPlayLocally =
+        combinedWav &&
         !entry.streamOnly &&
         entry.localPlayback !== false &&
         options.localPlayback &&
@@ -1092,11 +1107,12 @@ module.exports = function ajrmMarineAudio(app) {
 
       const rendered = {
         ...entry,
-        audioUrl: `/plugins/${PLUGIN_ID}/audio/${mp3FileName}`,
-        publicAudioUrl: publicAudioFileUrl(mp3FileName),
+        audioUrl: mp3FileName ? `/plugins/${PLUGIN_ID}/audio/${mp3FileName}` : "",
+        publicAudioUrl: mp3FileName ? publicAudioFileUrl(mp3FileName) : "",
         streamUrl: `/plugins/${PLUGIN_ID}/live.mp3`,
         playlistUrl: `/plugins/${PLUGIN_ID}/live.m3u`,
-        audioFile: mp3FileName,
+        audioFile: mp3FileName || "",
+        renderMode: preparation.textOnly ? "text-only" : "piper",
         renderedAt: new Date().toISOString(),
       };
       Object.assign(entry, rendered);
@@ -1106,7 +1122,7 @@ module.exports = function ajrmMarineAudio(app) {
       });
       await fs.promises.writeFile(metadataFile, `${JSON.stringify(rendered, null, 2)}\n`);
       await cleanupGeneratedAudio();
-      if (entry.streamOutput !== false && !isAudioMutedForEntry(entry)) {
+      if (mp3File && entry.streamOutput !== false && !isAudioMutedForEntry(entry)) {
         await broadcastMp3ToLiveStream(mp3File);
       }
 
@@ -1147,7 +1163,7 @@ module.exports = function ajrmMarineAudio(app) {
 
   function cleanupPreparedAnnouncement(preparation) {
     if (!preparation) return;
-    fs.rm(preparation.combinedWav, { force: true }, () => {});
+    if (preparation.combinedWav) fs.rm(preparation.combinedWav, { force: true }, () => {});
   }
 
   function shouldPreparedAnnouncementYield(entry) {

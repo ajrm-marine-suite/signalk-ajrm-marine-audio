@@ -7,10 +7,13 @@ const createPlugin = require("../plugin");
 function createHarness(initialOptions = {}, harnessOptions = {}) {
   const savedOptions = [];
   const subscriptionCallbacks = [];
+  const errors = [];
   const app = {
     config: { configPath: "/tmp" },
     debug() {},
-    error() {},
+    error(message) {
+      errors.push(String(message || ""));
+    },
     setPluginStatus() {},
     handleMessage() {},
     getSelfPath(pathName) {
@@ -53,6 +56,7 @@ function createHarness(initialOptions = {}, harnessOptions = {}) {
   return {
     plugin,
     savedOptions,
+    errors,
     posts,
     gets,
     subscriptionCallbacks,
@@ -457,6 +461,24 @@ async function postRoute(harness, pathName) {
     { level: 53, mixer: 75 },
   );
   defaults.plugin.stop();
+
+  const textOnly = createHarness();
+  sendNotification(
+    textOnly,
+    "notifications.system.browser-speech",
+    vesselNotification("browser-speech", "Browser speech only announcement."),
+  );
+  const textOnlyStatus = await waitFor(() => {
+    const status = statusOf(textOnly);
+    return status.lastAnnouncement && status.stats.rendered >= 1 ? status : null;
+  });
+  assert.equal(textOnlyStatus.stats.rendered, 1);
+  assert.equal(textOnlyStatus.stats.failed, 0);
+  assert.equal(textOnlyStatus.lastAnnouncement.message, "Browser speech only announcement.");
+  assert.equal(textOnlyStatus.lastAnnouncement.renderMode, "text-only");
+  assert.equal(textOnlyStatus.lastAnnouncement.audioUrl, "");
+  assert.equal(textOnly.errors.length, 0);
+  textOnly.plugin.stop();
 
   const withPiController = createHarness({}, { piControllerVersion: "0.5.3" });
   assert.equal(statusOf(withPiController).localPlayback, false);

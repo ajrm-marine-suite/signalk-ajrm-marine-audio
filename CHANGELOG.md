@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.21
+
+- Treat announcements as text-only when the Piper render chain is unavailable,
+  so browser-speech-only setups do not fail with `spawn piper ENOENT`.
+
 ## 0.5.20
 
 - Keep passive Audio status polling away from the Signal K login-status route
