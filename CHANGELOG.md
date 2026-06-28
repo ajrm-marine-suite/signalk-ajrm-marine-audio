@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.23
+
+- Include a bounded `recentAnnouncements` list in Audio status so browser
+  clients do not miss rapid collision/advisory bursts when a later lower
+  priority announcement becomes `lastAnnouncement`.
+
 ## 0.5.22
 
 - Reduce Audio page status polling noise: 5 seconds when opened directly and

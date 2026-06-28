@@ -477,6 +477,11 @@ async function postRoute(harness, pathName) {
   assert.equal(textOnlyStatus.lastAnnouncement.message, "Browser speech only announcement.");
   assert.equal(textOnlyStatus.lastAnnouncement.renderMode, "text-only");
   assert.equal(textOnlyStatus.lastAnnouncement.audioUrl, "");
+  assert.equal(textOnlyStatus.recentAnnouncements.length, 1);
+  assert.equal(
+    textOnlyStatus.recentAnnouncements[0].message,
+    "Browser speech only announcement.",
+  );
   assert.equal(textOnly.errors.length, 0);
   textOnly.plugin.stop();
 

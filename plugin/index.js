@@ -42,6 +42,7 @@ module.exports = function ajrmMarineAudio(app) {
   let currentLocalPlaybackChild = null;
   let currentLocalPlaybackEntry = null;
   let lastAnnouncement = null;
+  let recentAnnouncements = [];
   let engineMuted = false;
   let engineAudioPolicy = null;
   let engineSessionId = "";
@@ -98,6 +99,7 @@ module.exports = function ajrmMarineAudio(app) {
     audioTimelineSequence = 0;
     audioPlaybackSequence = 0;
     timeline = null;
+    recentAnnouncements = [];
     ajrmMarineNotificationsSessionId = "";
     lastNotificationsPlusAudioSequence = 0;
     processedNotificationsPlusAudioRequests = new Set();
@@ -1138,6 +1140,7 @@ module.exports = function ajrmMarineAudio(app) {
       );
 
       lastAnnouncement = rendered;
+      addRecentAnnouncement(rendered);
       if (rendered.category !== "stream-health") {
         lastRealAnnouncementAt = Date.now();
       }
@@ -1420,6 +1423,10 @@ module.exports = function ajrmMarineAudio(app) {
       preparing: preparing?.entry || null,
       prepared: prepared?.entry || null,
       lastAnnouncement: publishedLastAnnouncement,
+      recentAnnouncements: recentAnnouncements.map((entry) => ({
+        ...entry,
+        publicAudioUrl: entry.publicAudioUrl || publicAudioFileUrl(entry.audioFile),
+      })),
       recentEvents: recentEvents.slice().reverse(),
       stats,
       droppedLaggingClients,
@@ -2416,6 +2423,16 @@ module.exports = function ajrmMarineAudio(app) {
       recentEvents = recentEvents.slice(recentEvents.length - 80);
     }
     publishStatus();
+  }
+
+  function addRecentAnnouncement(entry) {
+    recentAnnouncements.push({
+      ...entry,
+      publicAudioUrl: entry.publicAudioUrl || publicAudioFileUrl(entry.audioFile),
+    });
+    if (recentAnnouncements.length > 20) {
+      recentAnnouncements = recentAnnouncements.slice(-20);
+    }
   }
 
   function publishStatus() {
