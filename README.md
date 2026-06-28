@@ -2,10 +2,13 @@
 
 ## Version 2 baseline
 
-`v0.5.9` renames visible Pi speaker wording to server speaker output and
-clarifies that the built-in Piper install action is only for 64-bit Raspberry
-Pi OS/Linux aarch64 through AJRM Marine Pi Controller. It is not a Windows or
-macOS installer.
+`v0.5.10` defaults server speaker and radio stream output to off for fresh
+installs, keeps server speaker unavailable until Piper, a voice model, and a
+local audio player are present, and does not silently enable it after Piper
+installation. `v0.5.9` renames visible Pi speaker wording to server speaker
+output and clarifies that the built-in Piper install action is only for 64-bit
+Raspberry Pi OS/Linux aarch64 through AJRM Marine Pi Controller. It is not a
+Windows or macOS installer.
 
 `v0.5.3` prefers the broker audio-request message for speech, so written
 notifications can keep identifiers such as MMSI without Piper reading them out.
@@ -123,7 +126,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.9 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.10 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
@@ -134,6 +137,12 @@ Piper, but server speaker playback, Piper browser playback, and the radio stream
 need Piper, a Piper voice model, and FFmpeg on the Signal K server. AJRM Marine
 Audio reports missing renderer dependencies on its page and in
 `vessels.self.plugins.ajrmMarineAudio.dependencies`.
+
+Server speaker output and radio stream output default to off. The webapp only
+allows server speaker output to be enabled when Piper, the selected voice model,
+and the configured local audio player are available. Installing Piper through Pi
+Controller makes the output available but does not turn the speaker on
+automatically.
 
 If AJRM Marine Pi Controller is installed and support actions are enabled, AJRM Marine Audio
 can request a Piper install from its dependency panel. That action is deliberately

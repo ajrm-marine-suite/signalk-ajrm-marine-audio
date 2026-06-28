@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.5.10
+
+- Default server speaker output to off for fresh installs.
+- Default radio stream output and its local stream port to off for fresh
+  installs.
+- Keep the server speaker checkbox unavailable until Piper, a voice model, and
+  a local audio player are present.
+- Reject attempts to enable server speaker output when the local playback chain
+  cannot work; installing Piper does not silently enable speaker output.
+- Add punctuation between dependency status and install guidance in the webapp.
+
 ## 0.5.9
 
 - Rename visible Pi speaker wording to server speaker output.

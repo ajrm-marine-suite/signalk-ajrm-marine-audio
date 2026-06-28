@@ -31,9 +31,6 @@ function createHarness(initialOptions = {}, harnessOptions = {}) {
   };
   const plugin = createPlugin(app);
   const baseOptions = {
-    publicHttpStream: false,
-    liveStream: false,
-    localPlayback: true,
     speakerReleaseGapMs: 10,
     ...initialOptions,
   };
@@ -378,6 +375,9 @@ async function postRepeatLast(harness) {
   assert.match(browserApp, /signalCommandButton/);
   assert.match(browserApp, /postJson\("outputs"/);
   assert.match(browserApp, /installPiperWithPiController/);
+  assert.match(browserApp, /localPlaybackAvailable/);
+  assert.match(browserApp, /Server speaker output needs Piper/);
+  assert.match(browserApp, /joinSentences/);
   assert.match(browserApp, /signalk-ajrm-marine-pi-controller\/actions\/install-piper/);
   assert.match(
     browserApp,
@@ -389,6 +389,11 @@ async function postRepeatLast(harness) {
   assert.match(browserCss, /box-shadow/);
 
   const defaults = createHarness();
+  assert.equal(statusOf(defaults).localPlayback, false);
+  assert.equal(statusOf(defaults).liveStream, false);
+  assert.equal(statusOf(defaults).publicHttpStream, false);
+  assert.equal(statusOf(defaults).localPlaybackAvailable, false);
+  assert.match(statusOf(defaults).localPlaybackUnavailableReason, /Piper executable/);
   assert.equal(statusOf(defaults).dependencies.install.supportedByPiController, true);
   assert.equal(statusOf(defaults).dependencies.install.piControllerRunning, false);
   assert.equal(statusOf(defaults).dependencies.install.available, false);
@@ -404,6 +409,7 @@ async function postRepeatLast(harness) {
   defaults.plugin.stop();
 
   const withPiController = createHarness({}, { piControllerVersion: "0.5.3" });
+  assert.equal(statusOf(withPiController).localPlayback, false);
   assert.equal(statusOf(withPiController).dependencies.install.piControllerRunning, true);
   assert.equal(statusOf(withPiController).dependencies.install.available, true);
   assert.match(statusOf(withPiController).dependencies.install.message, /64-bit Raspberry Pi OS/);
@@ -513,6 +519,21 @@ async function postRepeatLast(harness) {
   assert.equal(outputRouting.savedOptions.at(-1).localPlayback, false);
   assert.equal(outputRouting.savedOptions.at(-1).liveStream, false);
   outputRouting.plugin.stop();
+
+  const unavailableLocalPlayback = createHarness({
+    muted: false,
+    liveStream: true,
+  });
+  const unavailableLocalPlaybackBody = await postOutputs(unavailableLocalPlayback, {
+    muted: false,
+    localPlayback: true,
+    liveStream: true,
+  });
+  assert.equal(unavailableLocalPlaybackBody.statusCode, 409);
+  assert.match(unavailableLocalPlaybackBody.error, /Server speaker output is not available/);
+  assert.equal(statusOf(unavailableLocalPlayback).localPlayback, false);
+  assert.equal(unavailableLocalPlayback.savedOptions.length, 0);
+  unavailableLocalPlayback.plugin.stop();
 
   const darwinDefault = withPlatform("darwin", () =>
     createHarness({}, { disableMixer: false }),

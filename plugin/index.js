@@ -176,22 +176,22 @@ module.exports = function ajrmMarineAudio(app) {
         type: "boolean",
         title: "Play rendered audio on this Signal K server",
         description:
-          "When enabled, the Pi will play the same rendered announcement audio that browser clients can fetch.",
-        default: true,
+          "When enabled, this Signal K server will play the same rendered announcement audio that browser clients can fetch. Requires Piper, a voice model, and a local audio player.",
+        default: false,
       },
       liveStream: {
         type: "boolean",
         title: "Enable radio-style MP3 stream",
         description:
           "Serves a continuous stream for radio player apps that can keep playing while a phone is locked.",
-        default: true,
+        default: false,
       },
       publicHttpStream: {
         type: "boolean",
         title: "Enable local stream port",
         description:
           "Serves only the live audio stream on a separate local port, so native radio apps do not need a Signal K login.",
-        default: true,
+        default: false,
       },
       publicHttpStreamPort: {
         type: "integer",
@@ -533,6 +533,18 @@ module.exports = function ajrmMarineAudio(app) {
             : options.liveStream,
       };
       const previous = outputSettings();
+      if (next.localPlayback && !localPlaybackAvailability().available) {
+        const reason = localPlaybackAvailability().reason;
+        res.status(409).json({
+          ok: false,
+          error: reason
+            ? `Server speaker output is not available: ${reason}`
+            : "Server speaker output is not available.",
+          outputs: previous,
+          status: buildStatus(),
+        });
+        return;
+      }
       options.muted = next.muted;
       options.localPlayback = next.localPlayback;
       options.liveStream = next.liveStream;
@@ -631,9 +643,9 @@ module.exports = function ajrmMarineAudio(app) {
     return {
       enabled: value.enabled !== false,
       muted: value.muted === true,
-      localPlayback: value.localPlayback !== false,
-      liveStream: value.liveStream !== false,
-      publicHttpStream: value.publicHttpStream !== false,
+      localPlayback: value.localPlayback === true,
+      liveStream: value.liveStream === true,
+      publicHttpStream: value.publicHttpStream === true,
       publicHttpStreamPort: clampInteger(value.publicHttpStreamPort, 1024, 65535, 3445),
       publicStreamHost: String(value.publicStreamHost || "").trim(),
       publicStreamUseHttps: value.publicStreamUseHttps !== false,
@@ -1290,6 +1302,7 @@ module.exports = function ajrmMarineAudio(app) {
 
   function buildStatus() {
     const publicStreamBase = publicStreamBaseUrl();
+    const localPlaybackState = localPlaybackAvailability();
     const publishedLastAnnouncement = lastAnnouncement
       ? {
           ...lastAnnouncement,
@@ -1315,6 +1328,8 @@ module.exports = function ajrmMarineAudio(app) {
       engineAudioPolicySequence: lastEngineAudioPolicySequence,
       aisPlusMuted: false,
       localPlayback: options.localPlayback,
+      localPlaybackAvailable: localPlaybackState.available,
+      localPlaybackUnavailableReason: localPlaybackState.reason,
       liveStream: options.liveStream,
       liveStreamClients: liveStreamClients.size,
       liveStreamConnections: Array.from(liveStreamClients).map((client) => ({
@@ -1416,6 +1431,22 @@ module.exports = function ajrmMarineAudio(app) {
             : "Install AJRM Marine Pi Controller on a 64-bit Raspberry Pi OS server to use the built-in Piper installer. On Windows, macOS, or other Linux servers, install Piper manually and configure the paths here.",
       },
     };
+  }
+
+  function localPlaybackAvailability() {
+    const piper = checkExecutable(options.piperBinary);
+    if (piper.status !== "ok") {
+      return { available: false, reason: "Piper executable is missing" };
+    }
+    const voice = selectedVoiceFromList(listVoices());
+    if (!voice) {
+      return { available: false, reason: "Piper voice model is missing" };
+    }
+    const audioPlayer = checkExecutable(options.audioPlayer);
+    if (audioPlayer.status !== "ok") {
+      return { available: false, reason: "local audio player is missing" };
+    }
+    return { available: true, reason: "" };
   }
 
   function checkExecutable(command) {

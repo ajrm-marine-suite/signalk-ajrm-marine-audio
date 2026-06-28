@@ -244,6 +244,13 @@ function renderOutputRouting(status) {
   if (document.activeElement !== checkPiOutput) {
     checkPiOutput.checked = status.localPlayback !== false;
   }
+  const serverSpeakerAvailable = status.localPlaybackAvailable === true;
+  checkPiOutput.disabled = !serverSpeakerAvailable && !checkPiOutput.checked;
+  checkPiOutput.title =
+    serverSpeakerAvailable || checkPiOutput.checked
+      ? ""
+      : status.localPlaybackUnavailableReason ||
+        "Server speaker output needs Piper, a voice model, and a local audio player.";
   if (document.activeElement !== checkStreamOutput) {
     checkStreamOutput.checked = status.liveStream !== false;
   }
@@ -255,7 +262,9 @@ function renderOutputRouting(status) {
   if (status.engineMuted) mutedReasons.push("muted by Traffic Core");
   outputStatus.textContent = [
     `Browser ${browserOutputModeLabel(browserOutputMode)}`,
-    `server speaker ${status.localPlayback !== false ? "on" : "off"}`,
+    serverSpeakerAvailable
+      ? `server speaker ${status.localPlayback !== false ? "on" : "off"}`
+      : `server speaker unavailable${status.localPlaybackUnavailableReason ? ` (${status.localPlaybackUnavailableReason})` : ""}`,
     `radio stream ${status.liveStream !== false ? "on" : "off"}`,
     mutedReasons.length ? mutedReasons.join(", ") : "not muted",
   ].join(" · ");
@@ -272,11 +281,22 @@ function renderDependencies(dependencies) {
   dependencyStatus.textContent = dependencies.summary || "Renderer dependency status unavailable.";
   const canInstallPiper = dependencies.install?.available === true;
   if (dependencies.install?.message) {
-    dependencyStatus.textContent = `${dependencyStatus.textContent} ${dependencies.install.message}`;
+    dependencyStatus.textContent = joinSentences(
+      dependencyStatus.textContent,
+      dependencies.install.message,
+    );
   }
   buttonInstallPiper.hidden = !canInstallPiper;
   buttonInstallPiper.disabled = !canInstallPiper;
   buttonInstallPiper.dataset.endpoint = dependencies.install?.endpoint || "";
+}
+
+function joinSentences(first, second) {
+  const prefix = String(first || "").trim();
+  const suffix = String(second || "").trim();
+  if (!prefix) return suffix;
+  if (!suffix) return prefix;
+  return /[.!?]$/.test(prefix) ? `${prefix} ${suffix}` : `${prefix}. ${suffix}`;
 }
 
 async function installPiperWithPiController() {
