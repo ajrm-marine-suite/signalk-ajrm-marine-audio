@@ -2,7 +2,8 @@
 
 ## Version 2 baseline
 
-`v0.5.16` greys disabled buttons and removes their pressed/3D interaction
+`v0.5.17` clarifies that AJRM Marine Pi Controller is a Signal K app when
+explaining the optional built-in Piper installer. `v0.5.16` greys disabled buttons and removes their pressed/3D interaction
 state. `v0.5.15` moves directional ping beside AJRM Marine Piper playback, defaults it
 off, and keeps it disabled until Piper playback is selected and available.
 `v0.5.14` tightens the Audio page so browser speech can run Sound check and
@@ -139,7 +140,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.16 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.17 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
@@ -157,15 +158,16 @@ and the configured local audio player are available. Installing Piper through Pi
 Controller makes the output available but does not turn the speaker on
 automatically.
 
-If AJRM Marine Pi Controller is installed and support actions are enabled, AJRM Marine Audio
-can request a Piper install from its dependency panel. That action is deliberately
-manual and confirmed; it is not run by npm or by Signal K AppStore installation.
-The bundled installer is for 64-bit Raspberry Pi OS/Linux aarch64. On Windows,
-macOS, or other Linux servers, install Piper, FFmpeg, and the selected voice
-model manually, then set the Piper executable, FFmpeg executable, Piper voices
-directory, and voice model in the AJRM Marine Audio plugin configuration. If Pi
-Controller is not installed and running, Audio hides the install button and
-shows manual-install guidance instead.
+If the AJRM Marine Pi Controller Signal K app is installed and support actions
+are enabled, AJRM Marine Audio can request a Piper install from its dependency
+panel. That action is deliberately manual and confirmed; it is not run by npm or
+by Signal K AppStore installation. The bundled installer is for 64-bit
+Raspberry Pi OS/Linux aarch64. On Windows, macOS, or other Linux servers,
+install Piper, FFmpeg, and the selected voice model manually, then set the Piper
+executable, FFmpeg executable, Piper voices directory, and voice model in the
+AJRM Marine Audio plugin configuration. If Pi Controller is not installed and
+running, Audio hides the install button and shows manual-install guidance
+instead.
 
 The **Enable directional ping** checkbox sits beside **AJRM Marine Piper playback**.
 It defaults off and remains disabled until Piper playback is selected and the

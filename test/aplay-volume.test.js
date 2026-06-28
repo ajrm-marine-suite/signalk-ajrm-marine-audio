@@ -441,7 +441,8 @@ async function postRoute(harness, pathName) {
   assert.equal(statusOf(defaults).dependencies.install.piControllerRunning, false);
   assert.equal(statusOf(defaults).dependencies.install.available, false);
   assert.match(statusOf(defaults).dependencies.install.endpoint, /install-piper/);
-  assert.match(statusOf(defaults).dependencies.install.message, /Install AJRM Marine Pi Controller/);
+  assert.match(statusOf(defaults).dependencies.install.message, /AJRM Marine Pi Controller/);
+  assert.match(statusOf(defaults).dependencies.install.message, /Signal K app/);
   assert.match(statusOf(defaults).dependencies.install.message, /plugin configuration/);
   assert.match(statusOf(defaults).dependencies.summary, /Speech engine Piper is not installed yet/);
   assert.deepEqual(

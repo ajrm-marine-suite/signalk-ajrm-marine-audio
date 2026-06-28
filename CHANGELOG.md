@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.17
+
+- Clarify that AJRM Marine Pi Controller is a Signal K app when explaining the
+  optional built-in Piper installer.
+
 ## 0.5.16
 
 - Grey disabled buttons and remove their pressed/3D interaction state.

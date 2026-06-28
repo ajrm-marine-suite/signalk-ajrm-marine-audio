@@ -1458,7 +1458,7 @@ module.exports = function ajrmMarineAudio(app) {
         message:
           piControllerRunning
             ? "The built-in Piper installer is for 64-bit Raspberry Pi OS/Linux aarch64 through AJRM Marine Pi Controller. It is not a Windows or macOS installer."
-            : "Install AJRM Marine Pi Controller on a 64-bit Raspberry Pi OS server to use the built-in Piper installer. On Windows, macOS, or other Linux servers, install Piper and FFmpeg manually, then set the Piper executable, FFmpeg executable, Piper voices directory, and voice model in the AJRM Marine Audio plugin configuration.",
+            : "Install the AJRM Marine Pi Controller Signal K app on a 64-bit Raspberry Pi OS server to use the built-in Piper installer. On Windows, macOS, or other Linux servers, install Piper and FFmpeg manually, then set the Piper executable, FFmpeg executable, Piper voices directory, and voice model in the AJRM Marine Audio plugin configuration.",
       },
     };
   }
