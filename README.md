@@ -2,8 +2,11 @@
 
 ## Version 2 baseline
 
-`v0.5.19` throttles status polling after Signal K authentication failures so
-unauthenticated browser tabs do not flood the Signal K log. `v0.5.18` clarifies
+`v0.5.20` keeps passive status polling away from Signal K login-status checks
+after authentication failures and retries unauthenticated status checks more
+slowly, so stale or unauthenticated Audio tabs are much less chatty in the
+Signal K log. `v0.5.19` throttles status polling after Signal K authentication
+failures. `v0.5.18` clarifies
 that mute-all does not suppress Sound Check. `v0.5.17` clarifies that AJRM Marine Pi Controller is a Signal K app when
 explaining the optional built-in Piper installer. `v0.5.16` greys disabled buttons and removes their pressed/3D interaction
 state. `v0.5.15` moves directional ping beside AJRM Marine Piper playback, defaults it
@@ -142,7 +145,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.19 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.20 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

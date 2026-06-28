@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.20
+
+- Keep passive Audio status polling away from the Signal K login-status route
+  after authentication failures, and retry unauthenticated status checks at a
+  slower interval.
+
 ## 0.5.19
 
 - Throttle Audio webapp status polling after Signal K authentication failures

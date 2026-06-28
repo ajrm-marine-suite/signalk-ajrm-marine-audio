@@ -13,7 +13,7 @@ const LEGACY_BROWSER_SPEECH_STORAGE_KEYS = ["checkBrowserSpeech"];
 const BROWSER_OUTPUT_MODES = ["off", "speech", "piper"];
 const SOUND_CHECK_MESSAGE = "Sound Check. Testing 1, 2, 3.";
 const STATUS_REFRESH_MS = 2000;
-const AUTH_RETRY_MS = 15000;
+const STATUS_AUTH_RETRY_MS = 60000;
 const CONSOLE_AUDIO_HOSTED =
   new URLSearchParams(window.location.search).get("consoleAudioHost") === "1";
 const REQUEST_TIMEOUT_MS = 8000;
@@ -128,17 +128,26 @@ setInterval(() => refresh(), STATUS_REFRESH_MS);
 async function refresh({ force = false } = {}) {
   if (!force && Date.now() < nextStatusRefreshAt) return;
   try {
-    const status = await getJson("status");
+    const status = await getStatusJson();
     nextStatusRefreshAt = 0;
     renderStatus(status);
   } catch (error) {
     if (error.status === 401 || error.status === 403) {
-      nextStatusRefreshAt = Date.now() + AUTH_RETRY_MS;
+      nextStatusRefreshAt = Date.now() + STATUS_AUTH_RETRY_MS;
     }
     statusPill.textContent = "Offline";
     statusPill.className = "status-pill bad";
     renderEvents([{ event: "error", message: audioOfflineMessage(error), ts: new Date().toISOString() }]);
   }
+}
+
+async function getStatusJson() {
+  const response = await fetchWithTimeout(`${API}/status`, {
+    credentials: "include",
+    cache: "no-store",
+    headers: authHeaders(),
+  });
+  return readStatusResponse(response);
 }
 
 async function getJson(path) {
@@ -148,6 +157,25 @@ async function getJson(path) {
     headers: authHeaders(),
   });
   return readResponse(response, path);
+}
+
+async function readStatusResponse(response) {
+  const text = await response.text();
+  const body = text ? parseJson(text) : {};
+  if (!response.ok) {
+    if (response.status === 401 && accessToken) {
+      accessToken = "";
+      removeStoredValue(ACCESS_TOKEN_STORAGE_KEY);
+    }
+    const message =
+      response.status === 401 || response.status === 403
+        ? "AJRM Marine Audio needs a Signal K login or approved device token."
+        : body.error || `status failed: ${friendlyHttpError(response.status, text)}`;
+    const error = new Error(message);
+    error.status = response.status;
+    throw error;
+  }
+  return body;
 }
 
 function audioOfflineMessage(error) {
