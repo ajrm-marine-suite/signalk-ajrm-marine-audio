@@ -2,7 +2,7 @@
 
 ## Version 2 baseline
 
-`v0.5.17` clarifies that AJRM Marine Pi Controller is a Signal K app when
+`v0.5.18` clarifies that mute-all does not suppress Sound Check. `v0.5.17` clarifies that AJRM Marine Pi Controller is a Signal K app when
 explaining the optional built-in Piper installer. `v0.5.16` greys disabled buttons and removes their pressed/3D interaction
 state. `v0.5.15` moves directional ping beside AJRM Marine Piper playback, defaults it
 off, and keeps it disabled until Piper playback is selected and available.
@@ -140,7 +140,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.17 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.18 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

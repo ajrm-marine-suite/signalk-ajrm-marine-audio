@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.18
+
+- Clarify that the mute-all switch does not suppress Sound Check.
+
 ## 0.5.17
 
 - Clarify that AJRM Marine Pi Controller is a Signal K app when explaining the

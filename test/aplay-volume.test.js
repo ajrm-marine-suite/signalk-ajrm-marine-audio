@@ -381,6 +381,7 @@ async function postRoute(harness, pathName) {
   assert.match(html, /checkPiOutput/);
   assert.match(html, /checkStreamOutput/);
   assert.match(html, /checkMuteAll/);
+  assert.match(html, /except Sound Check/);
   assert.match(html, /dependencyPanel/);
   assert.match(html, /buttonInstallPiper/);
   assert.doesNotMatch(html, />Renderer<\/h2>/);
