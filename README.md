@@ -2,7 +2,10 @@
 
 ## Version 2 baseline
 
-`v0.5.13` disables radio stream output until the Piper speech render chain is
+`v0.5.14` tightens the Audio page so browser speech can run Sound check and
+Repeat last locally, stream-only controls are disabled unless the radio stream
+can work, the radio stream panel explains off/unavailable states, and missing
+dependency wording is friendlier. `v0.5.13` disables radio stream output until the Piper speech render chain is
 available and makes Sound check report clearly when no output is selected.
 `v0.5.12` uses clearer wording when Piper is missing. `v0.5.11` removes the
 non-actionable Renderer information panel from the Audio webapp, renames the
@@ -133,7 +136,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.13 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.14 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

@@ -600,11 +600,27 @@ module.exports = function ajrmMarineAudio(app) {
     }));
 
     router.post(`${prefix}/restart-streams`, write((_req, res) => {
+      if (!isRadioStreamAvailable()) {
+        res.status(409).json({
+          ok: false,
+          error: "Radio stream is off or unavailable.",
+          status: buildStatus(),
+        });
+        return;
+      }
       const count = restartLiveStreamClients("manual stream restart");
       res.json({ ok: true, restarted: count });
     }));
 
     router.post(`${prefix}/stream-time-check`, write((_req, res) => {
+      if (!isRadioStreamAvailable()) {
+        res.status(409).json({
+          ok: false,
+          error: "Radio stream is off or unavailable.",
+          status: buildStatus(),
+        });
+        return;
+      }
       const entry = createStreamTimeCheckAnnouncement(true);
       enqueue(entry);
       res.json({ ok: true, announcement: entry });
@@ -1410,16 +1426,16 @@ module.exports = function ajrmMarineAudio(app) {
     );
     const missing = [];
     if (piper.status !== "ok") missing.push("Speech engine Piper is not installed yet");
-    if (!voice) missing.push("Piper voice model");
-    if (ffmpeg.status !== "ok") missing.push("FFmpeg executable");
+    if (!voice) missing.push("Piper voice model is not installed yet");
+    if (ffmpeg.status !== "ok") missing.push("Audio converter FFmpeg is not installed yet");
     if (options.localPlayback && audioPlayer.status !== "ok") {
-      missing.push("local audio player");
+      missing.push("Server audio player is not installed yet");
     }
     const piperPlaybackAvailable = piperPlaybackAvailability().available;
     const piperInstallAvailable = piper.status !== "ok" || !voice;
     return {
       ok: missing.length === 0,
-      summary: missing.length ? `${missing.join(", ")} missing` : "Piper renderer ready",
+      summary: missing.length ? missing.join(", ") : "Piper speech engine ready",
       piperPlaybackAvailable,
       piper,
       ffmpeg,
@@ -1454,11 +1470,11 @@ module.exports = function ajrmMarineAudio(app) {
     }
     const voice = selectedVoiceFromList(listVoices());
     if (!voice) {
-      return { available: false, reason: "Piper voice model is missing" };
+      return { available: false, reason: "Piper voice model is not installed yet" };
     }
     const audioPlayer = checkExecutable(options.audioPlayer);
     if (audioPlayer.status !== "ok") {
-      return { available: false, reason: "local audio player is missing" };
+      return { available: false, reason: "Server audio player is not installed yet" };
     }
     return { available: true, reason: "" };
   }
@@ -1470,13 +1486,17 @@ module.exports = function ajrmMarineAudio(app) {
     }
     const voice = selectedVoiceFromList(listVoices());
     if (!voice) {
-      return { available: false, reason: "Piper voice model is missing" };
+      return { available: false, reason: "Piper voice model is not installed yet" };
     }
     const ffmpeg = checkExecutable(options.ffmpegBinary);
     if (ffmpeg.status !== "ok") {
-      return { available: false, reason: "FFmpeg is missing" };
+      return { available: false, reason: "Audio converter FFmpeg is not installed yet" };
     }
     return { available: true, reason: "" };
+  }
+
+  function isRadioStreamAvailable() {
+    return options.liveStream === true && piperPlaybackAvailability().available === true;
   }
 
   function checkExecutable(command) {

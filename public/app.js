@@ -11,6 +11,7 @@ const BROWSER_OUTPUT_STORAGE_KEY = "ajrmMarineAudio.browserOutput";
 const BROWSER_OUTPUT_MODE_STORAGE_KEY = "ajrmMarineAudio.browserOutputMode";
 const LEGACY_BROWSER_SPEECH_STORAGE_KEYS = ["checkBrowserSpeech"];
 const BROWSER_OUTPUT_MODES = ["off", "speech", "piper"];
+const SOUND_CHECK_MESSAGE = "Sound Check. Testing 1, 2, 3.";
 const CONSOLE_AUDIO_HOSTED =
   new URLSearchParams(window.location.search).get("consoleAudioHost") === "1";
 const REQUEST_TIMEOUT_MS = 8000;
@@ -26,6 +27,7 @@ const streamDisconnectedTotal = document.getElementById("streamDisconnectedTotal
 const lastAnnouncement = document.getElementById("lastAnnouncement");
 const lastAudio = document.getElementById("lastAudio");
 const streamUrl = document.getElementById("streamUrl");
+const streamStatus = document.getElementById("streamStatus");
 const streamDiagnostics = document.getElementById("streamDiagnostics");
 const events = document.getElementById("events");
 const checkPingEnabled = document.getElementById("checkPingEnabled");
@@ -40,6 +42,8 @@ const outputStatus = document.getElementById("outputStatus");
 const dependencyPanel = document.getElementById("dependencyPanel");
 const dependencyStatus = document.getElementById("dependencyStatus");
 const buttonInstallPiper = document.getElementById("buttonInstallPiper");
+const buttonRestartStreams = document.getElementById("buttonRestartStreams");
+const buttonStreamTimeCheck = document.getElementById("buttonStreamTimeCheck");
 const aplayVolumeRange = document.getElementById("aplayVolumeRange");
 const aplayVolumeValue = document.getElementById("aplayVolumeValue");
 const aplayVolumeStatus = document.getElementById("aplayVolumeStatus");
@@ -61,10 +65,10 @@ window.addEventListener("unhandledrejection", (event) => {
 });
 
 bindSoundCheckButton();
-bindCommandButton("buttonRepeatLast", "repeat-last", "Repeat last sent.");
+bindRepeatLastButton();
 bindCommandButton("buttonClearQueue", "clear-queue", "Clear queue sent.");
-bindCommandButton("buttonRestartStreams", "restart-streams", "Restart streams sent.");
-bindCommandButton("buttonStreamTimeCheck", "stream-time-check", "Stream time check sent.");
+bindStreamCommandButton("buttonRestartStreams", "restart-streams", "Restart streams sent.");
+bindStreamCommandButton("buttonStreamTimeCheck", "stream-time-check", "Stream time check sent.");
 buttonInstallPiper.addEventListener("click", installPiperWithPiController);
 checkPingEnabled.addEventListener("change", () => {
   postJson(`ping-enabled?enabled=${checkPingEnabled.checked ? "true" : "false"}`).catch(
@@ -171,6 +175,12 @@ function bindSoundCheckButton() {
         "No audio output is selected. Choose browser speech, server speaker, or radio stream first.";
       return;
     }
+    if (browserOutputMode === "speech" && !hasServerRenderedOutput()) {
+      if (speakMessageInBrowser(SOUND_CHECK_MESSAGE, true)) {
+        lastBrowserSpeechKey = `${SOUND_CHECK_MESSAGE}:sound-check`;
+      }
+      return;
+    }
     signalCommandButton(button, "Sound check sent.");
     postJson("sound-check").catch(renderCommandError);
   });
@@ -178,6 +188,10 @@ function bindSoundCheckButton() {
 
 function hasSoundCheckOutput() {
   if (browserOutputMode === "speech") return true;
+  return hasServerRenderedOutput();
+}
+
+function hasServerRenderedOutput() {
   if (
     browserOutputMode === "piper" &&
     lastStatus?.dependencies?.piperPlaybackAvailable === true
@@ -194,6 +208,42 @@ function hasSoundCheckOutput() {
     return true;
   }
   return false;
+}
+
+function bindRepeatLastButton() {
+  const button = document.getElementById("buttonRepeatLast");
+  button.addEventListener("click", () => {
+    if (browserOutputMode === "speech" && !hasServerRenderedOutput()) {
+      if (!speakLastAnnouncementInBrowser(true)) {
+        outputStatus.textContent = "No announcement has been received yet.";
+      }
+      return;
+    }
+    if (browserOutputMode === "piper" && !hasServerRenderedOutput()) {
+      playLastAudioInBrowser(true);
+      return;
+    }
+    if (!hasServerRenderedOutput()) {
+      outputStatus.textContent =
+        "No audio output is selected. Choose browser speech, server speaker, or radio stream first.";
+      return;
+    }
+    signalCommandButton(button, "Repeat last sent.");
+    postJson("repeat-last").catch(renderCommandError);
+  });
+}
+
+function bindStreamCommandButton(id, path, message) {
+  const button = document.getElementById(id);
+  button.addEventListener("click", () => {
+    if (!isRadioStreamUsable(lastStatus)) {
+      outputStatus.textContent =
+        "Radio stream is off or unavailable. Enable radio stream output after Piper, a voice model, and FFmpeg are installed.";
+      return;
+    }
+    signalCommandButton(button, message);
+    postJson(path).catch(renderCommandError);
+  });
 }
 
 function signalCommandButton(button, message) {
@@ -230,13 +280,16 @@ function renderStatus(status) {
   serverTime.textContent = formatTime(status.serverTime);
   streamConnectedTotal.textContent = streamStats.connectedTotal != null ? streamStats.connectedTotal : 0;
   streamDisconnectedTotal.textContent = streamStats.disconnectedTotal != null ? streamStats.disconnectedTotal : 0;
+  const piperPlaybackAvailable = status.dependencies?.piperPlaybackAvailable === true;
   checkPingEnabled.checked = status.pingEnabled !== false;
+  checkPingEnabled.disabled = !piperPlaybackAvailable;
+  checkPingEnabled.title = piperPlaybackAvailable
+    ? ""
+    : "Directional ping is used with Piper-rendered audio after Piper, a voice model, and FFmpeg are installed.";
   renderOutputRouting(status);
   renderDependencies(status.dependencies || null);
   renderAplayVolumeControl(status);
-  streamUrl.textContent =
-    status.publicStreamUrl ||
-    `${window.location.origin}${status.streamUrl || "/plugins/signalk-ajrm-marine-audio/live.mp3"}`;
+  renderRadioStreamPanel(status);
   streamDiagnostics.textContent = formatStreamDiagnostics(status);
 
   if (status.lastAnnouncement && status.lastAnnouncement.message) {
@@ -325,6 +378,33 @@ function renderOutputRouting(status) {
       : "radio stream unavailable",
     mutedReasons.length ? mutedReasons.join(", ") : "not muted",
   ].join(" · ");
+}
+
+function renderRadioStreamPanel(status) {
+  const piperPlaybackAvailable = status.dependencies?.piperPlaybackAvailable === true;
+  const url =
+    status.publicStreamUrl ||
+    `${window.location.origin}${status.streamUrl || "/plugins/signalk-ajrm-marine-audio/live.mp3"}`;
+  streamUrl.textContent = isRadioStreamUsable(status) ? url : "";
+  if (!piperPlaybackAvailable) {
+    streamStatus.textContent =
+      "Radio stream unavailable until Piper, a voice model, and FFmpeg are installed.";
+  } else if (status.liveStream !== true) {
+    streamStatus.textContent = "Radio stream output is off.";
+  } else {
+    streamStatus.textContent = "Radio stream output is available.";
+  }
+  buttonRestartStreams.disabled = !isRadioStreamUsable(status);
+  buttonStreamTimeCheck.disabled = !isRadioStreamUsable(status);
+  const streamButtonTitle = isRadioStreamUsable(status)
+    ? ""
+    : "Radio stream is off or unavailable.";
+  buttonRestartStreams.title = streamButtonTitle;
+  buttonStreamTimeCheck.title = streamButtonTitle;
+}
+
+function isRadioStreamUsable(status) {
+  return Boolean(status?.liveStream === true && status.dependencies?.piperPlaybackAvailable === true);
 }
 
 function renderDependencies(dependencies) {
@@ -434,7 +514,7 @@ function playBrowserAnnouncement(userInitiated, announcement) {
 
 function playLastAudioInBrowser(userInitiated) {
   const audioUrl = lastAudio.getAttribute("src") || "";
-  if (!audioUrl || (!userInitiated && audioUrl === lastBrowserAudioUrl)) return;
+  if (!audioUrl || (!userInitiated && audioUrl === lastBrowserAudioUrl)) return false;
   lastBrowserAudioUrl = audioUrl;
   lastAudio
     .play()
@@ -448,27 +528,36 @@ function playLastAudioInBrowser(userInitiated) {
       outputStatus.textContent =
         `Browser playback needs a tap here first: ${error.message || error}`;
     });
+  return true;
 }
 
 function speakLastAnnouncementInBrowser(userInitiated, announcement = null) {
   const message = String(
     announcement?.message || lastAnnouncement.textContent || "",
   ).trim();
-  if (!message || message === "No announcement received yet.") return;
+  if (!message || message === "No announcement received yet.") return false;
+  const speechKey = `${message}:${announcement?.audioUrl || announcement?.publicAudioUrl || ""}`;
+  if (!userInitiated && speechKey === lastBrowserSpeechKey) return false;
+  if (speakMessageInBrowser(message, userInitiated)) {
+    lastBrowserSpeechKey = speechKey;
+    return true;
+  }
+  return false;
+}
+
+function speakMessageInBrowser(message, userInitiated) {
   const speech = window.speechSynthesis;
   const Utterance = window.SpeechSynthesisUtterance;
   if (!speech || !Utterance) {
     outputStatus.textContent = "Browser speech synthesis is not available on this device.";
-    return;
+    return false;
   }
-  const speechKey = `${message}:${announcement?.audioUrl || announcement?.publicAudioUrl || ""}`;
-  if (!userInitiated && speechKey === lastBrowserSpeechKey) return;
-  lastBrowserSpeechKey = speechKey;
   speech.cancel();
   speech.speak(new Utterance(message));
   outputStatus.textContent = userInitiated
-    ? "Browser speech synthesis selected and last announcement spoken."
+    ? "Browser speech synthesis played."
     : "Browser speech synthesis started.";
+  return true;
 }
 
 function stopBrowserOutputs() {

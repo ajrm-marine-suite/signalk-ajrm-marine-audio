@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.14
+
+- Let Sound check and Repeat last use browser speech locally when that is the
+  only selected output.
+- Disable Restart streams and Stream time check unless the radio stream is on
+  and the Piper speech render chain is available.
+- Make the radio stream panel show off/unavailable status instead of a naked
+  URL when the stream cannot work.
+- Use friendlier missing dependency wording for the Piper voice model, FFmpeg,
+  and the server audio player.
+- Disable the directional ping checkbox until Piper-rendered audio is available.
+
 ## 0.5.13
 
 - Disable radio stream output until Piper, a voice model, and FFmpeg are

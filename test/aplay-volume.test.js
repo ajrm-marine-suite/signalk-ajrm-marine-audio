@@ -348,6 +348,24 @@ async function postRepeatLast(harness) {
   return responseBody;
 }
 
+async function postRoute(harness, pathName) {
+  let responseBody;
+  await harness.posts.get(pathName)(
+    {},
+    {
+      statusCode: 200,
+      status(code) {
+        this.statusCode = code;
+        return this;
+      },
+      json(value) {
+        responseBody = { statusCode: this.statusCode, ...value };
+      },
+    },
+  );
+  return responseBody;
+}
+
 (async () => {
   const html = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
   const browserApp = fs.readFileSync(path.join(__dirname, "..", "public", "app.js"), "utf8");
@@ -375,6 +393,12 @@ async function postRepeatLast(harness) {
   assert.match(browserApp, /bindSoundCheckButton/);
   assert.match(browserApp, /No audio output is selected/);
   assert.match(browserApp, /hasSoundCheckOutput/);
+  assert.match(browserApp, /speakMessageInBrowser\(SOUND_CHECK_MESSAGE/);
+  assert.match(browserApp, /bindRepeatLastButton/);
+  assert.match(browserApp, /bindStreamCommandButton/);
+  assert.match(browserApp, /Radio stream is off or unavailable/);
+  assert.match(browserApp, /renderRadioStreamPanel/);
+  assert.match(browserApp, /checkPingEnabled\.disabled/);
   assert.doesNotMatch(browserApp, /muted by notification provider/);
   assert.doesNotMatch(browserApp, /muted by AJRM Marine/);
   assert.match(browserApp, /bindCommandButton/);
@@ -409,6 +433,7 @@ async function postRepeatLast(harness) {
   assert.equal(statusOf(defaults).dependencies.install.available, false);
   assert.match(statusOf(defaults).dependencies.install.endpoint, /install-piper/);
   assert.match(statusOf(defaults).dependencies.install.message, /Install AJRM Marine Pi Controller/);
+  assert.match(statusOf(defaults).dependencies.summary, /Speech engine Piper is not installed yet/);
   assert.deepEqual(
     {
       level: statusOf(defaults).aplayVolumeLevelPercent,
@@ -559,6 +584,17 @@ async function postRepeatLast(harness) {
   assert.equal(statusOf(unavailableRadioStream).liveStream, false);
   assert.equal(unavailableRadioStream.savedOptions.length, 0);
   unavailableRadioStream.plugin.stop();
+
+  const unavailableStreamCommand = createHarness({
+    liveStream: false,
+  });
+  const restartBody = await postRoute(unavailableStreamCommand, "/restart-streams");
+  assert.equal(restartBody.statusCode, 409);
+  assert.match(restartBody.error, /Radio stream is off or unavailable/);
+  const streamTimeBody = await postRoute(unavailableStreamCommand, "/stream-time-check");
+  assert.equal(streamTimeBody.statusCode, 409);
+  assert.match(streamTimeBody.error, /Radio stream is off or unavailable/);
+  unavailableStreamCommand.plugin.stop();
 
   const darwinDefault = withPlatform("darwin", () =>
     createHarness({}, { disableMixer: false }),

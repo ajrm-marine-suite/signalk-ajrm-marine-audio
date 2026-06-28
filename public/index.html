@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AJRM Marine Audio</title>
-    <link rel="stylesheet" href="/signalk-ajrm-marine-audio/styles.css?v=0.5.13" />
+    <link rel="stylesheet" href="/signalk-ajrm-marine-audio/styles.css?v=0.5.14" />
   </head>
   <body>
     <main>
@@ -32,7 +32,7 @@
         <div class="output-routing">
           <h3>Output routing</h3>
           <p class="muted">
-            Choose where rendered AJRM Marine Audio announcements are allowed to play.
+            Choose where AJRM Marine Audio announcements are allowed to play.
             Browser output is local to this browser; server speaker and radio stream
             are saved on the Signal K server.
           </p>
@@ -123,6 +123,7 @@
           playing while a phone or tablet is locked.
         </p>
         <p class="path" id="streamUrl"></p>
+        <p class="muted" id="streamStatus">Radio stream status waiting for Audio status.</p>
         <p class="muted" id="streamDiagnostics">No stream diagnostics yet.</p>
       </section>
 
@@ -152,6 +153,6 @@
         }
       }, 3000);
     </script>
-    <script src="/signalk-ajrm-marine-audio/app.js?v=0.5.13"></script>
+    <script src="/signalk-ajrm-marine-audio/app.js?v=0.5.14"></script>
   </body>
 </html>
