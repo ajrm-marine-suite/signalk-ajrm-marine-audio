@@ -422,6 +422,8 @@ async function postRoute(harness, pathName) {
     /status\.lastAnnouncement\.audioUrl \|\| status\.lastAnnouncement\.publicAudioUrl/,
   );
   assert.match(browserCss, /button\.command-sent/);
+  assert.match(browserCss, /button:not\(:disabled\):active/);
+  assert.match(browserCss, /button:disabled/);
   assert.match(browserCss, /dependency-panel/);
   assert.match(browserCss, /input:disabled \+ span/);
   assert.match(browserCss, /transform:\s*translateY\(4px\)/);

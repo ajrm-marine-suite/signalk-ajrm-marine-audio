@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.5.16
+
+- Grey disabled buttons and remove their pressed/3D interaction state.
+
 ## 0.5.15
 
 - Default directional ping to off for fresh installs.

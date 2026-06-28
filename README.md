@@ -2,7 +2,8 @@
 
 ## Version 2 baseline
 
-`v0.5.15` moves directional ping beside AJRM Marine Piper playback, defaults it
+`v0.5.16` greys disabled buttons and removes their pressed/3D interaction
+state. `v0.5.15` moves directional ping beside AJRM Marine Piper playback, defaults it
 off, and keeps it disabled until Piper playback is selected and available.
 `v0.5.14` tightens the Audio page so browser speech can run Sound check and
 Repeat last locally, stream-only controls are disabled unless the radio stream
@@ -138,7 +139,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.15 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.16 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
