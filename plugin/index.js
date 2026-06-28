@@ -204,7 +204,7 @@ module.exports = function ajrmMarineAudio(app) {
         type: "string",
         title: "Public stream host",
         description:
-          "Optional hostname or IP address used when showing radio stream URLs. Leave blank to use EXTERNALHOST or this Pi's hostname.",
+          "Optional hostname or IP address used when showing radio stream URLs. Leave blank to use EXTERNALHOST or this server's hostname.",
         default: "",
       },
       publicStreamUseHttps: {
@@ -561,7 +561,7 @@ module.exports = function ajrmMarineAudio(app) {
         [
           `Audio outputs updated from webapp:`,
           `mute ${options.muted ? "on" : "off"},`,
-          `Pi speaker ${options.localPlayback ? "on" : "off"},`,
+          `server speaker ${options.localPlayback ? "on" : "off"},`,
           `radio stream ${options.liveStream ? "on" : "off"}`,
         ].join(" "),
       );
@@ -1378,6 +1378,9 @@ module.exports = function ajrmMarineAudio(app) {
     const voices = listVoices();
     const voice = selectedVoiceFromList(voices);
     const voiceDir = expandHome(options.voicesDir);
+    const piControllerRunning = Boolean(
+      app.getSelfPath?.("plugins.ajrmMarinePiController.version"),
+    );
     const missing = [];
     if (piper.status !== "ok") missing.push("Piper executable");
     if (!voice) missing.push("Piper voice model");
@@ -1403,10 +1406,14 @@ module.exports = function ajrmMarineAudio(app) {
       voicesDirectory: voiceDir,
       install: {
         supportedByPiController: true,
-        available: piperInstallAvailable,
+        piControllerRunning,
+        available: piperInstallAvailable && piControllerRunning,
         endpoint: PIPER_INSTALL_ENDPOINT,
+        platform: "raspberry-pi-os-64-bit",
         message:
-          "Install Piper only after confirming this Signal K server is a Raspberry Pi with AJRM Marine Pi Controller enabled.",
+          piControllerRunning
+            ? "The built-in Piper installer is for 64-bit Raspberry Pi OS/Linux aarch64 through AJRM Marine Pi Controller. It is not a Windows or macOS installer."
+            : "Install AJRM Marine Pi Controller on a 64-bit Raspberry Pi OS server to use the built-in Piper installer. On Windows, macOS, or other Linux servers, install Piper manually and configure the paths here.",
       },
     };
   }

@@ -2,6 +2,11 @@
 
 ## Version 2 baseline
 
+`v0.5.9` renames visible Pi speaker wording to server speaker output and
+clarifies that the built-in Piper install action is only for 64-bit Raspberry
+Pi OS/Linux aarch64 through AJRM Marine Pi Controller. It is not a Windows or
+macOS installer.
+
 `v0.5.3` prefers the broker audio-request message for speech, so written
 notifications can keep identifiers such as MMSI without Piper reading them out.
 
@@ -30,7 +35,7 @@ mute and AJRM Marine Traffic Audio Policy can mute playback. Provider
 configuration labels.
 
 `v0.5.0` replaces the browser playback checkbox with an explicit browser output
-mode: Off, browser speech synthesis, or AJRM Marine Piper playback. Pi speaker,
+mode: Off, browser speech synthesis, or AJRM Marine Piper playback. Server speaker,
 radio stream, and mute remain independent switches.
 
 `v0.5.0` keeps AJRM Marine Audio as the browser-audio authority on each device
@@ -44,13 +49,13 @@ AJRM Marine Audio tab is reopened from Console.
 `v0.5.0` completes the public webapp naming pass: visible labels now say
 AJRM Marine Audio, and the main page no longer presents Piper as the app name.
 
-`v0.5.0` promotes the current Notifications Plus renderer, Pi speaker pipeline,
+`v0.5.0` promotes the current Notifications Plus renderer, server speaker pipeline,
 and live-stream implementation as the working audio baseline. It does not yet
 implement the proposed authoritative synchronized playback contract and does
 not intentionally change runtime behavior from `v0.5.0`.
 
 `v0.5.0` carries rendered authenticated/public asset URLs in the authoritative
-timeline as soon as MP3 rendering completes. Pi speaker playback remains on
+timeline as soon as MP3 rendering completes. Server speaker playback remains on
 the fastest WAV-ready path and is never delayed for Companion.
 
 `v0.5.0` observes the versioned AJRM Marine Traffic Audio Policy projection.
@@ -63,11 +68,12 @@ non-monotonic policy updates are ignored.
 mute flags are ignored entirely by Audio from `v0.5.0`.
 
 `v0.5.0` restores output routing controls in the AJRM Marine Audio webapp. Browser
-playback is a local per-device setting, while Pi speaker output, radio stream
+playback is a local per-device setting, while server speaker output, radio stream
 output, and mute-all are saved on the Signal K server as Audio-owned settings.
 
 `v0.5.0` added a session-scoped playback lifecycle timeline for observation and
-measurement. Existing Pi, stream, and browser playback behavior is unchanged.
+measurement. Existing server speaker, stream, and browser playback behavior is
+unchanged.
 
 > **Alpha Release disclaimer:** This software is Alpha Release and has not been tested in live environments and must not be relied upon for navigation or safety. The Authors do not accept any responsibility for loss or damage as a result of using this software.
 
@@ -81,7 +87,7 @@ Standards-compatible Signal K notification
   -> Piper speech
   -> stereo directional ping
   -> stereo browser-friendly audio file
-  -> local Pi playback, Companion playback, and/or native radio player stream
+  -> server speaker playback, Companion playback, and/or native radio player stream
 ```
 
 ## Current State
@@ -117,14 +123,14 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.8 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.9 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
 Open **AJRM Marine Audio** from the Signal K webapps page.
 
 Piper is optional at install time. Browser speech synthesis can be used without
-Piper, but Pi speaker playback, Piper browser playback, and the radio stream
+Piper, but server speaker playback, Piper browser playback, and the radio stream
 need Piper, a Piper voice model, and FFmpeg on the Signal K server. AJRM Marine
 Audio reports missing renderer dependencies on its page and in
 `vessels.self.plugins.ajrmMarineAudio.dependencies`.
@@ -132,6 +138,11 @@ Audio reports missing renderer dependencies on its page and in
 If AJRM Marine Pi Controller is installed and support actions are enabled, AJRM Marine Audio
 can request a Piper install from its dependency panel. That action is deliberately
 manual and confirmed; it is not run by npm or by Signal K AppStore installation.
+The bundled installer is for 64-bit Raspberry Pi OS/Linux aarch64. On Windows,
+macOS, or other Linux servers, install Piper, FFmpeg, and the selected voice
+model yourself and point Audio at those paths in the plugin settings. If
+Pi Controller is not installed and running, Audio hides the install button and
+shows manual-install guidance instead.
 
 The **Enable directional ping** checkbox in the AJRM Marine Audio webapp can switch the ping on or off immediately while Signal K is running. The **Local speaker level** slider sets and saves the logarithmic default level for local `aplay` output, with its minimum mapped to `66%` mixer volume. The Signal K plugin configuration still provides the startup defaults and ping volume/frequency settings.
 
@@ -142,7 +153,7 @@ The radio stream is the best iPhone/iPad option when the screen may be locked. B
 Use this local stream URL in a radio player app:
 
 ```text
-https://<your-pi-hostname>.local:3445/live.mp3
+https://<your-server-hostname>.local:3445/live.mp3
 ```
 
 Station name:
@@ -154,7 +165,7 @@ AJRM Marine Audio
 Some apps prefer an M3U playlist:
 
 ```text
-https://<your-pi-hostname>.local:3445/live.m3u
+https://<your-server-hostname>.local:3445/live.m3u
 ```
 
 The local stream port serves only the generated audio stream, so native radio player apps do not need a Signal K login cookie. It uses the same `ssl-cert.pem` and `ssl-key.pem` as Signal K when they are available. The stream sends silence between announcements and writes each rendered AJRM Marine announcement into the stream as it is produced.
@@ -164,13 +175,13 @@ If `.local` hostnames are not suitable, set **Public stream host** in the plugin
 ### iPhone/iPad Setup
 
 1. Install a radio stream player app.
-2. Add a custom station using `https://<your-pi-hostname>.local:3445/live.mp3`.
+2. Add a custom station using `https://<your-server-hostname>.local:3445/live.mp3`.
 3. Name it `AJRM Marine Audio`.
 4. Start the station while connected to the boat Wi-Fi.
 5. Trigger **Sound check** in the AJRM Marine Audio webapp.
 6. Lock the phone and trigger another **Sound check** to confirm background playback.
 
-If the app asks for a playlist rather than a direct stream, use `https://<your-pi-hostname>.local:3445/live.m3u`.
+If the app asks for a playlist rather than a direct stream, use `https://<your-server-hostname>.local:3445/live.m3u`.
 
 ### Network Use
 
@@ -198,7 +209,7 @@ Use **Restart streams** in the AJRM Marine Audio webapp to test whether a radio 
 
 Enable **Announce time on live stream** to periodically speak the Signal K server time into the radio stream. This is a practical drift test: if the announcement says a time that is several minutes behind the actual time, the player has built up too much buffer delay.
 
-The interval is configurable as **Live stream time-check interval (minutes)**. The manual **Stream time check** button sends one time announcement immediately. Time checks are stream-only and are not played on the Pi speaker. The webapp displays the current server time so the spoken time can be compared with the Pi clock.
+The interval is configurable as **Live stream time-check interval (minutes)**. The manual **Stream time check** button sends one time announcement immediately. Time checks are stream-only and are not played on the server speaker. The webapp displays the current server time so the spoken time can be compared with the server clock.
 
 ### Stream Diagnostics
 
@@ -229,7 +240,7 @@ speaker.
 
 - Requires Piper and FFmpeg on the Signal K server.
 - Generated audio must be treated as time-limited; stale collision warnings should not auto-play.
-- The Pi remains the only place that needs Piper installed.
+- The Signal K server remains the only place that needs Piper installed.
 
 
 ## Public Beta

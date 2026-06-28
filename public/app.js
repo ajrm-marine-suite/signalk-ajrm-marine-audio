@@ -255,7 +255,7 @@ function renderOutputRouting(status) {
   if (status.engineMuted) mutedReasons.push("muted by Traffic Core");
   outputStatus.textContent = [
     `Browser ${browserOutputModeLabel(browserOutputMode)}`,
-    `Pi speaker ${status.localPlayback !== false ? "on" : "off"}`,
+    `server speaker ${status.localPlayback !== false ? "on" : "off"}`,
     `radio stream ${status.liveStream !== false ? "on" : "off"}`,
     mutedReasons.length ? mutedReasons.join(", ") : "not muted",
   ].join(" · ");
@@ -271,6 +271,9 @@ function renderDependencies(dependencies) {
   dependencyPanel.classList.toggle("warn", dependencies.ok === false);
   dependencyStatus.textContent = dependencies.summary || "Renderer dependency status unavailable.";
   const canInstallPiper = dependencies.install?.available === true;
+  if (dependencies.install?.message) {
+    dependencyStatus.textContent = `${dependencyStatus.textContent} ${dependencies.install.message}`;
+  }
   buttonInstallPiper.hidden = !canInstallPiper;
   buttonInstallPiper.disabled = !canInstallPiper;
   buttonInstallPiper.dataset.endpoint = dependencies.install?.endpoint || "";
@@ -280,7 +283,7 @@ async function installPiperWithPiController() {
   const endpoint = buttonInstallPiper.dataset.endpoint || "/plugins/signalk-ajrm-marine-pi-controller/actions/install-piper";
   if (
     !window.confirm(
-      "Install Piper on this Signal K server using AJRM Marine Pi Controller? This downloads the Piper binary and voice model and may require sudo permissions.",
+      "Install Piper on this Raspberry Pi Signal K server using AJRM Marine Pi Controller? This downloads the Linux aarch64 Piper binary and voice model and may require sudo permissions. Do not use this on Windows or macOS.",
     )
   ) {
     return;

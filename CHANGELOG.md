@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.9
+
+- Rename visible Pi speaker wording to server speaker output.
+- Clarify that the built-in Piper install action is for 64-bit Raspberry Pi
+  OS/Linux aarch64 via AJRM Marine Pi Controller, not Windows or macOS.
+
 ## 0.5.8
 
 - Align web asset cache keys and install documentation with the package version.

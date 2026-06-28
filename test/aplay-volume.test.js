@@ -13,6 +13,12 @@ function createHarness(initialOptions = {}, harnessOptions = {}) {
     error() {},
     setPluginStatus() {},
     handleMessage() {},
+    getSelfPath(pathName) {
+      if (pathName === "plugins.ajrmMarinePiController.version") {
+        return harnessOptions.piControllerVersion || null;
+      }
+      return null;
+    },
     savePluginOptions(nextOptions, callback) {
       savedOptions.push(nextOptions);
       callback();
@@ -384,7 +390,10 @@ async function postRepeatLast(harness) {
 
   const defaults = createHarness();
   assert.equal(statusOf(defaults).dependencies.install.supportedByPiController, true);
+  assert.equal(statusOf(defaults).dependencies.install.piControllerRunning, false);
+  assert.equal(statusOf(defaults).dependencies.install.available, false);
   assert.match(statusOf(defaults).dependencies.install.endpoint, /install-piper/);
+  assert.match(statusOf(defaults).dependencies.install.message, /Install AJRM Marine Pi Controller/);
   assert.deepEqual(
     {
       level: statusOf(defaults).aplayVolumeLevelPercent,
@@ -393,6 +402,12 @@ async function postRepeatLast(harness) {
     { level: 53, mixer: 75 },
   );
   defaults.plugin.stop();
+
+  const withPiController = createHarness({}, { piControllerVersion: "0.5.3" });
+  assert.equal(statusOf(withPiController).dependencies.install.piControllerRunning, true);
+  assert.equal(statusOf(withPiController).dependencies.install.available, true);
+  assert.match(statusOf(withPiController).dependencies.install.message, /64-bit Raspberry Pi OS/);
+  withPiController.plugin.stop();
 
   const stateOnly = createHarness();
   stateOnly.subscriptionCallbacks[0]({

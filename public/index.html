@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AJRM Marine Audio</title>
-    <link rel="stylesheet" href="/signalk-ajrm-marine-audio/styles.css?v=0.5.8" />
+    <link rel="stylesheet" href="/signalk-ajrm-marine-audio/styles.css?v=0.5.9" />
   </head>
   <body>
     <main>
@@ -33,7 +33,7 @@
           <h3>Output routing</h3>
           <p class="muted">
             Choose where rendered AJRM Marine Audio announcements are allowed to play.
-            Browser output is local to this browser; Pi speaker and radio stream
+            Browser output is local to this browser; server speaker and radio stream
             are saved on the Signal K server.
           </p>
           <fieldset class="toggle-group" id="browserOutputMode">
@@ -53,7 +53,7 @@
           </fieldset>
           <label class="toggle-row">
             <input id="checkPiOutput" type="checkbox" />
-            <span>Pi speaker output</span>
+            <span>Server speaker output</span>
           </label>
           <label class="toggle-row">
             <input id="checkStreamOutput" type="checkbox" />
@@ -69,7 +69,7 @@
           <h3>Renderer dependencies</h3>
           <p id="dependencyStatus" class="muted">Checking Piper renderer dependencies.</p>
           <button type="button" id="buttonInstallPiper" class="secondary" hidden>
-            Install Piper with AJRM Marine Pi Controller
+            Install Piper on Raspberry Pi server
           </button>
         </div>
         <div class="slider-control">
@@ -162,6 +162,6 @@
         }
       }, 3000);
     </script>
-    <script src="/signalk-ajrm-marine-audio/app.js?v=0.5.8"></script>
+    <script src="/signalk-ajrm-marine-audio/app.js?v=0.5.9"></script>
   </body>
 </html>
