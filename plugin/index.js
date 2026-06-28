@@ -342,7 +342,7 @@ module.exports = function ajrmMarineAudio(app) {
       pingEnabled: {
         type: "boolean",
         title: "Enable directional ping",
-        default: true,
+        default: false,
       },
       pingVolumePercent: {
         type: "number",
@@ -708,7 +708,7 @@ module.exports = function ajrmMarineAudio(app) {
       streamHealthIntervalMinutes: clampInteger(value.streamHealthIntervalMinutes, 1, 120, 15),
       masterVolumePercent: normalizePercentValue(value.masterVolumePercent, value.masterVolume, 100, 200),
       speechVolumePercent: normalizePercentValue(value.speechVolumePercent, value.speechVolume, 65, 200),
-      pingEnabled: value.pingEnabled !== false,
+      pingEnabled: value.pingEnabled === true,
       pingVolumePercent: normalizePercentValue(value.pingVolumePercent, value.pingVolume, 100, 400),
       pingSmallFrequencyHz: clampInteger(value.pingSmallFrequencyHz, 200, 2400, 1100),
       pingMediumFrequencyHz: clampInteger(value.pingMediumFrequencyHz, 200, 2400, 760),
@@ -1458,7 +1458,7 @@ module.exports = function ajrmMarineAudio(app) {
         message:
           piControllerRunning
             ? "The built-in Piper installer is for 64-bit Raspberry Pi OS/Linux aarch64 through AJRM Marine Pi Controller. It is not a Windows or macOS installer."
-            : "Install AJRM Marine Pi Controller on a 64-bit Raspberry Pi OS server to use the built-in Piper installer. On Windows, macOS, or other Linux servers, install Piper manually and configure the paths here.",
+            : "Install AJRM Marine Pi Controller on a 64-bit Raspberry Pi OS server to use the built-in Piper installer. On Windows, macOS, or other Linux servers, install Piper and FFmpeg manually, then set the Piper executable, FFmpeg executable, Piper voices directory, and voice model in the AJRM Marine Audio plugin configuration.",
       },
     };
   }

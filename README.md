@@ -2,6 +2,8 @@
 
 ## Version 2 baseline
 
+`v0.5.15` moves directional ping beside AJRM Marine Piper playback, defaults it
+off, and keeps it disabled until Piper playback is selected and available.
 `v0.5.14` tightens the Audio page so browser speech can run Sound check and
 Repeat last locally, stream-only controls are disabled unless the radio stream
 can work, the radio stream panel explains off/unavailable states, and missing
@@ -136,7 +138,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.14 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.15 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
@@ -159,11 +161,17 @@ can request a Piper install from its dependency panel. That action is deliberate
 manual and confirmed; it is not run by npm or by Signal K AppStore installation.
 The bundled installer is for 64-bit Raspberry Pi OS/Linux aarch64. On Windows,
 macOS, or other Linux servers, install Piper, FFmpeg, and the selected voice
-model yourself and point Audio at those paths in the plugin settings. If
-Pi Controller is not installed and running, Audio hides the install button and
+model manually, then set the Piper executable, FFmpeg executable, Piper voices
+directory, and voice model in the AJRM Marine Audio plugin configuration. If Pi
+Controller is not installed and running, Audio hides the install button and
 shows manual-install guidance instead.
 
-The **Enable directional ping** checkbox in the AJRM Marine Audio webapp can switch the ping on or off immediately while Signal K is running. The **Local speaker level** slider sets and saves the logarithmic default level for local `aplay` output, with its minimum mapped to `66%` mixer volume. The Signal K plugin configuration still provides the startup defaults and ping volume/frequency settings.
+The **Enable directional ping** checkbox sits beside **AJRM Marine Piper playback**.
+It defaults off and remains disabled until Piper playback is selected and the
+Piper speech render chain is available. The **Local speaker level** slider sets
+and saves the logarithmic default level for local `aplay` output, with its
+minimum mapped to `66%` mixer volume. The Signal K plugin configuration still
+provides the startup defaults and ping volume/frequency settings.
 
 ## Radio Stream
 

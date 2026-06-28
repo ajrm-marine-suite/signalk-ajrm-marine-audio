@@ -71,6 +71,10 @@ bindStreamCommandButton("buttonRestartStreams", "restart-streams", "Restart stre
 bindStreamCommandButton("buttonStreamTimeCheck", "stream-time-check", "Stream time check sent.");
 buttonInstallPiper.addEventListener("click", installPiperWithPiController);
 checkPingEnabled.addEventListener("change", () => {
+  if (checkPingEnabled.disabled) {
+    renderPingControl(lastStatus);
+    return;
+  }
   postJson(`ping-enabled?enabled=${checkPingEnabled.checked ? "true" : "false"}`).catch(
     renderCommandError,
   );
@@ -86,6 +90,7 @@ for (const input of browserOutputModeInputs) {
     }
     browserOutputMode = normalizeBrowserOutputMode(input.value);
     saveBrowserOutputMode(browserOutputMode);
+    renderPingControl(lastStatus);
     disableCompetingBrowserSpeech();
     outputStatus.textContent = browserOutputModeStatusText(browserOutputMode);
     if (CONSOLE_AUDIO_HOSTED && browserOutputMode !== "off") {
@@ -280,13 +285,8 @@ function renderStatus(status) {
   serverTime.textContent = formatTime(status.serverTime);
   streamConnectedTotal.textContent = streamStats.connectedTotal != null ? streamStats.connectedTotal : 0;
   streamDisconnectedTotal.textContent = streamStats.disconnectedTotal != null ? streamStats.disconnectedTotal : 0;
-  const piperPlaybackAvailable = status.dependencies?.piperPlaybackAvailable === true;
-  checkPingEnabled.checked = status.pingEnabled !== false;
-  checkPingEnabled.disabled = !piperPlaybackAvailable;
-  checkPingEnabled.title = piperPlaybackAvailable
-    ? ""
-    : "Directional ping is used with Piper-rendered audio after Piper, a voice model, and FFmpeg are installed.";
   renderOutputRouting(status);
+  renderPingControl(status);
   renderDependencies(status.dependencies || null);
   renderAplayVolumeControl(status);
   renderRadioStreamPanel(status);
@@ -340,6 +340,7 @@ function renderOutputRouting(status) {
     stopBrowserOutputs();
   }
   renderBrowserOutputMode();
+  renderPingControl(status);
   browserOutputPiper.disabled = !piperPlaybackAvailable;
   browserOutputPiper.title = piperPlaybackAvailable
     ? ""
@@ -378,6 +379,17 @@ function renderOutputRouting(status) {
       : "radio stream unavailable",
     mutedReasons.length ? mutedReasons.join(", ") : "not muted",
   ].join(" · ");
+}
+
+function renderPingControl(status) {
+  const piperPlaybackAvailable = status?.dependencies?.piperPlaybackAvailable === true;
+  const enabledForBrowserPiper = browserOutputMode === "piper" && piperPlaybackAvailable;
+  checkPingEnabled.disabled = !enabledForBrowserPiper;
+  checkPingEnabled.checked =
+    enabledForBrowserPiper && status?.pingEnabled === true;
+  checkPingEnabled.title = enabledForBrowserPiper
+    ? ""
+    : "Directional ping is available when AJRM Marine Piper playback is selected and Piper, a voice model, and FFmpeg are installed.";
 }
 
 function renderRadioStreamPanel(status) {

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AJRM Marine Audio</title>
-    <link rel="stylesheet" href="/signalk-ajrm-marine-audio/styles.css?v=0.5.14" />
+    <link rel="stylesheet" href="/signalk-ajrm-marine-audio/styles.css?v=0.5.15" />
   </head>
   <body>
     <main>
@@ -25,10 +25,6 @@
           <button type="button" id="buttonRestartStreams" class="secondary">Restart streams</button>
           <button type="button" id="buttonStreamTimeCheck" class="secondary">Stream time check</button>
         </div>
-        <label class="toggle-row">
-          <input id="checkPingEnabled" type="checkbox" />
-          <span>Enable directional ping</span>
-        </label>
         <div class="output-routing">
           <h3>Output routing</h3>
           <p class="muted">
@@ -49,6 +45,10 @@
             <label class="toggle-row">
               <input id="browserOutputPiper" name="browserOutputMode" type="radio" value="piper" />
               <span>AJRM Marine Piper playback</span>
+            </label>
+            <label class="toggle-row">
+              <input id="checkPingEnabled" type="checkbox" />
+              <span>Enable directional ping</span>
             </label>
           </fieldset>
           <label class="toggle-row">
@@ -153,6 +153,6 @@
         }
       }, 3000);
     </script>
-    <script src="/signalk-ajrm-marine-audio/app.js?v=0.5.14"></script>
+    <script src="/signalk-ajrm-marine-audio/app.js?v=0.5.15"></script>
   </body>
 </html>

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.15
+
+- Default directional ping to off for fresh installs.
+- Move the directional ping control beside AJRM Marine Piper playback and keep
+  it disabled until Piper playback is selected and available.
+- Grey disabled toggle labels as well as the controls.
+- Clarify that manual Piper/FFmpeg paths are configured in the AJRM Marine
+  Audio plugin configuration.
+
 ## 0.5.14
 
 - Let Sound check and Repeat last use browser speech locally when that is the

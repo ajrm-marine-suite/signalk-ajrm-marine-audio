@@ -374,6 +374,10 @@ async function postRoute(harness, pathName) {
   assert.match(html, /browserOutputOff/);
   assert.match(html, /browserOutputSpeech/);
   assert.match(html, /browserOutputPiper/);
+  assert.ok(
+    html.indexOf("browserOutputPiper") < html.indexOf("checkPingEnabled"),
+    "directional ping control is grouped with Piper browser playback",
+  );
   assert.match(html, /checkPiOutput/);
   assert.match(html, /checkStreamOutput/);
   assert.match(html, /checkMuteAll/);
@@ -399,6 +403,7 @@ async function postRoute(harness, pathName) {
   assert.match(browserApp, /Radio stream is off or unavailable/);
   assert.match(browserApp, /renderRadioStreamPanel/);
   assert.match(browserApp, /checkPingEnabled\.disabled/);
+  assert.match(browserApp, /enabledForBrowserPiper/);
   assert.doesNotMatch(browserApp, /muted by notification provider/);
   assert.doesNotMatch(browserApp, /muted by AJRM Marine/);
   assert.match(browserApp, /bindCommandButton/);
@@ -418,6 +423,7 @@ async function postRoute(harness, pathName) {
   );
   assert.match(browserCss, /button\.command-sent/);
   assert.match(browserCss, /dependency-panel/);
+  assert.match(browserCss, /input:disabled \+ span/);
   assert.match(browserCss, /transform:\s*translateY\(4px\)/);
   assert.match(browserCss, /box-shadow/);
 
@@ -425,6 +431,7 @@ async function postRoute(harness, pathName) {
   assert.equal(statusOf(defaults).localPlayback, false);
   assert.equal(statusOf(defaults).liveStream, false);
   assert.equal(statusOf(defaults).publicHttpStream, false);
+  assert.equal(statusOf(defaults).pingEnabled, false);
   assert.equal(statusOf(defaults).localPlaybackAvailable, false);
   assert.equal(statusOf(defaults).dependencies.piperPlaybackAvailable, false);
   assert.match(statusOf(defaults).localPlaybackUnavailableReason, /Speech engine Piper/);
@@ -433,6 +440,7 @@ async function postRoute(harness, pathName) {
   assert.equal(statusOf(defaults).dependencies.install.available, false);
   assert.match(statusOf(defaults).dependencies.install.endpoint, /install-piper/);
   assert.match(statusOf(defaults).dependencies.install.message, /Install AJRM Marine Pi Controller/);
+  assert.match(statusOf(defaults).dependencies.install.message, /plugin configuration/);
   assert.match(statusOf(defaults).dependencies.summary, /Speech engine Piper is not installed yet/);
   assert.deepEqual(
     {

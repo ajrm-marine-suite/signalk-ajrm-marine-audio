@@ -159,6 +159,10 @@ button:focus-visible {
   block-size: 1.2rem;
 }
 
+.toggle-row input:disabled + span {
+  color: #64748b;
+}
+
 .output-routing {
   background: #0b1423;
   border: 1px solid rgb(255 255 255 / 8%);
