@@ -1,6 +1,6 @@
 {
   "name": "signalk-ajrm-marine-audio",
-  "version": "0.5.18",
+  "version": "0.5.19",
   "description": "Speech and audio delivery for AJRM Marine Suite notifications.",
   "main": "plugin/index.js",
   "scripts": {

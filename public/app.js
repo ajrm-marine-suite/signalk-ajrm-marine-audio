@@ -12,6 +12,8 @@ const BROWSER_OUTPUT_MODE_STORAGE_KEY = "ajrmMarineAudio.browserOutputMode";
 const LEGACY_BROWSER_SPEECH_STORAGE_KEYS = ["checkBrowserSpeech"];
 const BROWSER_OUTPUT_MODES = ["off", "speech", "piper"];
 const SOUND_CHECK_MESSAGE = "Sound Check. Testing 1, 2, 3.";
+const STATUS_REFRESH_MS = 2000;
+const AUTH_RETRY_MS = 15000;
 const CONSOLE_AUDIO_HOSTED =
   new URLSearchParams(window.location.search).get("consoleAudioHost") === "1";
 const REQUEST_TIMEOUT_MS = 8000;
@@ -54,6 +56,7 @@ let browserOutputMode = initialBrowserOutputMode();
 let lastBrowserAudioUrl = "";
 let lastBrowserSpeechKey = "";
 let lastStatus = null;
+let nextStatusRefreshAt = 0;
 let firstStatusRender = true;
 
 window.addEventListener("error", (event) => {
@@ -118,15 +121,20 @@ aplayVolumeRange.addEventListener("change", () => {
   );
 });
 
-refresh();
+refresh({ force: true });
 resumeAccessRequestPolling();
-setInterval(refresh, 2000);
+setInterval(() => refresh(), STATUS_REFRESH_MS);
 
-async function refresh() {
+async function refresh({ force = false } = {}) {
+  if (!force && Date.now() < nextStatusRefreshAt) return;
   try {
     const status = await getJson("status");
+    nextStatusRefreshAt = 0;
     renderStatus(status);
   } catch (error) {
+    if (error.status === 401 || error.status === 403) {
+      nextStatusRefreshAt = Date.now() + AUTH_RETRY_MS;
+    }
     statusPill.textContent = "Offline";
     statusPill.className = "status-pill bad";
     renderEvents([{ event: "error", message: audioOfflineMessage(error), ts: new Date().toISOString() }]);
@@ -161,7 +169,7 @@ async function postJson(path, body = null) {
     body: body ? JSON.stringify(body) : undefined,
   });
   await readResponse(response, path);
-  await refresh();
+  await refresh({ force: true });
 }
 
 function bindCommandButton(id, path, message) {
@@ -887,7 +895,7 @@ function pollAccessRequest(href) {
           message: "AJRM Marine Audio write access approved.",
           ts: new Date().toISOString(),
         };
-        await refresh();
+        await refresh({ force: true });
         return;
       }
       localNotice = {

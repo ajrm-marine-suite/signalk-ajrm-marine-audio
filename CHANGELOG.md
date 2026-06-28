@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.19
+
+- Throttle Audio webapp status polling after Signal K authentication failures
+  so an unauthenticated browser tab does not flood the Signal K log.
+
 ## 0.5.18
 
 - Clarify that the mute-all switch does not suppress Sound Check.

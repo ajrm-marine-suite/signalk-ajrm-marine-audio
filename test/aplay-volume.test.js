@@ -389,6 +389,8 @@ async function postRoute(harness, pathName) {
   assert.doesNotMatch(browserApp, /audioDirectory/);
   assert.match(browserApp, /BROWSER_OUTPUT_MODE_STORAGE_KEY/);
   assert.match(browserApp, /BROWSER_OUTPUT_MODES/);
+  assert.match(browserApp, /AUTH_RETRY_MS/);
+  assert.match(browserApp, /nextStatusRefreshAt/);
   assert.match(browserApp, /CONSOLE_AUDIO_HOSTED/);
   assert.match(browserApp, /consoleAudioHost/);
   assert.match(browserApp, /LEGACY_BROWSER_SPEECH_STORAGE_KEYS/);
