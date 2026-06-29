@@ -1233,6 +1233,8 @@ module.exports = function ajrmMarineAudio(app) {
     if (!entry || entry.force || entry.category === "stream-health") return "";
     const gpsKey = gpsAnnouncementSupersedeKey(entry);
     if (gpsKey) return gpsKey;
+    const subjectKey = String(entry.subjectKey || "").trim();
+    if (subjectKey && entry.lifecycle === "active") return `subject:${subjectKey}`;
     const vesselId = String(entry.vesselId || entry.mmsi || "").trim();
     if (vesselId) return `vessel:${vesselId}`;
     const sourcePath = String(entry.sourcePath || "").trim();

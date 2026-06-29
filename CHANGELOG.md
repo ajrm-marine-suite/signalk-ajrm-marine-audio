@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.24
+
+- Treat active Notifications Plus subjects as supersedable audio work, so
+  repeated updates for one instrument or traffic target drop stale queued and
+  prepared announcements before adding the newest one.
+- Add regression coverage for falling-depth instrument updates and traffic
+  advisory-to-collision escalation while the speaker is already busy.
+
 ## 0.5.23
 
 - Include a bounded `recentAnnouncements` list in Audio status so browser

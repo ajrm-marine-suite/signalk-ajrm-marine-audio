@@ -749,6 +749,99 @@ async function postRoute(harness, pathName) {
   await new Promise((resolve) => setTimeout(resolve, 50));
   fs.rmSync(nonPreempting.tempDir, { recursive: true, force: true });
 
+  const depthSupersede = createPipelineHarness();
+  sendNotification(
+    depthSupersede,
+    "notifications.system.playing-depth-test",
+    vesselNotification("depth-blocker", "Current announcement is already playing."),
+    100,
+  );
+  await waitFor(() => statusOf(depthSupersede).active);
+  for (const [message, score] of [
+    ["Information. Depth below keel 4.5 metres.", 250],
+    ["Information. Depth below keel 4.4 metres.", 250],
+    ["Warning. Depth below keel 2.9 metres.", 550],
+  ]) {
+    sendNotification(
+      depthSupersede,
+      "audible-instruments:depth-below-keel",
+      {
+        state: score >= 500 ? "warn" : "alert",
+        method: ["visual", "sound"],
+        message,
+        data: {
+          category: "audible-instrument",
+          alertEvent: {
+            id: `depth-${score}-${message.match(/[0-9.]+/)?.[0]}`,
+            message,
+          },
+        },
+      },
+      score,
+      "active",
+      ["audible-instruments:depth-below-keel"],
+    );
+  }
+  const depthQueued = statusOf(depthSupersede);
+  assert.equal(depthQueued.queueLength, 1);
+  assert.equal(
+    depthQueued.recentEvents.some(
+      (event) =>
+        event.event === "queued" &&
+        /Warning\. Depth below keel 2\.9 metres/.test(event.message),
+    ),
+    true,
+  );
+  assert.equal(
+    depthQueued.recentEvents.some((event) => event.event === "superseded"),
+    true,
+    "falling depth updates drop intermediate queued instrument announcements",
+  );
+  depthSupersede.plugin.stop();
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  fs.rmSync(depthSupersede.tempDir, { recursive: true, force: true });
+
+  const trafficSupersede = createPipelineHarness();
+  sendNotification(
+    trafficSupersede,
+    "notifications.system.playing-traffic-test",
+    vesselNotification("traffic-blocker", "Current traffic announcement is already playing."),
+    100,
+  );
+  await waitFor(() => statusOf(trafficSupersede).active);
+  sendNotification(
+    trafficSupersede,
+    "ajrm-marine:traffic:vessel:235900004",
+    vesselNotification("235900004", "Traffic advisory. Ferry Alpha at 10 o'clock."),
+    550,
+    "active",
+    ["ajrm-marine:traffic:vessel:235900004"],
+  );
+  sendNotification(
+    trafficSupersede,
+    "ajrm-marine:traffic:vessel:235900004",
+    vesselNotification("235900004", "Collision alarm. Ferry Alpha at 10 o'clock."),
+    800,
+    "active",
+    ["ajrm-marine:traffic:vessel:235900004"],
+  );
+  const trafficQueued = statusOf(trafficSupersede);
+  assert.equal(trafficQueued.queueLength, 1);
+  assert.equal(
+    trafficQueued.recentEvents.some(
+      (event) => event.event === "queued" && /Collision alarm/.test(event.message),
+    ),
+    true,
+  );
+  assert.equal(
+    trafficQueued.recentEvents.some((event) => event.event === "superseded"),
+    true,
+    "traffic escalation drops the stale queued advisory",
+  );
+  trafficSupersede.plugin.stop();
+  await new Promise((resolve) => setTimeout(resolve, 50));
+  fs.rmSync(trafficSupersede.tempDir, { recursive: true, force: true });
+
   const lowerPriority = createPipelineHarness();
   sendNotification(
     lowerPriority,

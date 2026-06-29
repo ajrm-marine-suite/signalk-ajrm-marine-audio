@@ -2,8 +2,10 @@
 
 ## Version 2 baseline
 
-`v0.5.23` exposes recent rendered announcements to browser clients so rapid
-traffic-alert bursts are not hidden behind a later status item. `v0.5.22`
+`v0.5.24` drops stale queued or prepared announcements when newer active
+updates arrive for the same instrument or traffic subject. `v0.5.23` exposes
+recent rendered announcements to browser clients so rapid traffic-alert bursts
+are not hidden behind a later status item. `v0.5.22`
 reduces Audio page status polling noise and updates the static asset
 cache-busting version. `v0.5.21` treats announcements as text-only when Piper is unavailable, so
 browser-speech-only installs do not fail while trying to spawn the missing
