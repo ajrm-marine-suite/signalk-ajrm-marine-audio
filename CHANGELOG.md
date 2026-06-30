@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.31
+
+- Make the standalone Audio regression test exit explicitly on success or
+  failure so lingering platform-specific handles cannot leave Windows CI jobs
+  running until cancellation.
+
 ## 0.5.30
 
 - Replace shell-script fake audio commands in the test harness with

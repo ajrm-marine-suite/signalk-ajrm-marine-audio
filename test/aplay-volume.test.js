@@ -1288,7 +1288,9 @@ async function postRoute(harness, pathName) {
   } finally {
     numericStreamHost.plugin.stop();
   }
-})().catch((error) => {
+})().then(() => {
+  process.exit(0);
+}).catch((error) => {
   console.error(error);
-  process.exitCode = 1;
+  process.exit(1);
 });
