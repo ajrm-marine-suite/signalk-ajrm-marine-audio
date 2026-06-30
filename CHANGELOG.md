@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.29
+
+- Make the nested Piper voice regression test accept Windows path separators
+  so the Signal K plugin CI matrix completes cleanly on Windows.
+
 ## 0.5.28
 
 - Add Signal K AppStore relationship metadata recommending AJRM Marine Pi

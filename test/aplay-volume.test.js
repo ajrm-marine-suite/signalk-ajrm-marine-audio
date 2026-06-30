@@ -509,7 +509,7 @@ async function postRoute(harness, pathName) {
   assert.equal(statusOf(nestedVoice).dependencies.voice.status, "ok");
   assert.equal(statusOf(nestedVoice).dependencies.voice.id, "en_GB-alba-medium");
   assert.match(
-    statusOf(nestedVoice).dependencies.voice.file,
+    statusOf(nestedVoice).dependencies.voice.file.replace(/\\/g, "/"),
     /en_GB-alba-medium\/en_GB-alba-medium\.onnx$/,
   );
   assert.equal(statusOf(nestedVoice).voices.length, 1);
