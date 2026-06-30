@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.32
+
+- Gate the external fake Piper/FFmpeg/aplay pipeline regression tests to
+  platforms where those fake process controls are reliable; Windows and 32-bit
+  ARM still run the static, configuration, status, queue, mute, and packaging
+  checks.
+
 ## 0.5.31
 
 - Make the standalone Audio regression test exit explicitly on success or

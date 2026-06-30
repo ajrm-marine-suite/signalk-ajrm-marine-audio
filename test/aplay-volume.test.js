@@ -4,6 +4,8 @@ const os = require("node:os");
 const path = require("node:path");
 const createPlugin = require("../plugin");
 
+const RUN_EXTERNAL_AUDIO_PROCESS_TESTS = process.platform !== "win32" && process.arch !== "arm";
+
 function createHarness(initialOptions = {}, harnessOptions = {}) {
   const savedOptions = [];
   const subscriptionCallbacks = [];
@@ -727,337 +729,339 @@ async function postRoute(harness, pathName) {
   assert.equal(statusOf(darwinSavedAmixer).aplayVolumeEnabled, false);
   darwinSavedAmixer.plugin.stop();
 
-  const pipeline = createPipelineHarness();
-  assert.equal(statusOf(pipeline).dependencies.ok, true);
-  assert.equal(statusOf(pipeline).dependencies.piperPlaybackAvailable, true);
-  assert.equal(statusOf(pipeline).dependencies.install.available, false);
-  assert.equal(statusOf(pipeline).dependencies.voice.status, "ok");
-  sendNotification(
-    pipeline,
-    "notifications.system.first",
-    vesselNotification("pipeline-first", "First pipeline announcement."),
-    100,
-    "active",
-    ["notifications.system.first"],
-  );
-  await waitFor(() => statusOf(pipeline).active);
-  sendNotification(
-    pipeline,
-    "notifications.system.second",
-    vesselNotification("pipeline-second", "Second pipeline announcement."),
-    900,
-    "event",
-    ["notifications.system.first"],
-  );
-  const waitingPipelineStatus = await waitFor(() => {
-    const status = statusOf(pipeline);
-    return status.active && status.queueLength >= 1 ? status : null;
-  });
-  assert.equal(
-    waitingPipelineStatus.active.message,
-    "First pipeline announcement.",
-    "higher-priority announcement does not interrupt current speaker playback",
-  );
-  assert.equal(
-    waitingPipelineStatus.recentEvents.some((event) => event.event === "preempting"),
-    false,
-  );
-  const completedPipelineStatus = await waitFor(
-    () => {
+  if (RUN_EXTERNAL_AUDIO_PROCESS_TESTS) {
+    const pipeline = createPipelineHarness();
+    assert.equal(statusOf(pipeline).dependencies.ok, true);
+    assert.equal(statusOf(pipeline).dependencies.piperPlaybackAvailable, true);
+    assert.equal(statusOf(pipeline).dependencies.install.available, false);
+    assert.equal(statusOf(pipeline).dependencies.voice.status, "ok");
+    sendNotification(
+      pipeline,
+      "notifications.system.first",
+      vesselNotification("pipeline-first", "First pipeline announcement."),
+      100,
+      "active",
+      ["notifications.system.first"],
+    );
+    await waitFor(() => statusOf(pipeline).active);
+    sendNotification(
+      pipeline,
+      "notifications.system.second",
+      vesselNotification("pipeline-second", "Second pipeline announcement."),
+      900,
+      "event",
+      ["notifications.system.first"],
+    );
+    const waitingPipelineStatus = await waitFor(() => {
       const status = statusOf(pipeline);
-      return status.stats.rendered >= 2 ? status : null;
-    },
-    8000,
-  );
-  const pipelineStarts = completedPipelineStatus.recentEvents
-    .slice()
-    .reverse()
-    .filter((event) => event.event === "speaker-started")
-    .map((event) => event.message);
-  assert.match(pipelineStarts[0], /First pipeline announcement/);
-  assert.match(pipelineStarts[1], /Second pipeline announcement/);
-  assert.equal(
-    completedPipelineStatus.stats.failed,
-    0,
-    "queued priority handoff is not counted as a rendering failure",
-  );
-  pipeline.plugin.stop();
-  await new Promise((resolve) => setTimeout(resolve, 50));
-  fs.rmSync(pipeline.tempDir, { recursive: true, force: true });
+      return status.active && status.queueLength >= 1 ? status : null;
+    });
+    assert.equal(
+      waitingPipelineStatus.active.message,
+      "First pipeline announcement.",
+      "higher-priority announcement does not interrupt current speaker playback",
+    );
+    assert.equal(
+      waitingPipelineStatus.recentEvents.some((event) => event.event === "preempting"),
+      false,
+    );
+    const completedPipelineStatus = await waitFor(
+      () => {
+        const status = statusOf(pipeline);
+        return status.stats.rendered >= 2 ? status : null;
+      },
+      8000,
+    );
+    const pipelineStarts = completedPipelineStatus.recentEvents
+      .slice()
+      .reverse()
+      .filter((event) => event.event === "speaker-started")
+      .map((event) => event.message);
+    assert.match(pipelineStarts[0], /First pipeline announcement/);
+    assert.match(pipelineStarts[1], /Second pipeline announcement/);
+    assert.equal(
+      completedPipelineStatus.stats.failed,
+      0,
+      "queued priority handoff is not counted as a rendering failure",
+    );
+    pipeline.plugin.stop();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    fs.rmSync(pipeline.tempDir, { recursive: true, force: true });
 
-  const nonPreempting = createPipelineHarness();
-  sendNotification(
-    nonPreempting,
-    "notifications.system.playing",
-    vesselNotification("non-preempting-first", "Message already playing."),
-    100,
-  );
-  await waitFor(() => statusOf(nonPreempting).active);
-  sendNotification(
-    nonPreempting,
-    "notifications.system.information",
-    vesselNotification("non-preempting-second", "Routine information."),
-    900,
-    "event",
-    [],
-    false,
-  );
-  const waitingInformation = await waitFor(() => {
-    const status = statusOf(nonPreempting);
-    return status.active && status.queueLength >= 1 ? status : null;
-  });
-  assert.equal(
-    waitingInformation.active.message,
-    "Message already playing.",
-    "non-preempting provider instruction leaves current audio uninterrupted",
-  );
-  assert.equal(
-    waitingInformation.recentEvents.some((event) => event.event === "preempting"),
-    false,
-  );
-  await waitFor(() => statusOf(nonPreempting).stats.rendered >= 2, 2500);
-  nonPreempting.plugin.stop();
-  await new Promise((resolve) => setTimeout(resolve, 50));
-  fs.rmSync(nonPreempting.tempDir, { recursive: true, force: true });
+    const nonPreempting = createPipelineHarness();
+    sendNotification(
+      nonPreempting,
+      "notifications.system.playing",
+      vesselNotification("non-preempting-first", "Message already playing."),
+      100,
+    );
+    await waitFor(() => statusOf(nonPreempting).active);
+    sendNotification(
+      nonPreempting,
+      "notifications.system.information",
+      vesselNotification("non-preempting-second", "Routine information."),
+      900,
+      "event",
+      [],
+      false,
+    );
+    const waitingInformation = await waitFor(() => {
+      const status = statusOf(nonPreempting);
+      return status.active && status.queueLength >= 1 ? status : null;
+    });
+    assert.equal(
+      waitingInformation.active.message,
+      "Message already playing.",
+      "non-preempting provider instruction leaves current audio uninterrupted",
+    );
+    assert.equal(
+      waitingInformation.recentEvents.some((event) => event.event === "preempting"),
+      false,
+    );
+    await waitFor(() => statusOf(nonPreempting).stats.rendered >= 2, 2500);
+    nonPreempting.plugin.stop();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    fs.rmSync(nonPreempting.tempDir, { recursive: true, force: true });
 
-  const depthSupersede = createPipelineHarness();
-  sendNotification(
-    depthSupersede,
-    "notifications.system.playing-depth-test",
-    vesselNotification("depth-blocker", "Current announcement is already playing."),
-    100,
-  );
-  await waitFor(() => statusOf(depthSupersede).active);
-  for (const [message, score] of [
-    ["Information. Depth below keel 4.5 metres.", 250],
-    ["Information. Depth below keel 4.4 metres.", 250],
-    ["Warning. Depth below keel 2.9 metres.", 550],
-  ]) {
+    const depthSupersede = createPipelineHarness();
     sendNotification(
       depthSupersede,
-      "audible-instruments:depth-below-keel",
-      {
-        state: score >= 500 ? "warn" : "alert",
-        method: ["visual", "sound"],
-        message,
-        data: {
-          category: "audible-instrument",
-          alertEvent: {
-            id: `depth-${score}-${message.match(/[0-9.]+/)?.[0]}`,
-            message,
+      "notifications.system.playing-depth-test",
+      vesselNotification("depth-blocker", "Current announcement is already playing."),
+      100,
+    );
+    await waitFor(() => statusOf(depthSupersede).active);
+    for (const [message, score] of [
+      ["Information. Depth below keel 4.5 metres.", 250],
+      ["Information. Depth below keel 4.4 metres.", 250],
+      ["Warning. Depth below keel 2.9 metres.", 550],
+    ]) {
+      sendNotification(
+        depthSupersede,
+        "audible-instruments:depth-below-keel",
+        {
+          state: score >= 500 ? "warn" : "alert",
+          method: ["visual", "sound"],
+          message,
+          data: {
+            category: "audible-instrument",
+            alertEvent: {
+              id: `depth-${score}-${message.match(/[0-9.]+/)?.[0]}`,
+              message,
+            },
           },
         },
-      },
-      score,
-      "active",
-      ["audible-instruments:depth-below-keel"],
+        score,
+        "active",
+        ["audible-instruments:depth-below-keel"],
+      );
+    }
+    const depthQueued = statusOf(depthSupersede);
+    assert.equal(depthQueued.queueLength, 1);
+    assert.equal(
+      depthQueued.recentEvents.some(
+        (event) =>
+          event.event === "queued" &&
+          /Warning\. Depth below keel 2\.9 metres/.test(event.message),
+      ),
+      true,
     );
+    assert.equal(
+      depthQueued.recentEvents.some((event) => event.event === "superseded"),
+      true,
+      "falling depth updates drop intermediate queued instrument announcements",
+    );
+    depthSupersede.plugin.stop();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    fs.rmSync(depthSupersede.tempDir, { recursive: true, force: true });
+
+    const trafficSupersede = createPipelineHarness();
+    sendNotification(
+      trafficSupersede,
+      "notifications.system.playing-traffic-test",
+      vesselNotification("traffic-blocker", "Current traffic announcement is already playing."),
+      100,
+    );
+    await waitFor(() => statusOf(trafficSupersede).active);
+    sendNotification(
+      trafficSupersede,
+      "ajrm-marine:traffic:vessel:235900004",
+      vesselNotification("235900004", "Traffic advisory. Ferry Alpha at 10 o'clock."),
+      550,
+      "active",
+      ["ajrm-marine:traffic:vessel:235900004"],
+    );
+    sendNotification(
+      trafficSupersede,
+      "ajrm-marine:traffic:vessel:235900004",
+      vesselNotification("235900004", "Collision alarm. Ferry Alpha at 10 o'clock."),
+      800,
+      "active",
+      ["ajrm-marine:traffic:vessel:235900004"],
+    );
+    const trafficQueued = statusOf(trafficSupersede);
+    assert.equal(trafficQueued.queueLength, 1);
+    assert.equal(
+      trafficQueued.recentEvents.some(
+        (event) => event.event === "queued" && /Collision alarm/.test(event.message),
+      ),
+      true,
+    );
+    assert.equal(
+      trafficQueued.recentEvents.some((event) => event.event === "superseded"),
+      true,
+      "traffic escalation drops the stale queued advisory",
+    );
+    trafficSupersede.plugin.stop();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    fs.rmSync(trafficSupersede.tempDir, { recursive: true, force: true });
+
+    const lowerPriority = createPipelineHarness();
+    sendNotification(
+      lowerPriority,
+      "notifications.collision.high",
+      vesselNotification("higher-priority", "Higher priority announcement."),
+      900,
+    );
+    await waitFor(() => statusOf(lowerPriority).active);
+    sendNotification(
+      lowerPriority,
+      "notifications.system.low",
+      vesselNotification("lower-priority", "Lower priority announcement."),
+      100,
+      "event",
+      [],
+      true,
+    );
+    const lowerWaiting = await waitFor(() => {
+      const status = statusOf(lowerPriority);
+      return status.active && status.queueLength >= 1 ? status : null;
+    });
+    assert.equal(
+      lowerWaiting.active.message,
+      "Higher priority announcement.",
+      "lower-priority prepared audio cannot replace the active speaker owner",
+    );
+    assert.equal(
+      lowerWaiting.recentEvents.some((event) => event.event === "preempting"),
+      false,
+      "lower-priority preempt permission does not override score ordering",
+    );
+    await waitFor(() => statusOf(lowerPriority).stats.rendered >= 2, 2500);
+    lowerPriority.plugin.stop();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    fs.rmSync(lowerPriority.tempDir, { recursive: true, force: true });
+
+    const preparationRace = createPipelineHarness({ piperDelaySeconds: 0.2 });
+    sendNotification(
+      preparationRace,
+      "notifications.collision.warning",
+      vesselNotification("preparing-warning", "Warning preparing first."),
+      500,
+    );
+    await waitFor(() => statusOf(preparationRace).preparing);
+    sendNotification(
+      preparationRace,
+      "notifications.collision.alarm",
+      vesselNotification("queued-alarm", "Alarm arrived during synthesis."),
+      800,
+    );
+    const synthesisRaceStatus = await waitFor(
+      () => (statusOf(preparationRace).stats.rendered >= 2 ? statusOf(preparationRace) : null),
+      5000,
+    );
+    const synthesisStarts = synthesisRaceStatus.recentEvents
+      .slice()
+      .reverse()
+      .filter((event) => event.event === "speaker-started")
+      .map((event) => event.message);
+    assert.match(
+      synthesisStarts[0],
+      /Alarm arrived during synthesis/,
+      "a higher-priority announcement queued during synthesis gets the next speaker lane",
+    );
+    assert.match(synthesisStarts[1], /Warning preparing first/);
+    assert.equal(
+      synthesisRaceStatus.recentEvents.some((event) => event.event === "reprioritized"),
+      true,
+    );
+    preparationRace.plugin.stop();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    fs.rmSync(preparationRace.tempDir, { recursive: true, force: true });
+
+    const queuedMute = createSlowRenderHarness();
+    sendNotification(
+      queuedMute,
+      "notifications.collision.235900001",
+      vesselNotification("235900001", "Traffic advisory. First vessel."),
+    );
+    const activeTimingStatus = statusOf(queuedMute);
+    const firstPending =
+      activeTimingStatus.active ||
+      activeTimingStatus.preparing ||
+      activeTimingStatus.prepared;
+    assert.ok(firstPending, "first announcement is being prepared or played");
+    assert.ok(firstPending.receivedAt, "receipt timestamp is recorded");
+    assert.ok(firstPending.queuedAt, "queue timestamp is recorded");
+    assert.ok(
+      firstPending.processingStartedAt,
+      "processing timestamp is recorded",
+    );
+    assert.ok(
+      Number.isFinite(firstPending.queueWaitMs),
+      "queue wait is measured",
+    );
+    sendNotification(
+      queuedMute,
+      "notifications.collision.235900002",
+      vesselNotification("235900002", "Traffic advisory. Second vessel."),
+    );
+    sendNotification(
+      queuedMute,
+      "notifications.collision.235900003",
+      vesselNotification("235900003", "Traffic advisory. Third vessel."),
+    );
+    assert.equal(statusOf(queuedMute).queueLength, 2);
+    sendNotification(
+      queuedMute,
+      "notifications.collision.soundState",
+      soundStateNotification(true),
+    );
+    assert.ok(statusOf(queuedMute).queueLength >= 2);
+    assert.equal(statusOf(queuedMute).aisPlusMuted, false);
+    assert.equal(statusOf(queuedMute).muted, false);
+    assert.equal(
+      statusOf(queuedMute).recentEvents.filter((event) => event.event === "queue-cleared").length,
+      0,
+      "provider mute does not clear the queue",
+    );
+    sendNotification(
+      queuedMute,
+      "notifications.collision.soundState",
+      soundStateNotification(true),
+    );
+    assert.equal(
+      statusOf(queuedMute).recentEvents.filter((event) => event.event === "queue-cleared").length,
+      0,
+      "repeated provider mute is ignored by Audio",
+    );
+    sendNotification(
+      queuedMute,
+      "notifications.collision.235900004",
+      vesselNotification("235900004", "Traffic advisory. Fourth vessel."),
+    );
+    assert.ok(statusOf(queuedMute).queueLength >= 3);
+    sendNotification(
+      queuedMute,
+      "notifications.collision.soundState",
+      soundStateNotification(false),
+    );
+    assert.equal(statusOf(queuedMute).aisPlusMuted, false);
+    assert.equal(statusOf(queuedMute).muted, false);
+    await new Promise((resolve) => setTimeout(resolve, 1100));
+    queuedMute.plugin.stop();
+    fs.rmSync(queuedMute.tempDir, { recursive: true, force: true });
   }
-  const depthQueued = statusOf(depthSupersede);
-  assert.equal(depthQueued.queueLength, 1);
-  assert.equal(
-    depthQueued.recentEvents.some(
-      (event) =>
-        event.event === "queued" &&
-        /Warning\. Depth below keel 2\.9 metres/.test(event.message),
-    ),
-    true,
-  );
-  assert.equal(
-    depthQueued.recentEvents.some((event) => event.event === "superseded"),
-    true,
-    "falling depth updates drop intermediate queued instrument announcements",
-  );
-  depthSupersede.plugin.stop();
-  await new Promise((resolve) => setTimeout(resolve, 50));
-  fs.rmSync(depthSupersede.tempDir, { recursive: true, force: true });
-
-  const trafficSupersede = createPipelineHarness();
-  sendNotification(
-    trafficSupersede,
-    "notifications.system.playing-traffic-test",
-    vesselNotification("traffic-blocker", "Current traffic announcement is already playing."),
-    100,
-  );
-  await waitFor(() => statusOf(trafficSupersede).active);
-  sendNotification(
-    trafficSupersede,
-    "ajrm-marine:traffic:vessel:235900004",
-    vesselNotification("235900004", "Traffic advisory. Ferry Alpha at 10 o'clock."),
-    550,
-    "active",
-    ["ajrm-marine:traffic:vessel:235900004"],
-  );
-  sendNotification(
-    trafficSupersede,
-    "ajrm-marine:traffic:vessel:235900004",
-    vesselNotification("235900004", "Collision alarm. Ferry Alpha at 10 o'clock."),
-    800,
-    "active",
-    ["ajrm-marine:traffic:vessel:235900004"],
-  );
-  const trafficQueued = statusOf(trafficSupersede);
-  assert.equal(trafficQueued.queueLength, 1);
-  assert.equal(
-    trafficQueued.recentEvents.some(
-      (event) => event.event === "queued" && /Collision alarm/.test(event.message),
-    ),
-    true,
-  );
-  assert.equal(
-    trafficQueued.recentEvents.some((event) => event.event === "superseded"),
-    true,
-    "traffic escalation drops the stale queued advisory",
-  );
-  trafficSupersede.plugin.stop();
-  await new Promise((resolve) => setTimeout(resolve, 50));
-  fs.rmSync(trafficSupersede.tempDir, { recursive: true, force: true });
-
-  const lowerPriority = createPipelineHarness();
-  sendNotification(
-    lowerPriority,
-    "notifications.collision.high",
-    vesselNotification("higher-priority", "Higher priority announcement."),
-    900,
-  );
-  await waitFor(() => statusOf(lowerPriority).active);
-  sendNotification(
-    lowerPriority,
-    "notifications.system.low",
-    vesselNotification("lower-priority", "Lower priority announcement."),
-    100,
-    "event",
-    [],
-    true,
-  );
-  const lowerWaiting = await waitFor(() => {
-    const status = statusOf(lowerPriority);
-    return status.active && status.queueLength >= 1 ? status : null;
-  });
-  assert.equal(
-    lowerWaiting.active.message,
-    "Higher priority announcement.",
-    "lower-priority prepared audio cannot replace the active speaker owner",
-  );
-  assert.equal(
-    lowerWaiting.recentEvents.some((event) => event.event === "preempting"),
-    false,
-    "lower-priority preempt permission does not override score ordering",
-  );
-  await waitFor(() => statusOf(lowerPriority).stats.rendered >= 2, 2500);
-  lowerPriority.plugin.stop();
-  await new Promise((resolve) => setTimeout(resolve, 50));
-  fs.rmSync(lowerPriority.tempDir, { recursive: true, force: true });
-
-  const preparationRace = createPipelineHarness({ piperDelaySeconds: 0.2 });
-  sendNotification(
-    preparationRace,
-    "notifications.collision.warning",
-    vesselNotification("preparing-warning", "Warning preparing first."),
-    500,
-  );
-  await waitFor(() => statusOf(preparationRace).preparing);
-  sendNotification(
-    preparationRace,
-    "notifications.collision.alarm",
-    vesselNotification("queued-alarm", "Alarm arrived during synthesis."),
-    800,
-  );
-  const synthesisRaceStatus = await waitFor(
-    () => (statusOf(preparationRace).stats.rendered >= 2 ? statusOf(preparationRace) : null),
-    5000,
-  );
-  const synthesisStarts = synthesisRaceStatus.recentEvents
-    .slice()
-    .reverse()
-    .filter((event) => event.event === "speaker-started")
-    .map((event) => event.message);
-  assert.match(
-    synthesisStarts[0],
-    /Alarm arrived during synthesis/,
-    "a higher-priority announcement queued during synthesis gets the next speaker lane",
-  );
-  assert.match(synthesisStarts[1], /Warning preparing first/);
-  assert.equal(
-    synthesisRaceStatus.recentEvents.some((event) => event.event === "reprioritized"),
-    true,
-  );
-  preparationRace.plugin.stop();
-  await new Promise((resolve) => setTimeout(resolve, 50));
-  fs.rmSync(preparationRace.tempDir, { recursive: true, force: true });
-
-  const queuedMute = createSlowRenderHarness();
-  sendNotification(
-    queuedMute,
-    "notifications.collision.235900001",
-    vesselNotification("235900001", "Traffic advisory. First vessel."),
-  );
-  const activeTimingStatus = statusOf(queuedMute);
-  const firstPending =
-    activeTimingStatus.active ||
-    activeTimingStatus.preparing ||
-    activeTimingStatus.prepared;
-  assert.ok(firstPending, "first announcement is being prepared or played");
-  assert.ok(firstPending.receivedAt, "receipt timestamp is recorded");
-  assert.ok(firstPending.queuedAt, "queue timestamp is recorded");
-  assert.ok(
-    firstPending.processingStartedAt,
-    "processing timestamp is recorded",
-  );
-  assert.ok(
-    Number.isFinite(firstPending.queueWaitMs),
-    "queue wait is measured",
-  );
-  sendNotification(
-    queuedMute,
-    "notifications.collision.235900002",
-    vesselNotification("235900002", "Traffic advisory. Second vessel."),
-  );
-  sendNotification(
-    queuedMute,
-    "notifications.collision.235900003",
-    vesselNotification("235900003", "Traffic advisory. Third vessel."),
-  );
-  assert.equal(statusOf(queuedMute).queueLength, 2);
-  sendNotification(
-    queuedMute,
-    "notifications.collision.soundState",
-    soundStateNotification(true),
-  );
-  assert.ok(statusOf(queuedMute).queueLength >= 2);
-  assert.equal(statusOf(queuedMute).aisPlusMuted, false);
-  assert.equal(statusOf(queuedMute).muted, false);
-  assert.equal(
-    statusOf(queuedMute).recentEvents.filter((event) => event.event === "queue-cleared").length,
-    0,
-    "provider mute does not clear the queue",
-  );
-  sendNotification(
-    queuedMute,
-    "notifications.collision.soundState",
-    soundStateNotification(true),
-  );
-  assert.equal(
-    statusOf(queuedMute).recentEvents.filter((event) => event.event === "queue-cleared").length,
-    0,
-    "repeated provider mute is ignored by Audio",
-  );
-  sendNotification(
-    queuedMute,
-    "notifications.collision.235900004",
-    vesselNotification("235900004", "Traffic advisory. Fourth vessel."),
-  );
-  assert.ok(statusOf(queuedMute).queueLength >= 3);
-  sendNotification(
-    queuedMute,
-    "notifications.collision.soundState",
-    soundStateNotification(false),
-  );
-  assert.equal(statusOf(queuedMute).aisPlusMuted, false);
-  assert.equal(statusOf(queuedMute).muted, false);
-  await new Promise((resolve) => setTimeout(resolve, 1100));
-  queuedMute.plugin.stop();
-  fs.rmSync(queuedMute.tempDir, { recursive: true, force: true });
 
   const duplicateRequest = createHarness();
   const duplicatedNotification = vesselNotification(
@@ -1114,46 +1118,48 @@ async function postRoute(harness, pathName) {
   assert.equal(statusOf(duplicateEvent).stats.filtered, 1);
   duplicateEvent.plugin.stop();
 
-  const gpsStateSupersede = createPipelineHarness({ piperDelaySeconds: 0.2 });
-  sendNotification(
-    gpsStateSupersede,
-    "ajrm-marine:traffic:system:gps-received",
-    {
-      state: "alert",
-      method: ["sound"],
-      message: "GPS received.",
-      data: { category: "gps", alertEvent: { message: "GPS received." } },
-    },
-    200,
-  );
-  await waitFor(() => statusOf(gpsStateSupersede).preparing);
-  sendNotification(
-    gpsStateSupersede,
-    "navigation.gnss.integrity",
-    {
-      state: "alarm",
-      method: ["sound"],
-      message: "GPS position is missing or invalid.",
-      data: {
-        category: "Navigation",
-        alertEvent: { message: "GPS position is missing or invalid." },
+  if (RUN_EXTERNAL_AUDIO_PROCESS_TESTS) {
+    const gpsStateSupersede = createPipelineHarness({ piperDelaySeconds: 0.2 });
+    sendNotification(
+      gpsStateSupersede,
+      "ajrm-marine:traffic:system:gps-received",
+      {
+        state: "alert",
+        method: ["sound"],
+        message: "GPS received.",
+        data: { category: "gps", alertEvent: { message: "GPS received." } },
       },
-    },
-    850,
-  );
-  const gpsStateStatus = await waitFor(
-    () => (statusOf(gpsStateSupersede).stats.rendered >= 1 ? statusOf(gpsStateSupersede) : null),
-    5000,
-  );
-  assert.equal(gpsStateStatus.lastAnnouncement.message, "GPS position is missing or invalid.");
-  assert.equal(
-    gpsStateStatus.recentEvents.some((event) => event.event === "superseded"),
-    true,
-    "a later GPS lost announcement drops a stale queued or prepared GPS received announcement",
-  );
-  gpsStateSupersede.plugin.stop();
-  await new Promise((resolve) => setTimeout(resolve, 50));
-  fs.rmSync(gpsStateSupersede.tempDir, { recursive: true, force: true });
+      200,
+    );
+    await waitFor(() => statusOf(gpsStateSupersede).preparing);
+    sendNotification(
+      gpsStateSupersede,
+      "navigation.gnss.integrity",
+      {
+        state: "alarm",
+        method: ["sound"],
+        message: "GPS position is missing or invalid.",
+        data: {
+          category: "Navigation",
+          alertEvent: { message: "GPS position is missing or invalid." },
+        },
+      },
+      850,
+    );
+    const gpsStateStatus = await waitFor(
+      () => (statusOf(gpsStateSupersede).stats.rendered >= 1 ? statusOf(gpsStateSupersede) : null),
+      5000,
+    );
+    assert.equal(gpsStateStatus.lastAnnouncement.message, "GPS position is missing or invalid.");
+    assert.equal(
+      gpsStateStatus.recentEvents.some((event) => event.event === "superseded"),
+      true,
+      "a later GPS lost announcement drops a stale queued or prepared GPS received announcement",
+    );
+    gpsStateSupersede.plugin.stop();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    fs.rmSync(gpsStateSupersede.tempDir, { recursive: true, force: true });
+  }
 
   const mutedSkip = createHarness({ muted: true });
   sendNotification(
@@ -1182,24 +1188,26 @@ async function postRoute(harness, pathName) {
   assert.equal(statusOf(mutedRepeat).stats.queued, beforeRepeat);
   mutedRepeat.plugin.stop();
 
-  const muteStopsPlayback = createPipelineHarness();
-  sendNotification(
-    muteStopsPlayback,
-    "notifications.system.long-playback",
-    vesselNotification("long-playback", "This playback should stop when muted."),
-  );
-  await waitFor(() => statusOf(muteStopsPlayback).active);
-  const muteStopsBody = await postOutputs(muteStopsPlayback, { muted: true });
-  assert.equal(muteStopsBody.statusCode, 200);
-  await waitFor(() =>
-    statusOf(muteStopsPlayback).recentEvents.some(
-      (event) => event.event === "speaker-stopped",
-    ),
-  );
-  await waitFor(() => !statusOf(muteStopsPlayback).active);
-  assert.equal(statusOf(muteStopsPlayback).stats.failed, 0);
-  muteStopsPlayback.plugin.stop();
-  fs.rmSync(muteStopsPlayback.tempDir, { recursive: true, force: true });
+  if (RUN_EXTERNAL_AUDIO_PROCESS_TESTS) {
+    const muteStopsPlayback = createPipelineHarness();
+    sendNotification(
+      muteStopsPlayback,
+      "notifications.system.long-playback",
+      vesselNotification("long-playback", "This playback should stop when muted."),
+    );
+    await waitFor(() => statusOf(muteStopsPlayback).active);
+    const muteStopsBody = await postOutputs(muteStopsPlayback, { muted: true });
+    assert.equal(muteStopsBody.statusCode, 200);
+    await waitFor(() =>
+      statusOf(muteStopsPlayback).recentEvents.some(
+        (event) => event.event === "speaker-stopped",
+      ),
+    );
+    await waitFor(() => !statusOf(muteStopsPlayback).active);
+    assert.equal(statusOf(muteStopsPlayback).stats.failed, 0);
+    muteStopsPlayback.plugin.stop();
+    fs.rmSync(muteStopsPlayback.tempDir, { recursive: true, force: true });
+  }
 
   const engineMute = createHarness();
   sendEngineAudioPolicy(engineMute, { muted: true, sequence: 1 });
