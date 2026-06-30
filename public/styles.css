@@ -205,6 +205,34 @@ button:focus-visible {
   justify-self: start;
 }
 
+.select-control {
+  background: #0b1423;
+  border-radius: 10px;
+  color: #e2e8f0;
+  display: grid;
+  gap: 8px;
+  font-weight: 800;
+  margin-top: 14px;
+  padding: 12px;
+}
+
+.select-control select {
+  appearance: none;
+  background: #07111f;
+  border: 1px solid rgb(125 211 252 / 40%);
+  border-radius: 8px;
+  color: #eef6ff;
+  font: inherit;
+  font-weight: 800;
+  min-height: 42px;
+  padding: 8px 10px;
+}
+
+.select-control select:disabled {
+  border-color: rgb(100 116 139 / 45%);
+  color: #64748b;
+}
+
 .output-routing .toggle-row {
   margin-top: 8px;
 }

@@ -595,6 +595,40 @@ module.exports = function ajrmMarineAudio(app) {
       res.json({ ok: true, outputs: outputSettings(), status: buildStatus() });
     }));
 
+    router.post(`${prefix}/voice`, write(async (req, res) => {
+      const requested = String(req.body?.voice || req.query.voice || "").trim();
+      const voices = listVoices();
+      const selected = voices.find(
+        (voice) => voice.id === requested || `${voice.id}.onnx` === requested,
+      );
+      if (!selected) {
+        res.status(400).json({
+          ok: false,
+          error: requested
+            ? `Piper voice ${requested} is not installed.`
+            : "Select an installed Piper voice.",
+          voices,
+          status: buildStatus(),
+        });
+        return;
+      }
+      const previous = options.voice;
+      options.voice = selected.id;
+      try {
+        await savePluginOptions({
+          ...storedPluginOptions,
+          voice: options.voice,
+        });
+      } catch (error) {
+        options.voice = previous;
+        res.status(500).json({ ok: false, error: `Voice save failed: ${error.message}` });
+        return;
+      }
+      addRecent("settings", `Piper voice changed to ${selected.id} from Audio webapp`);
+      publishStatus();
+      res.json({ ok: true, voice: selected.id, status: buildStatus() });
+    }));
+
     router.post(`${prefix}/clear-queue`, write((_req, res) => {
       queue = [];
       addRecent("queue-cleared", "Announcement queue cleared");
@@ -1555,18 +1589,29 @@ module.exports = function ajrmMarineAudio(app) {
   function listVoices() {
     const dir = expandHome(options.voicesDir);
     try {
-      return fs
-        .readdirSync(dir)
-        .filter((name) => name.endsWith(".onnx"))
-        .map((name) => ({
-          id: name.replace(/\.onnx$/, ""),
-          file: path.join(dir, name),
-          selected: options.voice === name || options.voice === name.replace(/\.onnx$/, ""),
-        }))
-        .sort((a, b) => a.id.localeCompare(b.id));
+      const voices = [];
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (entry.isFile() && entry.name.endsWith(".onnx")) {
+          voices.push(voiceFromFile(dir, entry.name));
+          continue;
+        }
+        if (!entry.isDirectory()) continue;
+        const nestedVoice = path.join(dir, entry.name, `${entry.name}.onnx`);
+        if (fs.existsSync(nestedVoice)) voices.push(voiceFromFile(path.join(dir, entry.name), `${entry.name}.onnx`));
+      }
+      return voices.sort((a, b) => a.id.localeCompare(b.id));
     } catch {
       return [];
     }
+  }
+
+  function voiceFromFile(dir, name) {
+    const id = name.replace(/\.onnx$/, "");
+    return {
+      id,
+      file: path.join(dir, name),
+      selected: options.voice === name || options.voice === id,
+    };
   }
 
   function selectedVoice() {

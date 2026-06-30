@@ -46,6 +46,8 @@ const dependencyStatus = document.getElementById("dependencyStatus");
 const buttonInstallPiper = document.getElementById("buttonInstallPiper");
 const buttonRestartStreams = document.getElementById("buttonRestartStreams");
 const buttonStreamTimeCheck = document.getElementById("buttonStreamTimeCheck");
+const voiceSelect = document.getElementById("voiceSelect");
+const voiceStatus = document.getElementById("voiceStatus");
 const aplayVolumeRange = document.getElementById("aplayVolumeRange");
 const aplayVolumeValue = document.getElementById("aplayVolumeValue");
 const aplayVolumeStatus = document.getElementById("aplayVolumeStatus");
@@ -112,6 +114,7 @@ for (const input of browserOutputModeInputs) {
 checkPiOutput.addEventListener("change", saveOutputRouting);
 checkStreamOutput.addEventListener("change", saveOutputRouting);
 checkMuteAll.addEventListener("change", saveOutputRouting);
+voiceSelect.addEventListener("change", saveVoiceSelection);
 aplayVolumeRange.addEventListener("input", () => {
   renderAplayVolumeValue(aplayVolumeRange.value);
 });
@@ -324,6 +327,7 @@ function renderStatus(status) {
   renderOutputRouting(status);
   renderPingControl(status);
   renderDependencies(status.dependencies || null);
+  renderVoiceSelector(status);
   renderAplayVolumeControl(status);
   renderRadioStreamPanel(status);
   streamDiagnostics.textContent = formatStreamDiagnostics(status);
@@ -365,6 +369,50 @@ async function saveOutputRouting() {
   } catch (error) {
     renderCommandError(error);
   }
+}
+
+async function saveVoiceSelection() {
+  if (!voiceSelect.value) return;
+  try {
+    voiceSelect.disabled = true;
+    voiceStatus.textContent = "Saving Piper voice...";
+    const result = await postJson("voice", { voice: voiceSelect.value });
+    renderStatus(result.status || lastStatus);
+    voiceStatus.textContent = `Piper voice set to ${voiceSelect.value}.`;
+  } catch (error) {
+    renderCommandError(error);
+  } finally {
+    voiceSelect.disabled = false;
+  }
+}
+
+function renderVoiceSelector(status) {
+  const voices = Array.isArray(status.voices) ? status.voices : [];
+  const selected = voices.find((voice) => voice.selected) || null;
+  const currentValue = voiceSelect.value;
+  const shouldKeepFocusValue = document.activeElement === voiceSelect && currentValue;
+  voiceSelect.innerHTML = "";
+  if (!voices.length) {
+    const option = document.createElement("option");
+    option.value = "";
+    option.textContent = "No installed voices found";
+    voiceSelect.appendChild(option);
+    voiceSelect.disabled = true;
+    voiceStatus.textContent = "No Piper voice models found in the configured voices directory.";
+    return;
+  }
+  for (const voice of voices) {
+    const option = document.createElement("option");
+    option.value = voice.id;
+    option.textContent = voice.id;
+    voiceSelect.appendChild(option);
+  }
+  voiceSelect.disabled = false;
+  voiceSelect.value = shouldKeepFocusValue ? currentValue : selected?.id || voices[0].id;
+  const selectedVoice = voices.find((voice) => voice.id === voiceSelect.value) || selected;
+  voiceStatus.textContent = selectedVoice
+    ? `Using ${selectedVoice.id}.`
+    : `${voices.length} Piper voice${voices.length === 1 ? "" : "s"} installed.`;
 }
 
 function renderOutputRouting(status) {

@@ -72,6 +72,13 @@
             Install Piper on Raspberry Pi server
           </button>
         </div>
+        <label class="select-control" for="voiceSelect">
+          <span>Piper voice</span>
+          <select id="voiceSelect" disabled>
+            <option value="">No installed voices found</option>
+          </select>
+        </label>
+        <p class="muted" id="voiceStatus">Voice list waiting for Audio status.</p>
         <div class="slider-control">
           <label for="aplayVolumeRange">
             <span>Local speaker level</span>

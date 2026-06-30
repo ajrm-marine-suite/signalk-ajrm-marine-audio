@@ -388,6 +388,8 @@ async function postRoute(harness, pathName) {
   assert.match(html, /except Sound Check/);
   assert.match(html, /dependencyPanel/);
   assert.match(html, /buttonInstallPiper/);
+  assert.match(html, /voiceSelect/);
+  assert.match(html, /Piper voice/);
   assert.doesNotMatch(html, />Renderer<\/h2>/);
   assert.doesNotMatch(html, /audioDirectory/);
   assert.doesNotMatch(browserApp, /audioDirectory/);
@@ -417,6 +419,8 @@ async function postRoute(harness, pathName) {
   assert.match(browserApp, /bindCommandButton/);
   assert.match(browserApp, /signalCommandButton/);
   assert.match(browserApp, /postJson\("outputs"/);
+  assert.match(browserApp, /postJson\("voice"/);
+  assert.match(browserApp, /renderVoiceSelector/);
   assert.match(browserApp, /installPiperWithPiController/);
   assert.match(browserApp, /localPlaybackAvailable/);
   assert.match(browserApp, /Server speaker output needs Piper/);
@@ -433,6 +437,7 @@ async function postRoute(harness, pathName) {
   assert.match(browserCss, /button:not\(:disabled\):active/);
   assert.match(browserCss, /button:disabled/);
   assert.match(browserCss, /dependency-panel/);
+  assert.match(browserCss, /select-control/);
   assert.match(browserCss, /input:disabled \+ span/);
   assert.match(browserCss, /transform:\s*translateY\(4px\)/);
   assert.match(browserCss, /box-shadow/);
@@ -484,6 +489,47 @@ async function postRoute(harness, pathName) {
   );
   assert.equal(textOnly.errors.length, 0);
   textOnly.plugin.stop();
+
+  const nestedTempDir = fs.mkdtempSync(path.join(os.tmpdir(), "ajrm-marine-audio-nested-voices-"));
+  const nestedVoicesDir = path.join(nestedTempDir, "voices");
+  fs.mkdirSync(path.join(nestedVoicesDir, "en_GB-alba-medium"), { recursive: true });
+  fs.writeFileSync(
+    path.join(nestedVoicesDir, "en_GB-alba-medium", "en_GB-alba-medium.onnx"),
+    "",
+  );
+  const nestedVoice = createHarness({
+    localPlayback: false,
+    piperBinary: process.execPath,
+    ffmpegBinary: process.execPath,
+    publicHttpStream: false,
+    voice: "en_GB-alba-medium",
+    voicesDir: nestedVoicesDir,
+  });
+  assert.equal(statusOf(nestedVoice).dependencies.voice.status, "ok");
+  assert.equal(statusOf(nestedVoice).dependencies.voice.id, "en_GB-alba-medium");
+  assert.match(
+    statusOf(nestedVoice).dependencies.voice.file,
+    /en_GB-alba-medium\/en_GB-alba-medium\.onnx$/,
+  );
+  assert.equal(statusOf(nestedVoice).voices.length, 1);
+  assert.equal(statusOf(nestedVoice).voices[0].selected, true);
+  let voiceSaveBody;
+  await nestedVoice.posts.get("/voice")(
+    { body: { voice: "en_GB-alba-medium" }, query: {} },
+    {
+      statusCode: 200,
+      status(code) {
+        this.statusCode = code;
+        return this;
+      },
+      json(body) {
+        voiceSaveBody = { statusCode: this.statusCode, ...body };
+      },
+    },
+  );
+  assert.equal(voiceSaveBody.ok, true);
+  assert.equal(voiceSaveBody.voice, "en_GB-alba-medium");
+  nestedVoice.plugin.stop();
 
   const withPiController = createHarness({}, { piControllerVersion: "0.5.3" });
   assert.equal(statusOf(withPiController).localPlayback, false);
