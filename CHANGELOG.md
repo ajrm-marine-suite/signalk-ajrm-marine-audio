@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.30
+
+- Replace shell-script fake audio commands in the test harness with
+  cross-platform Node-backed commands so Windows CI can exercise the audio
+  pipeline tests.
+
 ## 0.5.29
 
 - Make the nested Piper voice regression test accept Windows path separators

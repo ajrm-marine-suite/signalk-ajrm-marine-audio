@@ -261,21 +261,31 @@ function createPipelineHarness({ piperDelaySeconds = 0 } = {}) {
   const voicesDir = path.join(tempDir, "voices");
   fs.mkdirSync(voicesDir, { recursive: true });
   fs.writeFileSync(path.join(voicesDir, "en_GB-alan-medium.onnx"), "");
-  const piperBinary = path.join(tempDir, "piper.sh");
-  const ffmpegBinary = path.join(tempDir, "ffmpeg.sh");
-  const audioPlayer = path.join(tempDir, "aplay.sh");
-  fs.writeFileSync(
-    piperBinary,
-    `#!/bin/sh\nout=""\nwhile [ "$#" -gt 0 ]; do\n  if [ "$1" = "--output_file" ]; then out="$2"; shift 2; else shift; fi\ndone\nsleep ${piperDelaySeconds}\nprintf wav > "$out"\n`,
+  const piperBinary = writeFakeCommand(
+    tempDir,
+    "piper",
+    `const fs = require("node:fs");
+const args = process.argv.slice(2);
+const outputIndex = args.indexOf("--output_file");
+const output = outputIndex >= 0 ? args[outputIndex + 1] : "";
+setTimeout(() => {
+  if (output) fs.writeFileSync(output, "wav");
+}, ${Math.round(piperDelaySeconds * 1000)});
+`,
   );
-  fs.writeFileSync(
-    ffmpegBinary,
-    '#!/bin/sh\nfor arg in "$@"; do out="$arg"; done\nprintf wav > "$out"\n',
+  const ffmpegBinary = writeFakeCommand(
+    tempDir,
+    "ffmpeg",
+    `const fs = require("node:fs");
+const output = process.argv[process.argv.length - 1];
+if (output) fs.writeFileSync(output, "wav");
+`,
   );
-  fs.writeFileSync(audioPlayer, "#!/bin/sh\nsleep 0.5\n");
-  for (const file of [piperBinary, ffmpegBinary, audioPlayer]) {
-    fs.chmodSync(file, 0o755);
-  }
+  const audioPlayer = writeFakeCommand(
+    tempDir,
+    "aplay",
+    "setTimeout(() => {}, 500);\n",
+  );
   const harness = createHarness({
     audioDirectory: path.join(tempDir, "audio"),
     audioPlayer,
@@ -287,6 +297,20 @@ function createPipelineHarness({ piperDelaySeconds = 0 } = {}) {
     voicesDir,
   });
   return { ...harness, tempDir };
+}
+
+function writeFakeCommand(directory, name, javascript) {
+  const script = path.join(directory, `${name}.js`);
+  fs.writeFileSync(script, javascript);
+  if (process.platform === "win32") {
+    const command = path.join(directory, `${name}.cmd`);
+    fs.writeFileSync(command, `@echo off\r\n"${process.execPath}" "${script}" %*\r\n`);
+    return command;
+  }
+  const command = path.join(directory, `${name}.sh`);
+  fs.writeFileSync(command, `#!/bin/sh\nexec "${process.execPath}" "${script}" "$@"\n`);
+  fs.chmodSync(command, 0o755);
+  return command;
 }
 
 async function waitFor(predicate, timeoutMs = 1500) {
