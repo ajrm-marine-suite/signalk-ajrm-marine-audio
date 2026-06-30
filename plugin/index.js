@@ -833,7 +833,7 @@ module.exports = function ajrmMarineAudio(app) {
     const wasMuted = engineMuted;
     engineMuted =
       projection.authoritative === true &&
-      projection.mode === "engine" &&
+      (projection.mode === "engine" || projection.mode === "traffic") &&
       projection.muted === true;
     if (!wasMuted && engineMuted) {
       clearAudibleWork("Engine audio policy muted audio");

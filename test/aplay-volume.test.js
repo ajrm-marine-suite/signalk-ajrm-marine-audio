@@ -212,6 +212,7 @@ function sendEngineAudioPolicy(harness, {
   sequence,
   sessionId = "engine-session",
   correlationId = "engine-policy",
+  mode = "engine",
 } = {}) {
   harness.subscriptionCallbacks[0]({
     updates: [
@@ -225,7 +226,7 @@ function sendEngineAudioPolicy(harness, {
               sessionId,
               sequence,
               correlationId,
-              mode: "engine",
+              mode,
               authoritative: true,
               muted,
             },
@@ -1196,6 +1197,23 @@ async function postRoute(harness, pathName) {
     "non-monotonic Engine Audio Policy sequence is ignored",
   );
   engineMute.plugin.stop();
+
+  const trafficMute = createHarness();
+  sendEngineAudioPolicy(trafficMute, {
+    muted: true,
+    sequence: 1,
+    mode: "traffic",
+    sessionId: "traffic-session",
+  });
+  assert.equal(statusOf(trafficMute).engineMuted, true);
+  assert.equal(statusOf(trafficMute).muted, true);
+  sendNotification(
+    trafficMute,
+    "notifications.navigation.gnss.integrity",
+    vesselNotification("traffic-muted", "This GPS alert must remain silent while stationary automute is active."),
+  );
+  assert.equal(statusOf(trafficMute).queueLength, 0);
+  trafficMute.plugin.stop();
 
   const emptyProviderMute = createHarness();
   sendNotification(
