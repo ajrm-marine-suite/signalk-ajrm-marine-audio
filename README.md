@@ -2,7 +2,8 @@
 
 ## Version 2 baseline
 
-`v0.5.24` drops stale queued or prepared announcements when newer active
+`v0.5.26` updates the built-in Piper install prompt to match the three-voice
+catalogue installed by AJRM Marine Pi Controller. `v0.5.24` drops stale queued or prepared announcements when newer active
 updates arrive for the same instrument or traffic subject. `v0.5.23` exposes
 recent rendered announcements to browser clients so rapid traffic-alert bursts
 are not hidden behind a later status item. `v0.5.22`

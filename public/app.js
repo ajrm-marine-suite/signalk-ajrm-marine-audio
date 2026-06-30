@@ -536,7 +536,7 @@ async function installPiperWithPiController() {
   const endpoint = buttonInstallPiper.dataset.endpoint || "/plugins/signalk-ajrm-marine-pi-controller/actions/install-piper";
   if (
     !window.confirm(
-      "Install Piper on this Raspberry Pi Signal K server using AJRM Marine Pi Controller? This downloads the Linux aarch64 Piper binary and voice model and may require sudo permissions. Do not use this on Windows or macOS.",
+      "Install Piper on this Raspberry Pi Signal K server using AJRM Marine Pi Controller? This downloads the Linux aarch64 Piper binary and voice models and may require sudo permissions. Do not use this on Windows or macOS.",
     )
   ) {
     return;
