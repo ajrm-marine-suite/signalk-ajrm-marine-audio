@@ -1,6 +1,6 @@
 {
   "name": "signalk-ajrm-marine-audio",
-  "version": "0.5.27",
+  "version": "0.5.28",
   "description": "Speech and audio delivery for AJRM Marine Suite notifications.",
   "main": "plugin/index.js",
   "scripts": {
@@ -41,6 +41,9 @@
   "signalk-plugin-enabled-by-default": true,
   "signalk": {
     "displayName": "AJRM Marine Audio",
-    "appIcon": "./icon-120.png"
+    "appIcon": "./icon-120.png",
+    "recommends": [
+      "signalk-ajrm-marine-pi-controller"
+    ]
   }
 }

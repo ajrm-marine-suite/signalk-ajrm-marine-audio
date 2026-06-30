@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.28
+
+- Add Signal K AppStore relationship metadata recommending AJRM Marine Pi
+  Controller for users who want the assisted Piper installer.
+- Add the reusable Signal K plugin CI workflow.
+
 ## 0.5.24
 
 - Treat active Notifications Plus subjects as supersedable audio work, so
