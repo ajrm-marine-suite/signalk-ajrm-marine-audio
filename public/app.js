@@ -59,9 +59,23 @@ let browserOutputMode = initialBrowserOutputMode();
 let browserMuted = readStoredValue(BROWSER_MUTE_STORAGE_KEY) === "true";
 let lastBrowserAudioUrl = "";
 let lastBrowserSpeechKey = "";
+let browserAudioQueue = [];
+let browserAudioPlaying = false;
+let browserSpeechQueue = [];
+let browserSpeechPlaying = false;
+let seenBrowserAnnouncementKeys = [];
 let lastStatus = null;
 let nextStatusRefreshAt = 0;
 let firstStatusRender = true;
+
+lastAudio.addEventListener("ended", () => {
+  browserAudioPlaying = false;
+  playNextQueuedBrowserAudio();
+});
+lastAudio.addEventListener("error", () => {
+  browserAudioPlaying = false;
+  playNextQueuedBrowserAudio();
+});
 
 window.addEventListener("error", (event) => {
   renderStartupError(event.message || "AJRM Marine Audio browser script failed");
@@ -342,23 +356,18 @@ function renderStatus(status) {
   if (status.lastAnnouncement && status.lastAnnouncement.message) {
     lastAnnouncement.classList.remove("muted");
     lastAnnouncement.textContent = status.lastAnnouncement.message;
-    const announcementAudioUrl =
-      status.lastAnnouncement.audioUrl || status.lastAnnouncement.publicAudioUrl;
-    if (announcementAudioUrl) {
-      lastAudio.hidden = false;
-      if (lastAudio.getAttribute("src") !== announcementAudioUrl) {
-        lastAudio.setAttribute("src", announcementAudioUrl);
-        playBrowserAnnouncement(false, status.lastAnnouncement);
-      }
-    } else {
-      lastAudio.hidden = true;
-      lastAudio.removeAttribute("src");
-    }
+    lastAudio.hidden =
+      browserOutputMode !== "piper" &&
+      !status.lastAnnouncement.audioUrl &&
+      !status.lastAnnouncement.publicAudioUrl;
+    queueBrowserAnnouncements(status);
   } else {
     lastAnnouncement.classList.add("muted");
     lastAnnouncement.textContent = "No announcement received yet.";
-    lastAudio.hidden = true;
-    lastAudio.removeAttribute("src");
+    if (!browserAudioPlaying) {
+      lastAudio.hidden = true;
+      lastAudio.removeAttribute("src");
+    }
   }
 
   renderEvents(status.recentEvents || []);
@@ -609,29 +618,16 @@ function playBrowserAnnouncement(userInitiated, announcement) {
   if (firstStatusRender && !userInitiated) return;
   if (browserMuted && !userInitiated) return;
   if (browserOutputMode === "piper") {
-    playLastAudioInBrowser(userInitiated);
+    queueBrowserPiperAnnouncement(announcement, { userInitiated });
   } else if (browserOutputMode === "speech") {
     speakLastAnnouncementInBrowser(userInitiated, announcement);
   }
 }
 
 function playLastAudioInBrowser(userInitiated) {
-  const audioUrl = lastAudio.getAttribute("src") || "";
-  if (!audioUrl || (!userInitiated && audioUrl === lastBrowserAudioUrl)) return false;
-  lastBrowserAudioUrl = audioUrl;
-  lastAudio
-    .play()
-    .then(() => {
-      outputStatus.textContent = userInitiated
-        ? "Browser playback enabled and last announcement played."
-        : "Browser announcement playback started.";
-    })
-    .catch((error) => {
-      lastBrowserAudioUrl = "";
-      outputStatus.textContent =
-        `Browser playback needs a tap here first: ${error.message || error}`;
-    });
-  return true;
+  const announcement = lastStatus?.lastAnnouncement || null;
+  if (!announcement) return false;
+  return queueBrowserPiperAnnouncement(announcement, { userInitiated });
 }
 
 function speakLastAnnouncementInBrowser(userInitiated, announcement = null) {
@@ -655,15 +651,137 @@ function speakMessageInBrowser(message, userInitiated) {
     outputStatus.textContent = "Browser speech synthesis is not available on this device.";
     return false;
   }
-  speech.cancel();
-  speech.speak(new Utterance(message));
-  outputStatus.textContent = userInitiated
-    ? "Browser speech synthesis played."
-    : "Browser speech synthesis started.";
+  const text = String(message || "").trim();
+  if (!text) return false;
+  browserSpeechQueue.push({ message: text, userInitiated });
+  playNextQueuedBrowserSpeech();
   return true;
 }
 
+function queueBrowserAnnouncements(status) {
+  const announcements = browserAnnouncementList(status);
+  if (!announcements.length) return;
+  if (firstStatusRender || browserMuted || browserOutputMode === "off" || CONSOLE_AUDIO_HOSTED) {
+    rememberSeenBrowserAnnouncements(announcements);
+    return;
+  }
+  for (const announcement of announcements) {
+    const key = browserAnnouncementKey(announcement);
+    if (!key || seenBrowserAnnouncementKeys.includes(key)) continue;
+    rememberSeenBrowserAnnouncementKey(key);
+    playBrowserAnnouncement(false, announcement);
+  }
+}
+
+function browserAnnouncementList(status) {
+  const byKey = new Map();
+  const add = (announcement) => {
+    if (!announcement || !announcement.message) return;
+    byKey.set(browserAnnouncementKey(announcement), announcement);
+  };
+  for (const announcement of status.recentAnnouncements || []) add(announcement);
+  add(status.lastAnnouncement);
+  return Array.from(byKey.values());
+}
+
+function browserAnnouncementKey(announcement) {
+  return String(
+    announcement?.playbackId ||
+      announcement?.requestId ||
+      announcement?.audioUrl ||
+      announcement?.publicAudioUrl ||
+      announcement?.message ||
+      "",
+  );
+}
+
+function rememberSeenBrowserAnnouncements(announcements) {
+  for (const announcement of announcements) {
+    rememberSeenBrowserAnnouncementKey(browserAnnouncementKey(announcement));
+  }
+}
+
+function rememberSeenBrowserAnnouncementKey(key) {
+  if (!key || seenBrowserAnnouncementKeys.includes(key)) return;
+  seenBrowserAnnouncementKeys.push(key);
+  if (seenBrowserAnnouncementKeys.length > 80) {
+    seenBrowserAnnouncementKeys = seenBrowserAnnouncementKeys.slice(-80);
+  }
+}
+
+function queueBrowserPiperAnnouncement(announcement, { userInitiated = false } = {}) {
+  const audioUrl = announcement?.audioUrl || announcement?.publicAudioUrl || "";
+  if (!audioUrl) return false;
+  const key = browserAnnouncementKey(announcement);
+  if (
+    !userInitiated &&
+    (audioUrl === lastBrowserAudioUrl ||
+      browserAudioQueue.some((item) => item.key === key || item.audioUrl === audioUrl))
+  ) {
+    return false;
+  }
+  browserAudioQueue.push({
+    audioUrl,
+    key,
+    message: String(announcement?.message || ""),
+    userInitiated,
+  });
+  lastAudio.hidden = false;
+  playNextQueuedBrowserAudio();
+  return true;
+}
+
+function playNextQueuedBrowserAudio() {
+  if (browserAudioPlaying || browserOutputMode !== "piper" || browserMuted) return;
+  const item = browserAudioQueue.shift();
+  if (!item) return;
+  browserAudioPlaying = true;
+  lastBrowserAudioUrl = item.audioUrl;
+  lastAudio.hidden = false;
+  lastAudio.setAttribute("src", item.audioUrl);
+  lastAudio
+    .play()
+    .then(() => {
+      outputStatus.textContent = item.userInitiated
+        ? "Browser playback enabled and announcement queued."
+        : "Browser announcement playback started.";
+    })
+    .catch((error) => {
+      browserAudioPlaying = false;
+      lastBrowserAudioUrl = "";
+      outputStatus.textContent =
+        `Browser playback needs a tap here first: ${error.message || error}`;
+    });
+}
+
+function playNextQueuedBrowserSpeech() {
+  if (browserSpeechPlaying || browserOutputMode !== "speech" || browserMuted) return;
+  const item = browserSpeechQueue.shift();
+  if (!item) return;
+  const speech = window.speechSynthesis;
+  const Utterance = window.SpeechSynthesisUtterance;
+  if (!speech || !Utterance) return;
+  browserSpeechPlaying = true;
+  const utterance = new Utterance(item.message);
+  utterance.onend = () => {
+    browserSpeechPlaying = false;
+    playNextQueuedBrowserSpeech();
+  };
+  utterance.onerror = () => {
+    browserSpeechPlaying = false;
+    playNextQueuedBrowserSpeech();
+  };
+  speech.speak(utterance);
+  outputStatus.textContent = item.userInitiated
+    ? "Browser speech synthesis queued."
+    : "Browser speech synthesis started.";
+}
+
 function stopBrowserOutputs() {
+  browserAudioQueue = [];
+  browserSpeechQueue = [];
+  browserAudioPlaying = false;
+  browserSpeechPlaying = false;
   lastAudio.pause();
   lastBrowserAudioUrl = "";
   if (window.speechSynthesis) window.speechSynthesis.cancel();

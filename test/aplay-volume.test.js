@@ -432,6 +432,10 @@ async function postRoute(harness, pathName) {
   assert.match(browserApp, /checkBrowserSpeech/);
   assert.match(browserApp, /disableCompetingBrowserSpeech/);
   assert.match(browserApp, /speakLastAnnouncementInBrowser/);
+  assert.match(browserApp, /queueBrowserAnnouncements/);
+  assert.match(browserApp, /playNextQueuedBrowserAudio/);
+  assert.match(browserApp, /playNextQueuedBrowserSpeech/);
+  assert.doesNotMatch(browserApp, /speech\.cancel\(\);\s*speech\.speak/);
   assert.match(browserApp, /bindSoundCheckButton/);
   assert.match(browserApp, /No audio output is selected/);
   assert.match(browserApp, /hasSoundCheckOutput/);
@@ -457,10 +461,7 @@ async function postRoute(harness, pathName) {
   assert.match(browserApp, /aplayVolumeRange\.disabled/);
   assert.match(browserApp, /joinSentences/);
   assert.match(browserApp, /signalk-ajrm-marine-pi-controller\/actions\/install-piper/);
-  assert.match(
-    browserApp,
-    /status\.lastAnnouncement\.audioUrl \|\| status\.lastAnnouncement\.publicAudioUrl/,
-  );
+  assert.match(browserApp, /announcement\?\.audioUrl \|\| announcement\?\.publicAudioUrl/);
   assert.match(browserCss, /button\.command-sent/);
   assert.match(browserCss, /button:not\(:disabled\):active/);
   assert.match(browserCss, /button:disabled/);

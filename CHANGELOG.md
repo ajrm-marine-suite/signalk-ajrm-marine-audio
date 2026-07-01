@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.34
+
+- Queue browser Piper playback and browser speech locally so a new announcement
+  waits for the current browser announcement to finish instead of interrupting
+  it.
+- Use recent rendered announcements as browser delivery input so rapid alert
+  bursts are played in order when the page is open.
+
 ## 0.5.33
 
 - Remove Audio's server-wide manual mute control from output routing. Shared
