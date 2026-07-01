@@ -412,7 +412,7 @@ async function postRoute(harness, pathName) {
   assert.match(html, /checkPiOutput/);
   assert.match(html, /checkStreamOutput/);
   assert.match(html, /checkMuteAll/);
-  assert.match(html, /except Sound Check/);
+  assert.match(html, /Mute browser output on this device/);
   assert.match(html, /dependencyPanel/);
   assert.match(html, /buttonInstallPiper/);
   assert.match(html, /voiceSelect/);
@@ -421,6 +421,7 @@ async function postRoute(harness, pathName) {
   assert.doesNotMatch(html, /audioDirectory/);
   assert.doesNotMatch(browserApp, /audioDirectory/);
   assert.match(browserApp, /BROWSER_OUTPUT_MODE_STORAGE_KEY/);
+  assert.match(browserApp, /BROWSER_MUTE_STORAGE_KEY/);
   assert.match(browserApp, /BROWSER_OUTPUT_MODES/);
   assert.match(browserApp, /STATUS_AUTH_RETRY_MS/);
   assert.match(browserApp, /readStatusResponse/);
@@ -647,35 +648,30 @@ async function postRoute(harness, pathName) {
   routeMaximum.plugin.stop();
 
   const outputRouting = createHarness({
-    muted: false,
     localPlayback: true,
     liveStream: true,
   });
   const outputBody = await postOutputs(outputRouting, {
-    muted: true,
     localPlayback: false,
     liveStream: false,
   });
   assert.equal(outputBody.statusCode, 200);
   assert.deepEqual(outputBody.outputs, {
-    muted: true,
     localPlayback: false,
     liveStream: false,
   });
-  assert.equal(statusOf(outputRouting).pluginMuted, true);
+  assert.equal(statusOf(outputRouting).pluginMuted, false);
   assert.equal(statusOf(outputRouting).localPlayback, false);
   assert.equal(statusOf(outputRouting).liveStream, false);
-  assert.equal(outputRouting.savedOptions.at(-1).muted, true);
   assert.equal(outputRouting.savedOptions.at(-1).localPlayback, false);
   assert.equal(outputRouting.savedOptions.at(-1).liveStream, false);
+  assert.equal(Object.prototype.hasOwnProperty.call(outputRouting.savedOptions.at(-1), "muted"), false);
   outputRouting.plugin.stop();
 
   const unavailableLocalPlayback = createHarness({
-    muted: false,
     liveStream: true,
   });
   const unavailableLocalPlaybackBody = await postOutputs(unavailableLocalPlayback, {
-    muted: false,
     localPlayback: true,
     liveStream: true,
   });
@@ -686,11 +682,9 @@ async function postRoute(harness, pathName) {
   unavailableLocalPlayback.plugin.stop();
 
   const unavailableRadioStream = createHarness({
-    muted: false,
     liveStream: false,
   });
   const unavailableRadioStreamBody = await postOutputs(unavailableRadioStream, {
-    muted: false,
     localPlayback: false,
     liveStream: true,
   });
@@ -1161,7 +1155,8 @@ async function postRoute(harness, pathName) {
     fs.rmSync(gpsStateSupersede.tempDir, { recursive: true, force: true });
   }
 
-  const mutedSkip = createHarness({ muted: true });
+  const mutedSkip = createHarness();
+  sendEngineAudioPolicy(mutedSkip, { muted: true, sequence: 1 });
   sendNotification(
     mutedSkip,
     "notifications.system.gps-received",
@@ -1180,7 +1175,7 @@ async function postRoute(harness, pathName) {
   );
   assert.equal(statusOf(mutedRepeat).stats.queued, 1);
   assert.equal(statusOf(mutedRepeat).lastAnnouncement.message, "First repeatable announcement.");
-  await postOutputs(mutedRepeat, { muted: true });
+  sendEngineAudioPolicy(mutedRepeat, { muted: true, sequence: 1 });
   const beforeRepeat = statusOf(mutedRepeat).stats.queued;
   const mutedRepeatBody = await postRepeatLast(mutedRepeat);
   assert.equal(mutedRepeatBody.statusCode, 409);
@@ -1196,8 +1191,7 @@ async function postRoute(harness, pathName) {
       vesselNotification("long-playback", "This playback should stop when muted."),
     );
     await waitFor(() => statusOf(muteStopsPlayback).active);
-    const muteStopsBody = await postOutputs(muteStopsPlayback, { muted: true });
-    assert.equal(muteStopsBody.statusCode, 200);
+    sendEngineAudioPolicy(muteStopsPlayback, { muted: true, sequence: 1 });
     await waitFor(() =>
       statusOf(muteStopsPlayback).recentEvents.some(
         (event) => event.event === "speaker-stopped",

@@ -169,11 +169,6 @@ module.exports = function ajrmMarineAudio(app) {
         title: "Enable AJRM Marine Audio rendering",
         default: true,
       },
-      muted: {
-        type: "boolean",
-        title: "Mute all audio output",
-        default: false,
-      },
       localPlayback: {
         type: "boolean",
         title: "Play rendered audio on this Signal K server",
@@ -521,10 +516,6 @@ module.exports = function ajrmMarineAudio(app) {
 
     router.post(`${prefix}/outputs`, write(async (req, res) => {
       const next = {
-        muted:
-          req.body?.muted !== undefined
-            ? booleanFrom(req.body.muted)
-            : options.muted,
         localPlayback:
           req.body?.localPlayback !== undefined
             ? booleanFrom(req.body.localPlayback)
@@ -559,18 +550,15 @@ module.exports = function ajrmMarineAudio(app) {
         });
         return;
       }
-      options.muted = next.muted;
       options.localPlayback = next.localPlayback;
       options.liveStream = next.liveStream;
       try {
         await savePluginOptions({
           ...storedPluginOptions,
-          muted: options.muted,
           localPlayback: options.localPlayback,
           liveStream: options.liveStream,
         });
       } catch (error) {
-        options.muted = previous.muted;
         options.localPlayback = previous.localPlayback;
         options.liveStream = previous.liveStream;
         res.status(500).json({ error: `Output settings save failed: ${error.message}` });
@@ -579,14 +567,10 @@ module.exports = function ajrmMarineAudio(app) {
       if (!options.liveStream) {
         restartLiveStreamClients("radio stream disabled");
       }
-      if (!previous.muted && options.muted) {
-        clearAudibleWork("Audio muted from webapp");
-      }
       addRecent(
         "settings",
         [
           `Audio outputs updated from webapp:`,
-          `mute ${options.muted ? "on" : "off"},`,
           `server speaker ${options.localPlayback ? "on" : "off"},`,
           `radio stream ${options.liveStream ? "on" : "off"}`,
         ].join(" "),
@@ -706,7 +690,7 @@ module.exports = function ajrmMarineAudio(app) {
   function normalizeOptions(value) {
     return {
       enabled: value.enabled !== false,
-      muted: value.muted === true,
+      muted: false,
       localPlayback: value.localPlayback === true,
       liveStream: value.liveStream === true,
       publicHttpStream: value.publicHttpStream === true,
@@ -767,7 +751,6 @@ module.exports = function ajrmMarineAudio(app) {
 
   function outputSettings() {
     return {
-      muted: options.muted,
       localPlayback: options.localPlayback,
       liveStream: options.liveStream,
     };
@@ -1376,7 +1359,7 @@ module.exports = function ajrmMarineAudio(app) {
   }
 
   function isAudioMuted() {
-    return options.muted === true || engineMuted === true;
+    return engineMuted === true;
   }
 
   function isAudioMutedForEntry(entry) {
@@ -1404,7 +1387,7 @@ module.exports = function ajrmMarineAudio(app) {
       serverTime: new Date().toISOString(),
       enabled: options.enabled,
       muted: isAudioMuted(),
-      pluginMuted: options.muted,
+      pluginMuted: false,
       engineMuted,
       engineAudioPolicy,
       engineSessionId,

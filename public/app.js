@@ -9,6 +9,7 @@ const ACCESS_REQUEST_STORAGE_KEY = "ajrmMarineAudio.accessRequestHref";
 const CLIENT_ID_STORAGE_KEY = "ajrmMarineAudio.clientId";
 const BROWSER_OUTPUT_STORAGE_KEY = "ajrmMarineAudio.browserOutput";
 const BROWSER_OUTPUT_MODE_STORAGE_KEY = "ajrmMarineAudio.browserOutputMode";
+const BROWSER_MUTE_STORAGE_KEY = "ajrmMarineAudio.browserMuted";
 const LEGACY_BROWSER_SPEECH_STORAGE_KEYS = ["checkBrowserSpeech"];
 const BROWSER_OUTPUT_MODES = ["off", "speech", "piper"];
 const SOUND_CHECK_MESSAGE = "Sound Check. Testing 1, 2, 3.";
@@ -55,6 +56,7 @@ let accessToken = readStoredValue(ACCESS_TOKEN_STORAGE_KEY);
 let accessRequestTimer = null;
 let localNotice = null;
 let browserOutputMode = initialBrowserOutputMode();
+let browserMuted = readStoredValue(BROWSER_MUTE_STORAGE_KEY) === "true";
 let lastBrowserAudioUrl = "";
 let lastBrowserSpeechKey = "";
 let lastStatus = null;
@@ -113,7 +115,12 @@ for (const input of browserOutputModeInputs) {
 }
 checkPiOutput.addEventListener("change", saveOutputRouting);
 checkStreamOutput.addEventListener("change", saveOutputRouting);
-checkMuteAll.addEventListener("change", saveOutputRouting);
+checkMuteAll.addEventListener("change", () => {
+  browserMuted = checkMuteAll.checked;
+  writeStoredValue(BROWSER_MUTE_STORAGE_KEY, browserMuted ? "true" : "false");
+  if (browserMuted) stopBrowserOutputs();
+  renderOutputRouting(lastStatus || {});
+});
 voiceSelect.addEventListener("change", saveVoiceSelection);
 aplayVolumeRange.addEventListener("input", () => {
   renderAplayVolumeValue(aplayVolumeRange.value);
@@ -362,7 +369,6 @@ async function saveOutputRouting() {
   try {
     outputStatus.textContent = "Saving output routing…";
     await postJson("outputs", {
-      muted: checkMuteAll.checked,
       localPlayback: checkPiOutput.checked,
       liveStream: checkStreamOutput.checked,
     });
@@ -448,11 +454,11 @@ function renderOutputRouting(status) {
       ? ""
       : "Radio stream output needs Piper, a voice model, and FFmpeg on the Signal K server.";
   if (document.activeElement !== checkMuteAll) {
-    checkMuteAll.checked = status.pluginMuted === true;
+    checkMuteAll.checked = browserMuted === true;
   }
   const mutedReasons = [];
-  if (status.pluginMuted) mutedReasons.push("Audio muted here");
-  if (status.engineMuted) mutedReasons.push("muted by Traffic Core");
+  if (browserMuted) mutedReasons.push("browser muted on this device");
+  if (status.engineMuted) mutedReasons.push("muted by Traffic");
   outputStatus.textContent = [
     `Browser ${browserOutputModeLabel(browserOutputMode)}`,
     serverSpeakerAvailable
@@ -601,6 +607,7 @@ function browserOutputModeStatusText(mode) {
 function playBrowserAnnouncement(userInitiated, announcement) {
   if (CONSOLE_AUDIO_HOSTED) return;
   if (firstStatusRender && !userInitiated) return;
+  if (browserMuted && !userInitiated) return;
   if (browserOutputMode === "piper") {
     playLastAudioInBrowser(userInitiated);
   } else if (browserOutputMode === "speech") {

@@ -2,8 +2,10 @@
 
 ## Version 2 baseline
 
-`v0.5.27` treats AJRM Marine Traffic's current `traffic` audio-policy mode as
-the shared mute source, so stationary automute silences normal suite
+`v0.5.33` removes Audio's server-wide manual mute from output routing: shared
+muting follows AJRM Marine Traffic Audio Policy, while the Audio webapp's mute
+control is local to that browser/device. `v0.5.27` treats AJRM Marine Traffic's
+current `traffic` audio-policy mode as the shared mute source, so stationary automute silences normal suite
 announcements. `v0.5.26` updates the built-in Piper install prompt to match the three-voice
 catalogue installed by AJRM Marine Pi Controller. `v0.5.24` drops stale queued or prepared announcements when newer active
 updates arrive for the same instrument or traffic subject. `v0.5.23` exposes
@@ -59,8 +61,8 @@ root window. When Audio is embedded by Console it still shows and saves browser
 output settings, but suppresses its own iframe playback to avoid double speech.
 Opened directly, AJRM Marine Audio remains fully standalone.
 
-`v0.5.0` makes Audio mute authority explicit: only AJRM Marine Audio's manual
-mute and AJRM Marine Traffic Audio Policy can mute playback. Provider
+`v0.5.0` makes Audio mute authority explicit: shared muting comes from AJRM
+Marine Traffic Audio Policy, with browser output choices kept local. Provider
 `delivery.muteState` flags are ignored by Audio.
 
 `v0.5.0` removes old AJRM Marine wording from visible Audio status and
@@ -68,7 +70,7 @@ configuration labels.
 
 `v0.5.0` replaces the browser playback checkbox with an explicit browser output
 mode: Off, browser speech synthesis, or AJRM Marine Piper playback. Server speaker,
-radio stream, and mute remain independent switches.
+radio stream, and browser-local mute remain independent switches.
 
 `v0.5.0` keeps AJRM Marine Audio as the browser-audio authority on each device
 so the older simple browser speech setting cannot clash with Piper browser
@@ -155,7 +157,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.20 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.33 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

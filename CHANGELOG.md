@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.33
+
+- Remove Audio's server-wide manual mute control from output routing. Shared
+  muting now follows AJRM Marine Traffic Audio Policy only.
+- Keep browser muting local to each browser/device so one display cannot mute
+  the server speaker, radio stream, or another browser.
+
 ## 0.5.32
 
 - Gate the external fake Piper/FFmpeg/aplay pipeline regression tests to
