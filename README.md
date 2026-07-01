@@ -2,11 +2,12 @@
 
 ## Version 2 baseline
 
-`v0.5.34` queues browser Piper playback and browser speech locally so a new
-announcement waits for the current browser announcement to finish. `v0.5.33`
-removes Audio's server-wide manual mute from output routing: shared muting
-follows AJRM Marine Traffic Audio Policy, while the Audio webapp's mute control
-is local to that browser/device. `v0.5.27` treats AJRM Marine Traffic's current
+`v0.5.35` keeps browser audio deliberately simple after the abandoned
+`v0.5.34` queueing experiment: browser playback is convenience output, while
+reliable FIFO playback belongs in the standalone AJRM Marine Audio Player.
+`v0.5.33` removes Audio's server-wide manual mute from output routing: shared
+muting follows AJRM Marine Traffic Audio Policy, while the Audio webapp's mute
+control is local to that browser/device. `v0.5.27` treats AJRM Marine Traffic's current
 `traffic` audio-policy mode as the shared mute source, so stationary automute
 silences normal suite announcements. `v0.5.26` updates the built-in Piper install prompt to match the three-voice
 catalogue installed by AJRM Marine Pi Controller. `v0.5.24` drops stale queued or prepared announcements when newer active
@@ -159,7 +160,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.34 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.35 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

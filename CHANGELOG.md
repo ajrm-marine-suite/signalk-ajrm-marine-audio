@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.35
+
+- Revert browser announcement queueing from `0.5.34`. Browser playback is now
+  deliberately simple convenience output again; reliable FIFO playback belongs
+  in the standalone AJRM Marine Audio Player.
+- Keep rendered announcement history in Audio status for external clients, but
+  do not use it to backfill browser audio when a tab regains attention.
+
 ## 0.5.34
 
 - Queue browser Piper playback and browser speech locally so a new announcement
@@ -7,6 +15,7 @@
   it.
 - Use recent rendered announcements as browser delivery input so rapid alert
   bursts are played in order when the page is open.
+  Superseded by `0.5.35`.
 
 ## 0.5.33
 
