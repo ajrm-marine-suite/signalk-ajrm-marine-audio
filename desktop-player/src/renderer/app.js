@@ -207,7 +207,7 @@ async function fetchStatus(serverUrl) {
 
 function enqueue(announcement, { force = false } = {}) {
   if (!announcement || !announcement.message) return false;
-  const audioUrl = announcement.audioUrl || announcement.publicAudioUrl || "";
+  const audioUrl = announcement.publicAudioUrl || announcement.audioUrl || "";
   if (!audioUrl) return false;
   const key = announcementKey(announcement);
   if (!force && seenKeys.includes(key)) return false;

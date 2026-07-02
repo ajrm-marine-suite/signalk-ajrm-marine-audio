@@ -11,12 +11,12 @@ function requestJson(url, redirectCount = 0) {
 }
 
 async function requestAudioDataUrl(url) {
-  const result = await requestData(url, { json: false });
+  const result = await requestData(url, { json: false, failureContext: "audio" });
   const contentType = result.contentType || "audio/mpeg";
   return `data:${contentType};base64,${result.buffer.toString("base64")}`;
 }
 
-function requestData(url, { json, redirectCount = 0 }) {
+function requestData(url, { json, redirectCount = 0, failureContext = "status" }) {
   const parsed = new URL(url);
   const client = parsed.protocol === "https:" ? https : http;
   const options = {
@@ -58,11 +58,11 @@ function requestData(url, { json, redirectCount = 0 }) {
             reject(new Error(`Audio status redirect to ${nextUrl.origin} was refused.`));
             return;
           }
-          requestData(nextUrl.toString(), { json, redirectCount: redirectCount + 1 }).then(resolve, reject);
+          requestData(nextUrl.toString(), { json, redirectCount: redirectCount + 1, failureContext }).then(resolve, reject);
           return;
         }
         if (response.statusCode < 200 || response.statusCode >= 300) {
-          reject(new Error(statusErrorMessage(response.statusCode)));
+          reject(new Error(statusErrorMessage(response.statusCode, failureContext)));
           return;
         }
         const buffer = Buffer.concat(chunks);
@@ -109,12 +109,13 @@ function requestErrorMessage(error) {
   return String(error || "Unknown error");
 }
 
-function statusErrorMessage(statusCode) {
+function statusErrorMessage(statusCode, context = "status") {
+  const noun = context === "audio" ? "audio file" : "status request";
   if (Number(statusCode) === 401) {
-    return "Signal K rejected the status request (HTTP 401). Enable Signal K read-only access, or disable security for testing.";
+    return `Signal K rejected the ${noun} (HTTP 401). Enable Signal K read-only access, or disable security for testing.`;
   }
   if (Number(statusCode) === 403) {
-    return "Signal K refused the status request (HTTP 403). The desktop player needs read-only access to AJRM Marine Audio status.";
+    return `Signal K refused the ${noun} (HTTP 403). The desktop player needs read-only access to AJRM Marine Audio status and generated audio.`;
   }
   return `Audio status failed: HTTP ${statusCode}`;
 }

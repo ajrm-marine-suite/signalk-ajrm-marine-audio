@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.45
+
+- Make the desktop player prefer `publicAudioUrl` over the authenticated
+  `audioUrl`, so generated announcements play when Signal K security is enabled
+  with read-only access.
+- Make audio-download 401/403 messages refer to the audio file, not the status
+  request.
+
 ## 0.5.44
 
 - Fetch desktop-player announcement MP3 files through Electron's main process

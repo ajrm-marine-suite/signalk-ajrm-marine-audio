@@ -26,6 +26,7 @@ assert.equal(isAllowedRedirect(new URL("http://192.168.1.20:3000"), new URL("htt
 assert.equal(isAllowedRedirect(new URL("http://nemo.local:3000"), new URL("https://github.com")), false);
 assert.match(statusErrorMessage(401), /read-only access/);
 assert.match(statusErrorMessage(403), /read-only access/);
+assert.match(statusErrorMessage(401, "audio"), /audio file/);
 
 async function withServer(handler, callback) {
   const server = http.createServer(handler);
