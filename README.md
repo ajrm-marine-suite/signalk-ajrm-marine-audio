@@ -2,6 +2,8 @@
 
 ## Version 2 baseline
 
+`v0.5.42` lets the desktop player follow Signal K's HTTP-to-HTTPS redirect,
+shows clearer connection-refused messages, and quits when the window is closed.
 `v0.5.41` adds a desktop-player **Auto-connect** option with one-minute retry
 when the Signal K server is not yet available. `v0.5.40` moves desktop-player status polling through Electron's main process
 so local self-signed Signal K HTTPS certificates do not produce repeated
@@ -172,7 +174,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.41 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.42 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

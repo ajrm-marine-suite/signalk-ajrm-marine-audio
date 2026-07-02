@@ -165,6 +165,7 @@ async function poll({ markExistingSeen = false, initialConnect = false } = {}) {
       scheduleAutoRetry();
       renderState();
     }
+    setMessage(formatErrorMessage(error));
     return false;
   }
 }
@@ -331,6 +332,16 @@ function escapeHtml(value) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+function formatErrorMessage(error) {
+  if (error?.message) return error.message;
+  if (Array.isArray(error?.errors) && error.errors.length) {
+    const first = error.errors.find((item) => item?.message) || error.errors[0];
+    if (first?.message) return first.message;
+  }
+  if (error?.code) return error.code;
+  return String(error || "Unknown error");
 }
 
 window.ajrmPlayer?.appVersion?.().then((version) => {

@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.42
+
+- Let the desktop player follow Signal K's HTTP-to-HTTPS redirect instead of
+  reporting HTTP 302 as a connection failure.
+- Show clearer connection-refused messages when the Signal K server is down.
+- Quit the desktop player when its window is closed, including on macOS.
+
 ## 0.5.41
 
 - Add a desktop-player **Auto-connect** option. When enabled, the player

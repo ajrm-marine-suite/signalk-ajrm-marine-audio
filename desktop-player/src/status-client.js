@@ -4,7 +4,9 @@ const http = require("node:http");
 const https = require("node:https");
 const { isLocalSignalKHost } = require("./local-hosts");
 
-function requestJson(url) {
+const MAX_REDIRECTS = 5;
+
+function requestJson(url, redirectCount = 0) {
   const parsed = new URL(url);
   const client = parsed.protocol === "https:" ? https : http;
   const options = {
@@ -26,6 +28,30 @@ function requestJson(url) {
         body += chunk;
       });
       response.on("end", () => {
+        if (isRedirect(response.statusCode)) {
+          const location = response.headers.location;
+          if (!location) {
+            reject(new Error(`Audio status redirect ${response.statusCode} did not include a Location header.`));
+            return;
+          }
+          if (redirectCount >= MAX_REDIRECTS) {
+            reject(new Error("Audio status redirect limit exceeded."));
+            return;
+          }
+          let nextUrl;
+          try {
+            nextUrl = new URL(location, parsed);
+          } catch (error) {
+            reject(new Error(`Audio status redirect target is invalid: ${error.message}`));
+            return;
+          }
+          if (!isAllowedRedirect(parsed, nextUrl)) {
+            reject(new Error(`Audio status redirect to ${nextUrl.origin} was refused.`));
+            return;
+          }
+          requestJson(nextUrl.toString(), redirectCount + 1).then(resolve, reject);
+          return;
+        }
         if (response.statusCode < 200 || response.statusCode >= 300) {
           reject(new Error(`Audio status failed: HTTP ${response.statusCode}`));
           return;
@@ -45,6 +71,26 @@ function requestJson(url) {
   });
 }
 
+function isRedirect(statusCode) {
+  return [301, 302, 303, 307, 308].includes(Number(statusCode));
+}
+
+function isAllowedRedirect(fromUrl, toUrl) {
+  if (toUrl.protocol !== "http:" && toUrl.protocol !== "https:") return false;
+  if (toUrl.hostname === fromUrl.hostname) return true;
+  return isLocalSignalKHost(fromUrl.hostname) && isLocalSignalKHost(toUrl.hostname);
+}
+
+function requestErrorMessage(error) {
+  if (error?.message) return error.message;
+  if (Array.isArray(error?.errors) && error.errors.length) {
+    const first = error.errors.find((item) => item?.message) || error.errors[0];
+    if (first?.message) return first.message;
+  }
+  if (error?.code) return error.code;
+  return String(error || "Unknown error");
+}
+
 function normalizeServerUrl(value) {
   const url = new URL(String(value || "").trim().replace(/\/+$/, "") || "http://localhost:3000");
   if (url.protocol !== "http:" && url.protocol !== "https:") {
@@ -58,7 +104,9 @@ function statusUrl(serverUrl) {
 }
 
 module.exports = {
+  isAllowedRedirect,
   normalizeServerUrl,
   requestJson,
+  requestErrorMessage,
   statusUrl,
 };
