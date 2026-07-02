@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.38
+
+- Configure Electron's Linux `chrome-sandbox` helper in the Lubuntu player
+  installer and document the manual repair command.
+- Create an **AJRM Marine Audio Player** desktop/app-menu launcher during the
+  Lubuntu player install.
+- Add a `start:no-sandbox` diagnostic fallback for the desktop player.
+
 ## 0.5.37
 
 - Add the standalone AJRM Marine Audio Player under `desktop-player/`, with

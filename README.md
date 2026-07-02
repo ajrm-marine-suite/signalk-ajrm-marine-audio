@@ -2,9 +2,11 @@
 
 ## Version 2 baseline
 
-`v0.5.37` adds the standalone AJRM Marine Audio Player under
-`desktop-player/`, so Lubuntu, macOS, and Windows clients can play
-server-rendered announcements without relying on browser audio.
+`v0.5.38` configures the Electron Linux sandbox helper in the Lubuntu player
+installer and creates a desktop/app-menu launcher. `v0.5.37` adds the
+standalone AJRM Marine Audio Player under `desktop-player/`, so Lubuntu, macOS,
+and Windows clients can play server-rendered announcements without relying on
+browser audio.
 `v0.5.36` clarifies the announcement freshness setting used to drop stale
 queued or prepared announcements. `v0.5.35` keeps browser audio deliberately
 simple after the abandoned `v0.5.34` queueing experiment: browser playback is
@@ -165,7 +167,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.37 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.38 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
@@ -227,6 +229,10 @@ as `https://192.168.1.50:3443`.
 
 The desktop player is not part of the Signal K plugin package installed by npm;
 it is downloaded from this GitHub repository and run on the client machine.
+On Lubuntu, `./scripts/install-lubuntu.sh` also configures Electron's
+`chrome-sandbox` helper with the required root ownership and `4755` permissions,
+then creates an **AJRM Marine Audio Player** launcher in the app menu and on the
+desktop where supported.
 
 ## Radio Stream
 

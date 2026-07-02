@@ -24,6 +24,9 @@ cd signalk-ajrm-marine-audio/desktop-player
 npm start
 ```
 
+The install script also creates an **AJRM Marine Audio Player** launcher in the
+desktop/app menu and, where the desktop folder exists, on the desktop itself.
+
 If `node --version` reports a version older than `20`, install a current Node.js
 release first. One common route on Ubuntu/Lubuntu is:
 
@@ -51,6 +54,30 @@ sudo apt install -y libgtk-3-0 libnss3 libxss1 libatk-bridge2.0-0 libasound2t64
 
 On older Ubuntu releases the audio package may be named `libasound2` instead of
 `libasound2t64`.
+
+Electron on Linux also needs its `chrome-sandbox` helper to be owned by root
+with mode `4755`. The install script configures this automatically. To repair an
+existing install manually:
+
+```sh
+cd ~/signalk-ajrm-marine-audio/desktop-player
+sudo chown root:root node_modules/electron/dist/chrome-sandbox
+sudo chmod 4755 node_modules/electron/dist/chrome-sandbox
+npm start
+```
+
+As a last-resort diagnostic only, the player can be started without the Electron
+sandbox:
+
+```sh
+npm run start:no-sandbox
+```
+
+To recreate the desktop launcher after moving or updating the repository, rerun:
+
+```sh
+./scripts/install-lubuntu.sh
+```
 
 ## First Run
 
