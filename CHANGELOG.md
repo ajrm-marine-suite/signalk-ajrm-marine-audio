@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.37
+
+- Add the standalone AJRM Marine Audio Player under `desktop-player/`, with
+  Lubuntu install instructions and a small install helper.
+
 ## 0.5.36
 
 - Clarify the `Announcement freshness window` configuration description: it

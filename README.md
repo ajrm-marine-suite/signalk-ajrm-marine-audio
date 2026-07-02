@@ -2,6 +2,9 @@
 
 ## Version 2 baseline
 
+`v0.5.37` adds the standalone AJRM Marine Audio Player under
+`desktop-player/`, so Lubuntu, macOS, and Windows clients can play
+server-rendered announcements without relying on browser audio.
 `v0.5.36` clarifies the announcement freshness setting used to drop stale
 queued or prepared announcements. `v0.5.35` keeps browser audio deliberately
 simple after the abandoned `v0.5.34` queueing experiment: browser playback is
@@ -162,7 +165,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.36 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.37 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
@@ -197,6 +200,33 @@ Piper speech render chain is available. The **Local speaker level** slider sets
 and saves the logarithmic default level for local `aplay` output, with its
 minimum mapped to `66%` mixer volume. The Signal K plugin configuration still
 provides the startup defaults and ping volume/frequency settings.
+
+## Standalone Desktop Player
+
+The repository also includes a separate Electron desktop player in
+`desktop-player/`. It is intended for Lubuntu, macOS, and Windows machines that
+should play AJRM Marine Audio announcements locally without depending on a
+browser tab staying awake.
+
+On Lubuntu:
+
+```sh
+sudo apt update
+sudo apt install -y git curl ca-certificates
+
+cd ~
+git clone https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git
+cd signalk-ajrm-marine-audio/desktop-player
+./scripts/install-lubuntu.sh
+npm start
+```
+
+Enter the Signal K server URL when the player opens, for example
+`https://nemo.local:3443`, `http://nemo.local:3000`, or a numeric address such
+as `https://192.168.1.50:3443`.
+
+The desktop player is not part of the Signal K plugin package installed by npm;
+it is downloaded from this GitHub repository and run on the client machine.
 
 ## Radio Stream
 

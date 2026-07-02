@@ -1,0 +1,23 @@
+{
+  "name": "ajrm-marine-audio-player",
+  "version": "0.1.0",
+  "description": "Standalone desktop player for AJRM Marine Audio announcements.",
+  "main": "src/main.js",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "test": "node --check src/main.js && node --check src/preload.js && node --check src/local-hosts.js && node --check src/renderer/app.js && node test/main.test.js"
+  },
+  "keywords": [
+    "ajrm-marine-suite",
+    "signalk",
+    "marine",
+    "audio",
+    "electron"
+  ],
+  "author": "Anthony McDonald, with assistance from William McAusland",
+  "license": "MIT",
+  "devDependencies": {
+    "electron": "^43.0.0"
+  }
+}

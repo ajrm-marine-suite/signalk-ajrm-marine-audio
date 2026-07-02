@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AJRM Marine Audio Player</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main>
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">AJRM Marine Suite</p>
+          <h1>Audio Player</h1>
+        </div>
+        <div id="connectionPill" class="pill bad">Disconnected</div>
+      </header>
+
+      <section class="panel connection-panel">
+        <label>
+          <span>Signal K server</span>
+          <input id="serverUrl" type="url" spellcheck="false" />
+        </label>
+        <button id="connectButton" type="button">Connect</button>
+        <button id="disconnectButton" type="button">Disconnect</button>
+      </section>
+
+      <section class="panel controls">
+        <button id="muteButton" type="button">Mute</button>
+        <label class="volume">
+          <span>Volume</span>
+          <input id="volume" type="range" min="0" max="100" value="100" />
+          <strong id="volumeValue">100%</strong>
+        </label>
+        <button id="repeatButton" type="button">Repeat Last</button>
+        <button id="clearButton" type="button">Clear Queue</button>
+      </section>
+
+      <section class="grid">
+        <article class="panel">
+          <h2>Now Playing</h2>
+          <p id="nowPlaying" class="large muted">No announcement playing.</p>
+          <audio id="audio" preload="auto"></audio>
+        </article>
+
+        <article class="panel">
+          <h2>Status</h2>
+          <dl>
+            <div><dt>Audio plugin</dt><dd id="pluginVersion">-</dd></div>
+            <div><dt>Server time</dt><dd id="serverTime">-</dd></div>
+            <div><dt>Queue</dt><dd id="queueLength">0</dd></div>
+            <div><dt>Last poll</dt><dd id="lastPoll">-</dd></div>
+          </dl>
+        </article>
+      </section>
+
+      <section class="panel">
+        <h2>Announcements</h2>
+        <ol id="announcements" class="announcements"></ol>
+      </section>
+
+      <p id="message" class="message">Ready.</p>
+    </main>
+    <script src="./app.js"></script>
+  </body>
+</html>
