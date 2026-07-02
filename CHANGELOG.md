@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.39
+
+- Let the desktop player return to the disconnected state after a failed first
+  connection attempt, so the server URL can be corrected and Connect pressed
+  again without using Disconnect first.
+
 ## 0.5.38
 
 - Configure Electron's Linux `chrome-sandbox` helper in the Lubuntu player

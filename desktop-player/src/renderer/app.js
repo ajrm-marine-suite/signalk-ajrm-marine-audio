@@ -27,6 +27,8 @@ const els = {
 
 let pollTimer = null;
 let connected = false;
+let connecting = false;
+let connectAttemptId = 0;
 let muted = false;
 let playing = false;
 let queue = [];
@@ -78,18 +80,32 @@ els.audio.addEventListener("error", () => {
 });
 
 async function connect() {
+  if (connecting || connected) return;
+  const attemptId = ++connectAttemptId;
   settings.serverUrl = normalizeServerUrl(els.serverUrl.value);
   els.serverUrl.value = settings.serverUrl;
   saveSettings(settings);
+  connecting = true;
   connected = true;
   seenKeys = [];
   setMessage("Connecting...");
   renderState();
-  await poll({ markExistingSeen: true });
-  pollTimer = window.setInterval(() => poll(), POLL_MS);
+  const ok = await poll({ markExistingSeen: true, initialConnect: true });
+  if (attemptId !== connectAttemptId) return;
+  connecting = false;
+  if (ok) {
+    pollTimer = window.setInterval(() => poll(), POLL_MS);
+  } else {
+    connected = false;
+    if (pollTimer) window.clearInterval(pollTimer);
+    pollTimer = null;
+  }
+  renderState();
 }
 
 function disconnect() {
+  connectAttemptId += 1;
+  connecting = false;
   connected = false;
   if (pollTimer) window.clearInterval(pollTimer);
   pollTimer = null;
@@ -100,7 +116,7 @@ function disconnect() {
   setMessage("Disconnected.");
 }
 
-async function poll({ markExistingSeen = false } = {}) {
+async function poll({ markExistingSeen = false, initialConnect = false } = {}) {
   if (!connected) return;
   try {
     const status = await fetchStatus(settings.serverUrl);
@@ -116,10 +132,13 @@ async function poll({ markExistingSeen = false } = {}) {
     }
     els.lastPoll.textContent = new Date().toLocaleTimeString();
     renderState();
+    return true;
   } catch (error) {
+    if (initialConnect) connected = false;
     els.connectionPill.textContent = "Offline";
     els.connectionPill.className = "pill bad";
     setMessage(error.message || String(error));
+    return false;
   }
 }
 
@@ -185,9 +204,15 @@ function renderStatus(status) {
 }
 
 function renderState() {
-  els.connectionPill.textContent = connected ? (muted ? "Muted" : "Connected") : "Disconnected";
-  els.connectionPill.className = `pill ${connected ? (muted ? "warn" : "good") : "bad"}`;
-  els.connectButton.disabled = connected;
+  els.connectionPill.textContent = connecting
+    ? "Connecting"
+    : connected
+      ? muted
+        ? "Muted"
+        : "Connected"
+      : "Disconnected";
+  els.connectionPill.className = `pill ${connecting ? "warn" : connected ? (muted ? "warn" : "good") : "bad"}`;
+  els.connectButton.disabled = connecting || connected;
   els.disconnectButton.disabled = !connected;
   els.muteButton.textContent = muted ? "Unmute" : "Mute";
   els.queueLength.textContent = String(queue.length);

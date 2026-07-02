@@ -2,7 +2,9 @@
 
 ## Version 2 baseline
 
-`v0.5.38` configures the Electron Linux sandbox helper in the Lubuntu player
+`v0.5.39` lets the desktop player recover cleanly from a failed first
+connection attempt so the server address can be corrected and Connect pressed
+again. `v0.5.38` configures the Electron Linux sandbox helper in the Lubuntu player
 installer and creates a desktop/app-menu launcher. `v0.5.37` adds the
 standalone AJRM Marine Audio Player under `desktop-player/`, so Lubuntu, macOS,
 and Windows clients can play server-rendered announcements without relying on
@@ -167,7 +169,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.38 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.39 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
