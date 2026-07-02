@@ -1253,6 +1253,49 @@ async function postRoute(harness, pathName) {
     muteStopsPlayback.plugin.stop();
     fs.rmSync(muteStopsPlayback.tempDir, { recursive: true, force: true });
 
+    const activeForcedSurvivesMute = createPipelineHarness();
+    sendNotification(
+      activeForcedSurvivesMute,
+      "notifications.system.active-bite-summary-forced",
+      {
+        ...vesselNotification("active-bite-summary-forced", "Marine built in tests complete."),
+        data: {
+          ...vesselNotification("active-bite-summary-forced", "Marine built in tests complete.").data,
+          category: "test",
+          force: true,
+        },
+      },
+      950,
+      "event",
+      [],
+      false,
+    );
+    await waitFor(() => statusOf(activeForcedSurvivesMute).active);
+    sendEngineAudioPolicy(activeForcedSurvivesMute, {
+      muted: true,
+      sequence: 1,
+      mode: "traffic",
+      sessionId: "traffic-session",
+    });
+    const activeForcedRendered = await waitFor(
+      () => {
+        const status = statusOf(activeForcedSurvivesMute);
+        return status.stats.rendered >= 1 ? status : null;
+      },
+      8000,
+    );
+    assert.equal(activeForcedRendered.stats.failed, 0);
+    assert.equal(
+      activeForcedRendered.recentEvents.some((event) =>
+        event.event === "speaker-stopped" &&
+        /Marine built in tests complete/.test(event.message)
+      ),
+      false,
+      "forced BITE summary already playing is not stopped by stationary automute",
+    );
+    activeForcedSurvivesMute.plugin.stop();
+    fs.rmSync(activeForcedSurvivesMute.tempDir, { recursive: true, force: true });
+
     const forcedSurvivesMute = createPipelineHarness();
     sendNotification(
       forcedSurvivesMute,

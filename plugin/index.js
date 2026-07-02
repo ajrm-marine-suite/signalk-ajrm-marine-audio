@@ -1359,6 +1359,7 @@ module.exports = function ajrmMarineAudio(app) {
 
   function stopActiveLocalPlayback(reason) {
     if (!currentLocalPlaybackChild || !currentLocalPlaybackEntry) return false;
+    if (currentLocalPlaybackEntry.force === true) return false;
     currentLocalPlaybackEntry.cancelledByMute = true;
     currentLocalPlaybackEntry.superseded = true;
     currentLocalPlaybackChild.kill("SIGTERM");
