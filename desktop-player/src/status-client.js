@@ -53,7 +53,7 @@ function requestJson(url, redirectCount = 0) {
           return;
         }
         if (response.statusCode < 200 || response.statusCode >= 300) {
-          reject(new Error(`Audio status failed: HTTP ${response.statusCode}`));
+          reject(new Error(statusErrorMessage(response.statusCode)));
           return;
         }
         try {
@@ -91,6 +91,16 @@ function requestErrorMessage(error) {
   return String(error || "Unknown error");
 }
 
+function statusErrorMessage(statusCode) {
+  if (Number(statusCode) === 401) {
+    return "Signal K rejected the status request (HTTP 401). Enable Signal K read-only access, or disable security for testing.";
+  }
+  if (Number(statusCode) === 403) {
+    return "Signal K refused the status request (HTTP 403). The desktop player needs read-only access to AJRM Marine Audio status.";
+  }
+  return `Audio status failed: HTTP ${statusCode}`;
+}
+
 function normalizeServerUrl(value) {
   const url = new URL(String(value || "").trim().replace(/\/+$/, "") || "http://localhost:3000");
   if (url.protocol !== "http:" && url.protocol !== "https:") {
@@ -108,5 +118,6 @@ module.exports = {
   normalizeServerUrl,
   requestJson,
   requestErrorMessage,
+  statusErrorMessage,
   statusUrl,
 };

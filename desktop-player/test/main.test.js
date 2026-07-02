@@ -2,7 +2,7 @@
 
 const assert = require("node:assert/strict");
 const { isLocalSignalKHost } = require("../src/local-hosts");
-const { isAllowedRedirect, normalizeServerUrl, requestJson, statusUrl } = require("../src/status-client");
+const { isAllowedRedirect, normalizeServerUrl, requestJson, statusErrorMessage, statusUrl } = require("../src/status-client");
 const http = require("node:http");
 
 assert.equal(isLocalSignalKHost("localhost"), true);
@@ -24,6 +24,8 @@ assert.throws(() => normalizeServerUrl("file:///tmp/test"), /http/);
 assert.equal(isAllowedRedirect(new URL("http://nemo.local:3000"), new URL("https://nemo.local:3443")), true);
 assert.equal(isAllowedRedirect(new URL("http://192.168.1.20:3000"), new URL("https://192.168.1.20:3443")), true);
 assert.equal(isAllowedRedirect(new URL("http://nemo.local:3000"), new URL("https://github.com")), false);
+assert.match(statusErrorMessage(401), /read-only access/);
+assert.match(statusErrorMessage(403), /read-only access/);
 
 async function withServer(handler, callback) {
   const server = http.createServer(handler);
@@ -47,6 +49,16 @@ async function withServer(handler, callback) {
     response.end(JSON.stringify({ ok: true }));
   }, async (baseUrl) => {
     assert.deepEqual(await requestJson(`${baseUrl}/start`), { ok: true });
+  });
+
+  await withServer((_request, response) => {
+    response.writeHead(401, { "Content-Type": "text/plain" });
+    response.end("Unauthorized");
+  }, async (baseUrl) => {
+    await assert.rejects(
+      () => requestJson(`${baseUrl}/status`),
+      /read-only access/,
+    );
   });
 })().catch((error) => {
   console.error(error);

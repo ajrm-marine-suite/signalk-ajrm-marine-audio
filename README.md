@@ -2,7 +2,8 @@
 
 ## Version 2 baseline
 
-`v0.5.42` lets the desktop player follow Signal K's HTTP-to-HTTPS redirect,
+`v0.5.43` keeps desktop-player connection simple and gives a clear message when
+Signal K security blocks read-only status access. `v0.5.42` lets the desktop player follow Signal K's HTTP-to-HTTPS redirect,
 shows clearer connection-refused messages, and quits when the window is closed.
 `v0.5.41` adds a desktop-player **Auto-connect** option with one-minute retry
 when the Signal K server is not yet available. `v0.5.40` moves desktop-player status polling through Electron's main process
@@ -174,7 +175,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.42 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.43 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
@@ -240,6 +241,9 @@ On Lubuntu, `./scripts/install-lubuntu.sh` also configures Electron's
 `chrome-sandbox` helper with the required root ownership and `4755` permissions,
 then creates an **AJRM Marine Audio Player** launcher in the app menu and on the
 desktop where supported.
+
+When Signal K security is enabled, the desktop player expects Signal K read-only
+access to be enabled. It does not store Signal K login credentials.
 
 ## Radio Stream
 

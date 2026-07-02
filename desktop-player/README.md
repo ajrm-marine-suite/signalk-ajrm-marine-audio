@@ -98,6 +98,10 @@ Enable **Auto-connect** if the player should connect automatically when it
 starts. If the Signal K server is not available yet, the player retries once a
 minute until it connects.
 
+If Signal K security is enabled, enable Signal K read-only access. The desktop
+player deliberately does not store Signal K usernames, passwords, or device
+tokens; it only reads AJRM Marine Audio status and generated announcement URLs.
+
 The player accepts self-signed HTTPS certificates only for local/private Signal
 K hosts: `localhost`, `.local`, `192.168.x.x`, `10.x.x.x`, and
 `172.16.x.x` through `172.31.x.x`. Public internet hosts still use normal

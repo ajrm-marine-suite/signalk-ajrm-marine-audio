@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.43
+
+- Keep desktop-player connection simple: no stored Signal K credentials.
+- Show a clear read-only-access message when Signal K security returns HTTP
+  401/403 for the Audio status endpoint.
+
 ## 0.5.42
 
 - Let the desktop player follow Signal K's HTTP-to-HTTPS redirect instead of

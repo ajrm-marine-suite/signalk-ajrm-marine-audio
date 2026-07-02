@@ -198,7 +198,9 @@ async function fetchStatus(serverUrl) {
     headers: { Accept: "application/json" },
   });
   if (!response.ok) {
-    throw new Error(`Audio status failed: HTTP ${response.status}`);
+    throw new Error(response.status === 401
+      ? "Signal K rejected the status request (HTTP 401). Enable Signal K read-only access, or disable security for testing."
+      : `Audio status failed: HTTP ${response.status}`);
   }
   return response.json();
 }

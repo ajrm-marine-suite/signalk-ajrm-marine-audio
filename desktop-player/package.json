@@ -1,6 +1,6 @@
 {
   "name": "ajrm-marine-audio-player",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Standalone desktop player for AJRM Marine Audio announcements.",
   "main": "src/main.js",
   "private": true,
