@@ -3,6 +3,7 @@
 const STORAGE_KEY = "ajrmMarineAudioPlayer.settings";
 const POLL_MS = 1500;
 const AUTO_RETRY_MS = 60000;
+const PLAYBACK_RETRY_MS = 3000;
 const MAX_SEEN = 120;
 const MAX_HISTORY = 30;
 
@@ -39,6 +40,7 @@ let queue = [];
 let history = [];
 let seenKeys = [];
 let pendingKeys = new Set();
+let playbackRetryTimers = new Set();
 let lastAnnouncement = null;
 let currentItem = null;
 
@@ -77,6 +79,7 @@ els.repeatButton.addEventListener("click", () => {
 });
 els.clearButton.addEventListener("click", () => {
   for (const item of queue) releasePending(item);
+  clearPlaybackRetryTimers();
   queue = [];
   renderState();
   setMessage("Queue cleared.");
@@ -97,11 +100,10 @@ els.audio.addEventListener("ended", () => {
   playNext();
 });
 els.audio.addEventListener("error", () => {
-  releasePending(currentItem);
+  schedulePlaybackRetry(currentItem, "Audio playback failed.");
   currentItem = null;
   playing = false;
-  setMessage("Audio playback failed. The announcement will be retried while it remains available.");
-  playNext();
+  renderState();
 });
 
 if (settings.autoConnect) {
@@ -142,6 +144,7 @@ function disconnect() {
   clearRetry();
   if (pollTimer) window.clearInterval(pollTimer);
   pollTimer = null;
+  clearPlaybackRetryTimers();
   releasePending(currentItem);
   currentItem = null;
   pendingKeys = new Set();
@@ -265,18 +268,17 @@ async function playNext() {
     els.audio.src = await resolveAudioUrl(item);
     cacheSoundCheckIfNeeded(item);
   } catch (error) {
-    releasePending(item);
+    schedulePlaybackRetry(item, `Audio download failed: ${formatErrorMessage(error)}`);
     currentItem = null;
     playing = false;
-    setMessage(`Audio download failed. The announcement will be retried while it remains available: ${formatErrorMessage(error)}`);
-    playNext();
+    renderState();
     return;
   }
   els.audio.play().catch((error) => {
-    releasePending(item);
+    schedulePlaybackRetry(item, `Playback needs user interaction or an available output device: ${error.message || error}`);
     currentItem = null;
     playing = false;
-    setMessage(`Playback needs user interaction or an available output device: ${error.message || error}`);
+    renderState();
   });
   renderState();
 }
@@ -398,6 +400,33 @@ function rememberSeen(key) {
 
 function releasePending(item) {
   if (item?.key) pendingKeys.delete(item.key);
+}
+
+function schedulePlaybackRetry(item, reason) {
+  if (!item) return;
+  if (!connected || seenKeys.includes(item.key)) {
+    releasePending(item);
+    return;
+  }
+  item.retryCount = Number(item.retryCount || 0) + 1;
+  setMessage(`${reason} Retrying in ${Math.round(PLAYBACK_RETRY_MS / 1000)} seconds.`);
+  const timer = window.setTimeout(() => {
+    playbackRetryTimers.delete(timer);
+    if (!connected || seenKeys.includes(item.key)) {
+      releasePending(item);
+      renderState();
+      return;
+    }
+    queue.unshift(item);
+    renderState();
+    playNext();
+  }, PLAYBACK_RETRY_MS);
+  playbackRetryTimers.add(timer);
+}
+
+function clearPlaybackRetryTimers() {
+  for (const timer of playbackRetryTimers) window.clearTimeout(timer);
+  playbackRetryTimers = new Set();
 }
 
 function normalizeServerUrl(value) {

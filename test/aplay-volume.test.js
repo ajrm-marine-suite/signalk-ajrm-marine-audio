@@ -476,6 +476,8 @@ async function postRoute(harness, pathName) {
     "desktop player prefers the authenticated Signal K audio route before the public stream URL",
   );
   assert.match(desktopPlayerApp, /pendingKeys = new Set/);
+  assert.match(desktopPlayerApp, /playbackRetryTimers = new Set/);
+  assert.match(desktopPlayerApp, /function schedulePlaybackRetry/);
   assert.match(desktopPlayerApp, /rememberSeen\(currentItem\.key\)/);
   assert.doesNotMatch(
     desktopPlayerApp,
