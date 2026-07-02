@@ -1128,7 +1128,7 @@ module.exports = function ajrmMarineAudio(app) {
 
       const rendered = {
         ...entry,
-        audioUrl: mp3FileName ? `/plugins/${PLUGIN_ID}/audio/${mp3FileName}` : "",
+        audioUrl: mp3FileName ? `/signalk/v1/api/ajrmMarineAudio/audio/${mp3FileName}` : "",
         publicAudioUrl: mp3FileName ? publicAudioFileUrl(mp3FileName) : "",
         streamUrl: `/plugins/${PLUGIN_ID}/live.mp3`,
         playlistUrl: `/plugins/${PLUGIN_ID}/live.m3u`,

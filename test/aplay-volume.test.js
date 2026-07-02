@@ -405,6 +405,7 @@ async function postRoute(harness, pathName) {
   const html = fs.readFileSync(path.join(__dirname, "..", "public", "index.html"), "utf8");
   const browserApp = fs.readFileSync(path.join(__dirname, "..", "public", "app.js"), "utf8");
   const browserCss = fs.readFileSync(path.join(__dirname, "..", "public", "styles.css"), "utf8");
+  const pluginSource = fs.readFileSync(path.join(__dirname, "..", "plugin", "index.js"), "utf8");
   assert.match(html, /Output routing/);
   assert.match(html, /browserOutputOff/);
   assert.match(html, /browserOutputSpeech/);
@@ -474,6 +475,11 @@ async function postRoute(harness, pathName) {
     desktopPlayerApp,
     /announcement\.audioUrl \|\| announcement\.publicAudioUrl/,
     "desktop player prefers the authenticated Signal K audio route before the public stream URL",
+  );
+  assert.match(
+    pluginSource,
+    /\/signalk\/v1\/api\/ajrmMarineAudio\/audio\/\$\{mp3FileName\}/,
+    "Audio publishes generated MP3s on the Signal K API read route as audioUrl",
   );
   assert.match(desktopPlayerApp, /pendingKeys = new Set/);
   assert.match(desktopPlayerApp, /playbackRetryTimers = new Set/);
