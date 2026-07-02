@@ -12,6 +12,7 @@ const els = {
   connectButton: document.getElementById("connectButton"),
   disconnectButton: document.getElementById("disconnectButton"),
   muteButton: document.getElementById("muteButton"),
+  soundCheckButton: document.getElementById("soundCheckButton"),
   repeatButton: document.getElementById("repeatButton"),
   clearButton: document.getElementById("clearButton"),
   volume: document.getElementById("volume"),
@@ -64,6 +65,7 @@ els.muteButton.addEventListener("click", () => {
   renderState();
   if (!muted) playNext();
 });
+els.soundCheckButton.addEventListener("click", playCachedSoundCheck);
 els.repeatButton.addEventListener("click", () => {
   if (!lastAnnouncement) {
     setMessage("No announcement has been received yet.");
@@ -220,6 +222,10 @@ function enqueue(announcement, { force = false } = {}) {
     message: String(announcement.message || ""),
     receivedAt: new Date().toISOString(),
   };
+  if (isSoundCheckAnnouncement(item.message)) {
+    settings.soundCheckMessage = item.message;
+    saveSettings(settings);
+  }
   queue.push(item);
   lastAnnouncement = item;
   history.unshift(item);
@@ -242,6 +248,7 @@ async function playNext() {
   els.nowPlaying.classList.remove("muted");
   try {
     els.audio.src = await resolveAudioUrl(item);
+    cacheSoundCheckIfNeeded(item);
   } catch (error) {
     playing = false;
     setMessage(`Audio download failed: ${formatErrorMessage(error)}`);
@@ -253,6 +260,27 @@ async function playNext() {
     setMessage(`Playback needs user interaction or an available output device: ${error.message || error}`);
   });
   renderState();
+}
+
+function playCachedSoundCheck() {
+  if (!settings.soundCheckDataUrl) {
+    setMessage("No cached Sound Check audio yet. Run Sound Check from AJRM Marine Audio once while this player is connected.");
+    return;
+  }
+  const item = {
+    key: `local-sound-check:${Date.now()}`,
+    audioUrl: "",
+    playbackUrl: settings.soundCheckDataUrl,
+    message: settings.soundCheckMessage || "Sound Check. Testing 1, 2, 3.",
+    receivedAt: new Date().toISOString(),
+  };
+  if (playing) {
+    els.audio.pause();
+    playing = false;
+  }
+  queue.unshift(item);
+  setMessage("Playing cached Sound Check.");
+  playNext();
 }
 
 async function resolveAudioUrl(item) {
@@ -283,12 +311,26 @@ function renderState() {
   els.connectionPill.className = `pill ${connecting ? "warn" : connected ? (muted ? "warn" : "good") : "bad"}`;
   els.connectButton.disabled = connecting || connected;
   els.disconnectButton.disabled = !connected;
+  els.soundCheckButton.disabled = !settings.soundCheckDataUrl;
   els.muteButton.textContent = muted ? "Unmute" : "Mute";
   els.queueLength.textContent = String(queue.length);
   if (!playing && !queue.length) {
     els.nowPlaying.textContent = "No announcement playing.";
     els.nowPlaying.classList.add("muted");
   }
+}
+
+function cacheSoundCheckIfNeeded(item) {
+  if (!item?.playbackUrl || !isSoundCheckAnnouncement(item.message)) return;
+  settings.soundCheckDataUrl = item.playbackUrl;
+  settings.soundCheckMessage = item.message;
+  settings.soundCheckCachedAt = new Date().toISOString();
+  saveSettings(settings);
+  renderState();
+}
+
+function isSoundCheckAnnouncement(message) {
+  return /\bsound\s*check\b/i.test(String(message || ""));
 }
 
 function renderHistory() {

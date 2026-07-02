@@ -105,6 +105,12 @@ The player fetches both status and MP3 announcement files through Electron's
 main process so local self-signed Signal K HTTPS certificates do not prevent
 playback.
 
+The **Sound Check** button replays the most recent Sound Check announcement
+that this player has received. It is cached locally as rendered MP3 audio, so it
+uses the selected server voice but does not require Piper on the desktop
+machine. The button becomes available after one Sound Check has been received
+from AJRM Marine Audio.
+
 The player accepts self-signed HTTPS certificates only for local/private Signal
 K hosts: `localhost`, `.local`, `192.168.x.x`, `10.x.x.x`, and
 `172.16.x.x` through `172.31.x.x`. Public internet hosts still use normal
@@ -124,7 +130,8 @@ backfill old browser/audio history when the app starts.
 - Cross-platform Electron app.
 - Local mute and volume.
 - FIFO playback of server-rendered MP3 announcements.
-- Sound Check using the latest rendered announcement when available.
+- Local Sound Check replay using the latest rendered Sound Check announcement
+  when available.
 - No AIS, GPS, traffic, instrument, or profile logic.
 
 ## Next Steps

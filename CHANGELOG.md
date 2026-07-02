@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.5.46
+
+- Add a desktop-player **Sound Check** button that replays the latest cached
+  server-rendered Sound Check MP3 for local volume setting.
+- Cache the received Sound Check MP3 locally so the selected server voice is
+  reused without requiring Piper on the desktop machine.
+
 ## 0.5.45
 
 - Make the desktop player prefer `publicAudioUrl` over the authenticated
