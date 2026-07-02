@@ -100,6 +100,20 @@ input[type="url"] {
   font: inherit;
 }
 
+.auto-connect {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  gap: 8px;
+  color: #d6e7e2;
+  white-space: nowrap;
+}
+
+.auto-connect input {
+  width: 18px;
+  height: 18px;
+}
+
 button {
   min-height: 44px;
   padding: 0 16px;

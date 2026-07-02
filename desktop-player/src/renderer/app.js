@@ -2,11 +2,13 @@
 
 const STORAGE_KEY = "ajrmMarineAudioPlayer.settings";
 const POLL_MS = 1500;
+const AUTO_RETRY_MS = 60000;
 const MAX_SEEN = 120;
 const MAX_HISTORY = 30;
 
 const els = {
   serverUrl: document.getElementById("serverUrl"),
+  autoConnect: document.getElementById("autoConnect"),
   connectButton: document.getElementById("connectButton"),
   disconnectButton: document.getElementById("disconnectButton"),
   muteButton: document.getElementById("muteButton"),
@@ -26,6 +28,7 @@ const els = {
 };
 
 let pollTimer = null;
+let retryTimer = null;
 let connected = false;
 let connecting = false;
 let connectAttemptId = 0;
@@ -38,13 +41,23 @@ let lastAnnouncement = null;
 
 const settings = loadSettings();
 els.serverUrl.value = settings.serverUrl || "http://localhost:3000";
+els.autoConnect.checked = Boolean(settings.autoConnect);
 els.volume.value = String(settings.volume ?? 100);
 els.audio.volume = Number(els.volume.value) / 100;
 renderVolume();
 renderState();
 
-els.connectButton.addEventListener("click", connect);
+els.connectButton.addEventListener("click", () => connect({ automatic: false }));
 els.disconnectButton.addEventListener("click", disconnect);
+els.autoConnect.addEventListener("change", () => {
+  settings.autoConnect = els.autoConnect.checked;
+  saveSettings(settings);
+  if (els.autoConnect.checked && !connected && !connecting) {
+    scheduleAutoRetry({ immediate: true });
+  } else {
+    clearRetry();
+  }
+});
 els.muteButton.addEventListener("click", () => {
   muted = !muted;
   if (muted) els.audio.pause();
@@ -79,8 +92,13 @@ els.audio.addEventListener("error", () => {
   playNext();
 });
 
-async function connect() {
+if (settings.autoConnect) {
+  window.setTimeout(() => connect({ automatic: true }), 0);
+}
+
+async function connect({ automatic = false } = {}) {
   if (connecting || connected) return;
+  clearRetry();
   const attemptId = ++connectAttemptId;
   settings.serverUrl = normalizeServerUrl(els.serverUrl.value);
   els.serverUrl.value = settings.serverUrl;
@@ -99,6 +117,7 @@ async function connect() {
     connected = false;
     if (pollTimer) window.clearInterval(pollTimer);
     pollTimer = null;
+    if (automatic || settings.autoConnect) scheduleAutoRetry();
   }
   renderState();
 }
@@ -107,6 +126,7 @@ function disconnect() {
   connectAttemptId += 1;
   connecting = false;
   connected = false;
+  clearRetry();
   if (pollTimer) window.clearInterval(pollTimer);
   pollTimer = null;
   queue = [];
@@ -138,8 +158,33 @@ async function poll({ markExistingSeen = false, initialConnect = false } = {}) {
     els.connectionPill.textContent = "Offline";
     els.connectionPill.className = "pill bad";
     setMessage(error.message || String(error));
+    if (!initialConnect && settings.autoConnect) {
+      connected = false;
+      if (pollTimer) window.clearInterval(pollTimer);
+      pollTimer = null;
+      scheduleAutoRetry();
+      renderState();
+    }
     return false;
   }
+}
+
+function scheduleAutoRetry({ immediate = false } = {}) {
+  clearRetry();
+  if (!settings.autoConnect || connected || connecting) return;
+  const delay = immediate ? 0 : AUTO_RETRY_MS;
+  retryTimer = window.setTimeout(() => {
+    retryTimer = null;
+    connect({ automatic: true });
+  }, delay);
+  if (!immediate) {
+    setMessage(`Auto-connect failed. Retrying in ${Math.round(AUTO_RETRY_MS / 1000)} seconds.`);
+  }
+}
+
+function clearRetry() {
+  if (retryTimer) window.clearTimeout(retryTimer);
+  retryTimer = null;
 }
 
 async function fetchStatus(serverUrl) {

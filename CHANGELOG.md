@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.41
+
+- Add a desktop-player **Auto-connect** option. When enabled, the player
+  connects automatically on startup and retries once a minute if the Signal K
+  server is not yet available.
+
 ## 0.5.40
 
 - Move desktop-player status polling through Electron's main process so local
