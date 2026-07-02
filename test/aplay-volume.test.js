@@ -466,6 +466,22 @@ async function postRoute(harness, pathName) {
     browserApp,
     /status\.lastAnnouncement\.audioUrl \|\| status\.lastAnnouncement\.publicAudioUrl/,
   );
+  const desktopPlayerApp = fs.readFileSync(
+    path.join(__dirname, "..", "desktop-player", "src", "renderer", "app.js"),
+    "utf8",
+  );
+  assert.match(
+    desktopPlayerApp,
+    /announcement\.audioUrl \|\| announcement\.publicAudioUrl/,
+    "desktop player prefers the authenticated Signal K audio route before the public stream URL",
+  );
+  assert.match(desktopPlayerApp, /pendingKeys = new Set/);
+  assert.match(desktopPlayerApp, /rememberSeen\(currentItem\.key\)/);
+  assert.doesNotMatch(
+    desktopPlayerApp,
+    /rememberSeen\(key\);\s*const absoluteAudioUrl/s,
+    "desktop player must not mark an announcement seen before successful playback",
+  );
   assert.match(browserCss, /button\.command-sent/);
   assert.match(browserCss, /button:not\(:disabled\):active/);
   assert.match(browserCss, /button:disabled/);

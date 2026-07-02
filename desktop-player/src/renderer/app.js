@@ -38,7 +38,9 @@ let playing = false;
 let queue = [];
 let history = [];
 let seenKeys = [];
+let pendingKeys = new Set();
 let lastAnnouncement = null;
+let currentItem = null;
 
 const settings = loadSettings();
 els.serverUrl.value = settings.serverUrl || "http://localhost:3000";
@@ -74,6 +76,7 @@ els.repeatButton.addEventListener("click", () => {
   enqueue(lastAnnouncement, { force: true });
 });
 els.clearButton.addEventListener("click", () => {
+  for (const item of queue) releasePending(item);
   queue = [];
   renderState();
   setMessage("Queue cleared.");
@@ -85,12 +88,19 @@ els.volume.addEventListener("input", () => {
   renderVolume();
 });
 els.audio.addEventListener("ended", () => {
+  if (currentItem) {
+    rememberSeen(currentItem.key);
+    releasePending(currentItem);
+  }
+  currentItem = null;
   playing = false;
   playNext();
 });
 els.audio.addEventListener("error", () => {
+  releasePending(currentItem);
+  currentItem = null;
   playing = false;
-  setMessage("Audio playback failed. Skipping to the next announcement.");
+  setMessage("Audio playback failed. The announcement will be retried while it remains available.");
   playNext();
 });
 
@@ -108,6 +118,7 @@ async function connect({ automatic = false } = {}) {
   connecting = true;
   connected = true;
   seenKeys = [];
+  pendingKeys = new Set();
   setMessage("Connecting...");
   renderState();
   const ok = await poll({ markExistingSeen: true, initialConnect: true });
@@ -131,6 +142,9 @@ function disconnect() {
   clearRetry();
   if (pollTimer) window.clearInterval(pollTimer);
   pollTimer = null;
+  releasePending(currentItem);
+  currentItem = null;
+  pendingKeys = new Set();
   queue = [];
   playing = false;
   els.audio.pause();
@@ -209,11 +223,11 @@ async function fetchStatus(serverUrl) {
 
 function enqueue(announcement, { force = false } = {}) {
   if (!announcement || !announcement.message) return false;
-  const audioUrl = announcement.publicAudioUrl || announcement.audioUrl || "";
+  const audioUrl = announcement.audioUrl || announcement.publicAudioUrl || "";
   if (!audioUrl) return false;
   const key = announcementKey(announcement);
-  if (!force && seenKeys.includes(key)) return false;
-  rememberSeen(key);
+  if (!force && (seenKeys.includes(key) || pendingKeys.has(key))) return false;
+  if (!force) pendingKeys.add(key);
   const absoluteAudioUrl = absoluteUrl(settings.serverUrl, audioUrl);
   const item = {
     key,
@@ -244,18 +258,23 @@ async function playNext() {
     return;
   }
   playing = true;
+  currentItem = item;
   els.nowPlaying.textContent = item.message;
   els.nowPlaying.classList.remove("muted");
   try {
     els.audio.src = await resolveAudioUrl(item);
     cacheSoundCheckIfNeeded(item);
   } catch (error) {
+    releasePending(item);
+    currentItem = null;
     playing = false;
-    setMessage(`Audio download failed: ${formatErrorMessage(error)}`);
+    setMessage(`Audio download failed. The announcement will be retried while it remains available: ${formatErrorMessage(error)}`);
     playNext();
     return;
   }
   els.audio.play().catch((error) => {
+    releasePending(item);
+    currentItem = null;
     playing = false;
     setMessage(`Playback needs user interaction or an available output device: ${error.message || error}`);
   });
@@ -375,6 +394,10 @@ function rememberSeen(key) {
   if (!key || seenKeys.includes(key)) return;
   seenKeys.push(key);
   if (seenKeys.length > MAX_SEEN) seenKeys = seenKeys.slice(-MAX_SEEN);
+}
+
+function releasePending(item) {
+  if (item?.key) pendingKeys.delete(item.key);
 }
 
 function normalizeServerUrl(value) {
