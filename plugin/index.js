@@ -1324,13 +1324,16 @@ module.exports = function ajrmMarineAudio(app) {
   }
 
   function clearQueuedAnnouncements(reason) {
-    const removed = queue.length;
+    const originalQueueLength = queue.length;
+    const retainedQueue = queue.filter((entry) => entry?.force === true);
+    const removed = originalQueueLength - retainedQueue.length;
     const preparingEntry = preparing?.entry || null;
     const preparedEntry = prepared?.entry || null;
     const cancelledPreparing =
-      preparingEntry && preparingEntry.superseded !== true;
-    const cancelledPrepared = preparedEntry && preparedEntry.superseded !== true;
-    queue = [];
+      preparingEntry && preparingEntry.force !== true && preparingEntry.superseded !== true;
+    const cancelledPrepared =
+      preparedEntry && preparedEntry.force !== true && preparedEntry.superseded !== true;
+    queue = retainedQueue;
     if (cancelledPreparing) preparingEntry.superseded = true;
     if (cancelledPrepared) {
       preparedEntry.superseded = true;
@@ -1341,6 +1344,9 @@ module.exports = function ajrmMarineAudio(app) {
     const details = [];
     if (removed > 0) {
       details.push(`dropped ${removed} queued announcement${removed === 1 ? "" : "s"}`);
+    }
+    if (retainedQueue.length > 0) {
+      details.push(`kept ${retainedQueue.length} forced announcement${retainedQueue.length === 1 ? "" : "s"}`);
     }
     if (cancelledPreparing) details.push("cancelled in-flight preparation");
     if (cancelledPrepared) details.push("discarded prepared announcement");

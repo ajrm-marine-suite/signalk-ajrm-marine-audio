@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.49
+
+- Keep forced test announcements, including BITE audible summaries, in the
+  queue when Traffic stationary automute activates and clears ordinary queued
+  audio.
+- Add a regression test for a forced BITE summary queued behind active playback
+  when automute switches on.
+
 ## 0.5.48
 
 - Honour forced Notifications audio requests so explicit test announcements,

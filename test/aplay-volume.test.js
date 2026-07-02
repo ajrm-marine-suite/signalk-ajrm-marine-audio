@@ -1252,6 +1252,50 @@ async function postRoute(harness, pathName) {
     assert.equal(statusOf(muteStopsPlayback).stats.failed, 0);
     muteStopsPlayback.plugin.stop();
     fs.rmSync(muteStopsPlayback.tempDir, { recursive: true, force: true });
+
+    const forcedSurvivesMute = createPipelineHarness();
+    sendNotification(
+      forcedSurvivesMute,
+      "notifications.system.long-playback-before-bite",
+      vesselNotification("long-playback-before-bite", "This playback should stop when muted before BITE summary."),
+      100,
+    );
+    await waitFor(() => statusOf(forcedSurvivesMute).active);
+    sendNotification(
+      forcedSurvivesMute,
+      "notifications.system.bite-summary-forced",
+      {
+        ...vesselNotification("bite-summary-forced", "Marine built in tests complete."),
+        data: {
+          ...vesselNotification("bite-summary-forced", "Marine built in tests complete.").data,
+          category: "test",
+          force: true,
+        },
+      },
+      700,
+      "event",
+      [],
+      false,
+    );
+    await waitFor(() => statusOf(forcedSurvivesMute).queueLength >= 1);
+    sendEngineAudioPolicy(forcedSurvivesMute, {
+      muted: true,
+      sequence: 1,
+      mode: "traffic",
+      sessionId: "traffic-session",
+    });
+    await waitFor(() => statusOf(forcedSurvivesMute).engineMuted === true);
+    const forcedRendered = await waitFor(
+      () => statusOf(forcedSurvivesMute).recentEvents.some(
+        (event) =>
+          event.event === "rendered" &&
+          /Marine built in tests complete/.test(event.message),
+      ),
+      8000,
+    );
+    assert.equal(forcedRendered, true, "forced BITE summary survives stationary automute queue clearing");
+    forcedSurvivesMute.plugin.stop();
+    fs.rmSync(forcedSurvivesMute.tempDir, { recursive: true, force: true });
   }
 
   const engineMute = createHarness();
