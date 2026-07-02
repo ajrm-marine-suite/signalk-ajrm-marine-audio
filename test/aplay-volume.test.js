@@ -478,6 +478,9 @@ async function postRoute(harness, pathName) {
   assert.match(desktopPlayerApp, /pendingKeys = new Set/);
   assert.match(desktopPlayerApp, /playbackRetryTimers = new Set/);
   assert.match(desktopPlayerApp, /function schedulePlaybackRetry/);
+  assert.match(desktopPlayerApp, /pollInFlight = false/);
+  assert.match(desktopPlayerApp, /if \(pollInFlight\) return/);
+  assert.match(desktopPlayerApp, /finally \{\s*pollInFlight = false;\s*\}/s);
   assert.match(desktopPlayerApp, /rememberSeen\(currentItem\.key\)/);
   assert.doesNotMatch(
     desktopPlayerApp,

@@ -31,6 +31,8 @@ const els = {
 
 let pollTimer = null;
 let retryTimer = null;
+let pollInFlight = false;
+let statusFailureCount = 0;
 let connected = false;
 let connecting = false;
 let connectAttemptId = 0;
@@ -119,6 +121,8 @@ async function connect({ automatic = false } = {}) {
   saveSettings(settings);
   connecting = true;
   connected = true;
+  pollInFlight = false;
+  statusFailureCount = 0;
   seenKeys = [];
   pendingKeys = new Set();
   setMessage("Connecting...");
@@ -141,6 +145,8 @@ function disconnect() {
   connectAttemptId += 1;
   connecting = false;
   connected = false;
+  pollInFlight = false;
+  statusFailureCount = 0;
   clearRetry();
   if (pollTimer) window.clearInterval(pollTimer);
   pollTimer = null;
@@ -157,8 +163,11 @@ function disconnect() {
 
 async function poll({ markExistingSeen = false, initialConnect = false } = {}) {
   if (!connected) return;
+  if (pollInFlight) return;
+  pollInFlight = true;
   try {
     const status = await fetchStatus(settings.serverUrl);
+    statusFailureCount = 0;
     renderStatus(status);
     const announcements = status.recentAnnouncements?.length
       ? status.recentAnnouncements
@@ -174,18 +183,16 @@ async function poll({ markExistingSeen = false, initialConnect = false } = {}) {
     return true;
   } catch (error) {
     if (initialConnect) connected = false;
-    els.connectionPill.textContent = "Offline";
-    els.connectionPill.className = "pill bad";
-    setMessage(error.message || String(error));
-    if (!initialConnect && settings.autoConnect) {
-      connected = false;
-      if (pollTimer) window.clearInterval(pollTimer);
-      pollTimer = null;
-      scheduleAutoRetry();
-      renderState();
+    statusFailureCount += 1;
+    if (initialConnect) {
+      els.connectionPill.textContent = "Offline";
+      els.connectionPill.className = "pill bad";
     }
-    setMessage(formatErrorMessage(error));
+    setMessage(`Audio status poll failed${statusFailureCount > 1 ? ` ${statusFailureCount} times` : ""}: ${formatErrorMessage(error)}`);
+    renderState();
     return false;
+  } finally {
+    pollInFlight = false;
   }
 }
 
@@ -325,11 +332,13 @@ function renderState() {
   els.connectionPill.textContent = connecting
     ? "Connecting"
     : connected
-      ? muted
+      ? statusFailureCount > 0
+        ? "Status delayed"
+        : muted
         ? "Muted"
         : "Connected"
       : "Disconnected";
-  els.connectionPill.className = `pill ${connecting ? "warn" : connected ? (muted ? "warn" : "good") : "bad"}`;
+  els.connectionPill.className = `pill ${connecting ? "warn" : connected ? (muted || statusFailureCount > 0 ? "warn" : "good") : "bad"}`;
   els.connectButton.disabled = connecting || connected;
   els.disconnectButton.disabled = !connected;
   els.soundCheckButton.disabled = !settings.soundCheckDataUrl;
