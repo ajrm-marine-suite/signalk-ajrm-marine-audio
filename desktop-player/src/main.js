@@ -3,7 +3,7 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("node:path");
 const { isLocalSignalKHost } = require("./local-hosts");
-const { requestAudioDataUrl, requestJson, statusUrl } = require("./status-client");
+const { requestAudioDataUrl, requestErrorMessage, requestJson, statusUrl } = require("./status-client");
 
 let mainWindow = null;
 
@@ -58,5 +58,17 @@ app.on("window-all-closed", () => {
 });
 
 ipcMain.handle("app-version", () => app.getVersion());
-ipcMain.handle("fetch-audio-status", (_event, serverUrl) => requestJson(statusUrl(serverUrl)));
-ipcMain.handle("fetch-audio-data-url", (_event, audioUrl) => requestAudioDataUrl(audioUrl));
+ipcMain.handle("fetch-audio-status", async (_event, serverUrl) => safeResult(() => requestJson(statusUrl(serverUrl))));
+ipcMain.handle("fetch-audio-data-url", async (_event, audioUrl) => safeResult(() => requestAudioDataUrl(audioUrl)));
+
+async function safeResult(action) {
+  try {
+    return { ok: true, value: await action() };
+  } catch (error) {
+    return {
+      ok: false,
+      error: requestErrorMessage(error),
+      code: error?.code || "",
+    };
+  }
+}

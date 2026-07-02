@@ -2,7 +2,9 @@
 
 ## Version 2 baseline
 
-`v0.5.46` adds a desktop-player **Sound Check** button that replays the latest
+`v0.5.47` keeps expected desktop-player network failures, such as status
+timeouts or socket resets, in the app UI instead of logging noisy Electron IPC
+handler exceptions. `v0.5.46` adds a desktop-player **Sound Check** button that replays the latest
 cached server-rendered Sound Check MP3 for local volume setting. `v0.5.45` makes the desktop player prefer public generated-audio URLs when
 Signal K security is enabled. `v0.5.44` fetches desktop-player announcement MP3 files through Electron's main
 process so local self-signed Signal K HTTPS certificates do not stop playback.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.47
+
+- Keep desktop-player status and audio fetch failures inside the app UI instead
+  of letting expected network timeouts or socket resets log noisy Electron IPC
+  handler exceptions to the terminal.
+
 ## 0.5.46
 
 - Add a desktop-player **Sound Check** button that replays the latest cached

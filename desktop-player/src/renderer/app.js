@@ -192,7 +192,7 @@ function clearRetry() {
 
 async function fetchStatus(serverUrl) {
   if (window.ajrmPlayer?.fetchStatus) {
-    return window.ajrmPlayer.fetchStatus(serverUrl);
+    return unwrapPlayerResult(await window.ajrmPlayer.fetchStatus(serverUrl));
   }
   const response = await fetch(`${serverUrl}/signalk/v1/api/ajrmMarineAudio/status`, {
     cache: "no-store",
@@ -286,7 +286,7 @@ function playCachedSoundCheck() {
 async function resolveAudioUrl(item) {
   if (item.playbackUrl) return item.playbackUrl;
   if (window.ajrmPlayer?.fetchAudioDataUrl) {
-    item.playbackUrl = await window.ajrmPlayer.fetchAudioDataUrl(item.audioUrl);
+    item.playbackUrl = unwrapPlayerResult(await window.ajrmPlayer.fetchAudioDataUrl(item.audioUrl));
     return item.playbackUrl;
   }
   item.playbackUrl = item.audioUrl;
@@ -347,6 +347,17 @@ function renderVolume() {
 
 function setMessage(message) {
   els.message.textContent = message;
+}
+
+function unwrapPlayerResult(result) {
+  if (!result || result.ok !== false) {
+    return result && Object.prototype.hasOwnProperty.call(result, "value")
+      ? result.value
+      : result;
+  }
+  const error = new Error(result.error || "Audio player request failed.");
+  if (result.code) error.code = result.code;
+  throw error;
 }
 
 function announcementKey(announcement) {
