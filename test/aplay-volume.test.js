@@ -125,6 +125,9 @@ function sendNotification(
   const audioRequest = value?.data?.audioRequest || {
     requestId: `test-broker:${audioSequence}`,
   };
+  if (value?.data?.force === true) {
+    audioRequest.force = true;
+  }
   const audioEvent = {
     schemaVersion: 1,
     provider: "ajrm-marine-traffic",
@@ -140,6 +143,7 @@ function sendNotification(
       streamOutput: true,
       muteState,
       preempt,
+      force: value?.data?.force === true,
     },
     presentation: {
       title: alertEvent.vesselName || "AJRM Marine",
@@ -1286,6 +1290,21 @@ async function postRoute(harness, pathName) {
     vesselNotification("traffic-muted", "This GPS alert must remain silent while stationary automute is active."),
   );
   assert.equal(statusOf(trafficMute).queueLength, 0);
+  sendNotification(
+    trafficMute,
+    "notifications.system.bite-summary",
+    {
+      ...vesselNotification("bite-summary", "Marine built in tests complete."),
+      data: {
+        ...vesselNotification("bite-summary", "Marine built in tests complete.").data,
+        category: "test",
+        force: true,
+      },
+    },
+  );
+  assert.equal(statusOf(trafficMute).stats.queued, 1);
+  assert.equal(statusOf(trafficMute).lastAnnouncement.force, true);
+  assert.equal(statusOf(trafficMute).lastAnnouncement.message, "Marine built in tests complete.");
   trafficMute.plugin.stop();
 
   const emptyProviderMute = createHarness();

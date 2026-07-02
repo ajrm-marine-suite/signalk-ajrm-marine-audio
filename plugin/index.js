@@ -901,6 +901,7 @@ module.exports = function ajrmMarineAudio(app) {
       category: envelope.presentation?.category || "notification",
       message,
       sourcePath: AJRM_MARINE_NOTIFICATIONS_PATH,
+      force: request?.force === true || envelope.delivery?.force === true,
       localPlayback: envelope.delivery?.localPlayback !== false,
       streamOutput: envelope.delivery?.streamOutput !== false,
     });

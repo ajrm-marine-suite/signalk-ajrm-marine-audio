@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.48
+
+- Honour forced Notifications audio requests so explicit test announcements,
+  such as BITE audible summaries, can bypass Traffic stationary automute in the
+  same way as Sound Check.
+
 ## 0.5.47
 
 - Keep desktop-player status and audio fetch failures inside the app UI instead
