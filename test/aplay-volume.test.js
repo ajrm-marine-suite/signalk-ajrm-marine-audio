@@ -1058,6 +1058,52 @@ async function postRoute(harness, pathName) {
     fs.rmSync(queuedMute.tempDir, { recursive: true, force: true });
   }
 
+  const repeatedCollision = createHarness();
+  const firstCollision = vesselNotification(
+    "235900004",
+    "Collision alarm. Medium vessel HARBOUR TUG at 9 o'clock.",
+  );
+  firstCollision.data.alertEvent.id = "traffic-collision-235900004-1";
+  firstCollision.data.audioRequest = {
+    requestId: "broker-session:1",
+    eventId: "traffic-collision-235900004-1",
+    message: "Collision alarm. Medium vessel HARBOUR TUG at 9 o'clock.",
+  };
+  sendNotification(
+    repeatedCollision,
+    "notifications.collision.235900004",
+    firstCollision,
+    800,
+    "active",
+    ["ajrm-marine:traffic:vessel:235900004"],
+    true,
+  );
+  const repeatCollision = vesselNotification(
+    "235900004",
+    "Collision alarm. Medium vessel HARBOUR TUG at 9 o'clock.",
+  );
+  repeatCollision.data.alertEvent.id = "traffic-collision-235900004-2";
+  repeatCollision.data.audioRequest = {
+    requestId: "broker-session:2",
+    eventId: "traffic-collision-235900004-2",
+    message: "Collision alarm. Medium vessel HARBOUR TUG at 9 o'clock.",
+  };
+  sendNotification(
+    repeatedCollision,
+    "notifications.collision.235900004",
+    repeatCollision,
+    800,
+    "active",
+    ["ajrm-marine:traffic:vessel:235900004"],
+    false,
+  );
+  assert.equal(
+    statusOf(repeatedCollision).stats.queued,
+    2,
+    "same active collision subject with new broker audio events must queue repeated warnings",
+  );
+  repeatedCollision.plugin.stop();
+
   const duplicateRequest = createHarness();
   const duplicatedNotification = vesselNotification(
     "duplicate-audio",
