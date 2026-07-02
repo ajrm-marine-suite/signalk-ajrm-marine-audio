@@ -7,6 +7,8 @@ const { requestAudioDataUrl, requestErrorMessage, requestJson, statusUrl } = req
 
 let mainWindow = null;
 
+app.commandLine.appendSwitch("autoplay-policy", "no-user-gesture-required");
+
 function installLocalCertificatePolicy() {
   app.on("certificate-error", (event, _webContents, url, _error, _certificate, callback) => {
     let hostname = "";
@@ -35,6 +37,7 @@ function createWindow() {
     backgroundColor: "#071317",
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
+      backgroundThrottling: false,
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: false,
