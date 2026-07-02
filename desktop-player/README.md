@@ -101,6 +101,9 @@ minute until it connects.
 If Signal K security is enabled, enable Signal K read-only access. The desktop
 player deliberately does not store Signal K usernames, passwords, or device
 tokens; it only reads AJRM Marine Audio status and generated announcement URLs.
+The player fetches both status and MP3 announcement files through Electron's
+main process so local self-signed Signal K HTTPS certificates do not prevent
+playback.
 
 The player accepts self-signed HTTPS certificates only for local/private Signal
 K hosts: `localhost`, `.local`, `192.168.x.x`, `10.x.x.x`, and

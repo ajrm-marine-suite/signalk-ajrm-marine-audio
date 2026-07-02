@@ -7,6 +7,16 @@ const { isLocalSignalKHost } = require("./local-hosts");
 const MAX_REDIRECTS = 5;
 
 function requestJson(url, redirectCount = 0) {
+  return requestData(url, { json: true, redirectCount });
+}
+
+async function requestAudioDataUrl(url) {
+  const result = await requestData(url, { json: false });
+  const contentType = result.contentType || "audio/mpeg";
+  return `data:${contentType};base64,${result.buffer.toString("base64")}`;
+}
+
+function requestData(url, { json, redirectCount = 0 }) {
   const parsed = new URL(url);
   const client = parsed.protocol === "https:" ? https : http;
   const options = {
@@ -22,10 +32,9 @@ function requestJson(url, redirectCount = 0) {
   }
   return new Promise((resolve, reject) => {
     const request = client.request(parsed, options, (response) => {
-      let body = "";
-      response.setEncoding("utf8");
+      const chunks = [];
       response.on("data", (chunk) => {
-        body += chunk;
+        chunks.push(Buffer.from(chunk));
       });
       response.on("end", () => {
         if (isRedirect(response.statusCode)) {
@@ -49,14 +58,23 @@ function requestJson(url, redirectCount = 0) {
             reject(new Error(`Audio status redirect to ${nextUrl.origin} was refused.`));
             return;
           }
-          requestJson(nextUrl.toString(), redirectCount + 1).then(resolve, reject);
+          requestData(nextUrl.toString(), { json, redirectCount: redirectCount + 1 }).then(resolve, reject);
           return;
         }
         if (response.statusCode < 200 || response.statusCode >= 300) {
           reject(new Error(statusErrorMessage(response.statusCode)));
           return;
         }
+        const buffer = Buffer.concat(chunks);
+        if (!json) {
+          resolve({
+            buffer,
+            contentType: String(response.headers["content-type"] || "").split(";")[0],
+          });
+          return;
+        }
         try {
+          const body = buffer.toString("utf8");
           resolve(JSON.parse(body || "{}"));
         } catch (error) {
           reject(new Error(`Audio status returned invalid JSON: ${error.message}`));
@@ -116,6 +134,7 @@ function statusUrl(serverUrl) {
 module.exports = {
   isAllowedRedirect,
   normalizeServerUrl,
+  requestAudioDataUrl,
   requestJson,
   requestErrorMessage,
   statusErrorMessage,

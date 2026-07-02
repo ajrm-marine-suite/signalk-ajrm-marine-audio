@@ -2,7 +2,7 @@
 
 const assert = require("node:assert/strict");
 const { isLocalSignalKHost } = require("../src/local-hosts");
-const { isAllowedRedirect, normalizeServerUrl, requestJson, statusErrorMessage, statusUrl } = require("../src/status-client");
+const { isAllowedRedirect, normalizeServerUrl, requestAudioDataUrl, requestJson, statusErrorMessage, statusUrl } = require("../src/status-client");
 const http = require("node:http");
 
 assert.equal(isLocalSignalKHost("localhost"), true);
@@ -59,6 +59,13 @@ async function withServer(handler, callback) {
       () => requestJson(`${baseUrl}/status`),
       /read-only access/,
     );
+  });
+
+  await withServer((_request, response) => {
+    response.writeHead(200, { "Content-Type": "audio/mpeg" });
+    response.end(Buffer.from([1, 2, 3, 4]));
+  }, async (baseUrl) => {
+    assert.equal(await requestAudioDataUrl(`${baseUrl}/audio.mp3`), "data:audio/mpeg;base64,AQIDBA==");
   });
 })().catch((error) => {
   console.error(error);

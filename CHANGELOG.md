@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.44
+
+- Fetch desktop-player announcement MP3 files through Electron's main process
+  and play them from local data URLs, so local self-signed Signal K HTTPS
+  certificates do not stop playback.
+
 ## 0.5.43
 
 - Keep desktop-player connection simple: no stored Signal K credentials.

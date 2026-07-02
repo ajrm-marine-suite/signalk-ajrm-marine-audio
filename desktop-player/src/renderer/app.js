@@ -216,6 +216,7 @@ function enqueue(announcement, { force = false } = {}) {
   const item = {
     key,
     audioUrl: absoluteAudioUrl,
+    playbackUrl: "",
     message: String(announcement.message || ""),
     receivedAt: new Date().toISOString(),
   };
@@ -229,7 +230,7 @@ function enqueue(announcement, { force = false } = {}) {
   return true;
 }
 
-function playNext() {
+async function playNext() {
   if (playing || muted) return;
   const item = queue.shift();
   if (!item) {
@@ -239,12 +240,29 @@ function playNext() {
   playing = true;
   els.nowPlaying.textContent = item.message;
   els.nowPlaying.classList.remove("muted");
-  els.audio.src = item.audioUrl;
+  try {
+    els.audio.src = await resolveAudioUrl(item);
+  } catch (error) {
+    playing = false;
+    setMessage(`Audio download failed: ${formatErrorMessage(error)}`);
+    playNext();
+    return;
+  }
   els.audio.play().catch((error) => {
     playing = false;
     setMessage(`Playback needs user interaction or an available output device: ${error.message || error}`);
   });
   renderState();
+}
+
+async function resolveAudioUrl(item) {
+  if (item.playbackUrl) return item.playbackUrl;
+  if (window.ajrmPlayer?.fetchAudioDataUrl) {
+    item.playbackUrl = await window.ajrmPlayer.fetchAudioDataUrl(item.audioUrl);
+    return item.playbackUrl;
+  }
+  item.playbackUrl = item.audioUrl;
+  return item.playbackUrl;
 }
 
 function renderStatus(status) {

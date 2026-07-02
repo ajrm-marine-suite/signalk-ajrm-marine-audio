@@ -2,6 +2,8 @@
 
 ## Version 2 baseline
 
+`v0.5.44` fetches desktop-player announcement MP3 files through Electron's main
+process so local self-signed Signal K HTTPS certificates do not stop playback.
 `v0.5.43` keeps desktop-player connection simple and gives a clear message when
 Signal K security blocks read-only status access. `v0.5.42` lets the desktop player follow Signal K's HTTP-to-HTTPS redirect,
 shows clearer connection-refused messages, and quits when the window is closed.
@@ -175,7 +177,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.43 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.44 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
