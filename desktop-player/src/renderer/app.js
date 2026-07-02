@@ -143,6 +143,9 @@ async function poll({ markExistingSeen = false, initialConnect = false } = {}) {
 }
 
 async function fetchStatus(serverUrl) {
+  if (window.ajrmPlayer?.fetchStatus) {
+    return window.ajrmPlayer.fetchStatus(serverUrl);
+  }
   const response = await fetch(`${serverUrl}/signalk/v1/api/ajrmMarineAudio/status`, {
     cache: "no-store",
     credentials: "include",

@@ -1,13 +1,13 @@
 {
   "name": "ajrm-marine-audio-player",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Standalone desktop player for AJRM Marine Audio announcements.",
   "main": "src/main.js",
   "private": true,
   "scripts": {
     "start": "electron .",
     "start:no-sandbox": "electron --no-sandbox .",
-    "test": "node --check src/main.js && node --check src/preload.js && node --check src/local-hosts.js && node --check src/renderer/app.js && node test/main.test.js"
+    "test": "node --check src/main.js && node --check src/preload.js && node --check src/local-hosts.js && node --check src/status-client.js && node --check src/renderer/app.js && node test/main.test.js"
   },
   "keywords": [
     "ajrm-marine-suite",

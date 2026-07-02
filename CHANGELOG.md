@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.40
+
+- Move desktop-player status polling through Electron's main process so local
+  self-signed Signal K HTTPS certificates do not produce repeated Chromium
+  `net_error -202` terminal noise while idle.
+
 ## 0.5.39
 
 - Let the desktop player return to the disconnected state after a failed first

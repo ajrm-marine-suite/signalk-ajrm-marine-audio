@@ -3,6 +3,7 @@
 const { app, BrowserWindow, ipcMain } = require("electron");
 const path = require("node:path");
 const { isLocalSignalKHost } = require("./local-hosts");
+const { requestJson, statusUrl } = require("./status-client");
 
 let mainWindow = null;
 
@@ -57,3 +58,4 @@ app.on("window-all-closed", () => {
 });
 
 ipcMain.handle("app-version", () => app.getVersion());
+ipcMain.handle("fetch-audio-status", (_event, serverUrl) => requestJson(statusUrl(serverUrl)));
