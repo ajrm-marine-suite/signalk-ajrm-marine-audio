@@ -2,9 +2,11 @@
 
 ## Version 2 baseline
 
-`v0.5.35` keeps browser audio deliberately simple after the abandoned
-`v0.5.34` queueing experiment: browser playback is convenience output, while
-reliable FIFO playback belongs in the standalone AJRM Marine Audio Player.
+`v0.5.36` clarifies the announcement freshness setting used to drop stale
+queued or prepared announcements. `v0.5.35` keeps browser audio deliberately
+simple after the abandoned `v0.5.34` queueing experiment: browser playback is
+convenience output, while reliable FIFO playback belongs in the standalone AJRM
+Marine Audio Player.
 `v0.5.33` removes Audio's server-wide manual mute from output routing: shared
 muting follows AJRM Marine Traffic Audio Policy, while the Audio webapp's mute
 control is local to that browser/device. `v0.5.27` treats AJRM Marine Traffic's current
@@ -160,7 +162,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.35 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.36 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

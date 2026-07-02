@@ -371,8 +371,9 @@ module.exports = function ajrmMarineAudio(app) {
       },
       generatedAudioExpiresSeconds: {
         type: "integer",
-        title: "Generated audio freshness window",
-        description: "Browser clients should not auto-play announcement audio older than this.",
+        title: "Announcement freshness window",
+        description:
+          "Drop queued or prepared announcements older than this unless the provider supplies its own expiry.",
         default: 90,
         minimum: 10,
         maximum: 600,

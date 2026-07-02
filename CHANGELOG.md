@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.36
+
+- Clarify the `Announcement freshness window` configuration description: it
+  drops stale queued or prepared announcements unless the provider supplies its
+  own expiry.
+
 ## 0.5.35
 
 - Revert browser announcement queueing from `0.5.34`. Browser playback is now
