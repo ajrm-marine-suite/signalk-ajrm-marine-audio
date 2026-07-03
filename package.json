@@ -1,6 +1,6 @@
 {
   "name": "signalk-ajrm-marine-audio",
-  "version": "0.5.56",
+  "version": "0.5.57",
   "description": "Speech and audio delivery for AJRM Marine Suite notifications.",
   "main": "plugin/index.js",
   "scripts": {
@@ -19,7 +19,7 @@
     "navigation"
   ],
   "author": "Anthony McDonald, with assistance from William McAusland",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git"
