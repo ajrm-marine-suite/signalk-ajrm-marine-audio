@@ -269,7 +269,7 @@ module.exports = function ajrmMarineAudio(app) {
         type: "string",
         title: "Piper voice model",
         description: "The .onnx filename or voice id to use.",
-        default: "en_GB-alan-medium",
+        default: "en_GB-alba-medium",
       },
       audioDirectory: {
         type: "string",
@@ -719,7 +719,7 @@ module.exports = function ajrmMarineAudio(app) {
             : value.aplayVolumeControl,
         ).trim() || DEFAULT_APLAY_VOLUME_CONTROL,
       voicesDir: String(value.voicesDir || "~/piper-voices"),
-      voice: String(value.voice || "en_GB-alan-medium"),
+      voice: String(value.voice || "en_GB-alba-medium"),
       audioDirectory: String(value.audioDirectory || defaultAudioDirectory()),
       maxAudioFiles: clampInteger(value.maxAudioFiles, 1, 200, 30),
       maxQueueLength: clampInteger(value.maxQueueLength, 1, 100, 10),

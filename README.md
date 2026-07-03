@@ -21,7 +21,8 @@ installer and creates a desktop/app-menu launcher. `v0.5.37` adds the
 standalone AJRM Marine Audio Player under `desktop-player/`, so Lubuntu, macOS,
 and Windows clients can play server-rendered announcements without relying on
 browser audio.
-`v0.5.36` clarifies the announcement freshness setting used to drop stale
+`v0.5.56` makes `en_GB-alba-medium` the default Piper voice for new
+installations. `v0.5.36` clarifies the announcement freshness setting used to drop stale
 queued or prepared announcements. `v0.5.35` keeps browser audio deliberately
 simple after the abandoned `v0.5.34` queueing experiment: browser playback is
 convenience output, while reliable FIFO playback belongs in the standalone AJRM
@@ -198,6 +199,10 @@ allows server speaker output to be enabled when Piper, the selected voice model,
 and the configured local audio player are available. Installing Piper through Pi
 Controller makes the output available but does not turn the speaker on
 automatically.
+
+New installations default to the `en_GB-alba-medium` Piper voice when it is
+available. Existing installations keep the voice already saved in the Signal K
+plugin configuration until changed from the Audio webapp or plugin config.
 
 If the AJRM Marine Pi Controller Signal K app is installed and support actions
 are enabled, AJRM Marine Audio can request a Piper install from its dependency
