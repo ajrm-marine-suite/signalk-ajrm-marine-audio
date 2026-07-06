@@ -29,6 +29,7 @@ const AJRM_MARINE_NOTIFICATIONS_PATH = "plugins.ajrmMarineNotifications";
 const AJRM_MARINE_NOTIFICATIONS_AUDIO_PATH = "plugins.ajrmMarineNotifications.audio";
 const ENGINE_AUDIO_POLICY_PATH = "plugins.ajrmMarineTraffic.audioPolicy";
 const PIPER_INSTALL_ENDPOINT = "/plugins/signalk-ajrm-marine-pi-controller/actions/install-piper";
+const DEFAULT_PROCESS_TIMEOUT_MS = 60000;
 
 module.exports = function ajrmMarineAudio(app) {
   const plugin = {};
@@ -2207,8 +2208,14 @@ module.exports = function ajrmMarineAudio(app) {
       let stdinFd = null;
       let stderrFd = null;
       let finished = false;
+      let child = null;
+      let timeoutTimer = null;
 
       const cleanup = () => {
+        if (timeoutTimer) {
+          clearTimeout(timeoutTimer);
+          timeoutTimer = null;
+        }
         for (const fd of [stdinFd, stderrFd]) {
           if (fd == null) continue;
           try {
@@ -2232,6 +2239,12 @@ module.exports = function ajrmMarineAudio(app) {
       const rejectOnce = (error) => {
         if (finished) return;
         finished = true;
+        if (child && !child.killed) {
+          child.kill("SIGTERM");
+          setTimeout(() => {
+            if (!child.killed) child.kill("SIGKILL");
+          }, 1000).unref?.();
+        }
         const stderr = readStderr();
         cleanup();
         reject(
@@ -2255,7 +2268,6 @@ module.exports = function ajrmMarineAudio(app) {
         return;
       }
 
-      let child;
       try {
         child = spawn(command, args, { stdio: [stdinFd ?? "ignore", "ignore", stderrFd] });
         onSpawn?.(child);
@@ -2263,6 +2275,10 @@ module.exports = function ajrmMarineAudio(app) {
         rejectOnce(error);
         return;
       }
+      timeoutTimer = setTimeout(() => {
+        rejectOnce(new Error(`timed out after ${formatDurationMs(processTimeoutMs())}`));
+      }, processTimeoutMs());
+      timeoutTimer.unref?.();
       child.on("error", rejectOnce);
       child.on("close", (code) => {
         if (finished) return;
@@ -2276,6 +2292,14 @@ module.exports = function ajrmMarineAudio(app) {
         }
       });
     });
+  }
+
+  function processTimeoutMs() {
+    const envValue = Number(process.env.AJRM_MARINE_AUDIO_PROCESS_TIMEOUT_MS);
+    if (Number.isFinite(envValue) && envValue > 0) {
+      return Math.max(100, envValue);
+    }
+    return DEFAULT_PROCESS_TIMEOUT_MS;
   }
 
   function createPingWav(clock, size = "", pingCount = 1) {

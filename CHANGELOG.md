@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.58
+
+- Add a watchdog around external audio renderer/player processes so a hung
+  Piper, ffmpeg, or local player command cannot block the announcement queue
+  indefinitely.
+- Add a regression test that deliberately hangs Piper and verifies Audio times
+  out the renderer, records a failure, and continues draining the queue.
+
 ## 0.5.49
 
 - Keep forced test announcements, including BITE audible summaries, in the

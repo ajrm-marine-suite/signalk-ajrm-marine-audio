@@ -262,7 +262,7 @@ function createSlowRenderHarness() {
   return { ...harness, tempDir };
 }
 
-function createPipelineHarness({ piperDelaySeconds = 0 } = {}) {
+function createPipelineHarness({ piperDelaySeconds = 0, piperJavascript = "" } = {}) {
   const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), "ajrm-marine-audio-pipeline-"));
   const voicesDir = path.join(tempDir, "voices");
   fs.mkdirSync(voicesDir, { recursive: true });
@@ -270,7 +270,7 @@ function createPipelineHarness({ piperDelaySeconds = 0 } = {}) {
   const piperBinary = writeFakeCommand(
     tempDir,
     "piper",
-    `const fs = require("node:fs");
+    piperJavascript || `const fs = require("node:fs");
 const args = process.argv.slice(2);
 const outputIndex = args.indexOf("--output_file");
 const output = outputIndex >= 0 ? args[outputIndex + 1] : "";
@@ -327,6 +327,24 @@ async function waitFor(predicate, timeoutMs = 1500) {
     await new Promise((resolve) => setTimeout(resolve, 10));
   }
   throw new Error("Timed out waiting for audio pipeline state");
+}
+
+async function withAudioProcessTimeout(timeoutMs, fn) {
+  const hadValue = Object.prototype.hasOwnProperty.call(
+    process.env,
+    "AJRM_MARINE_AUDIO_PROCESS_TIMEOUT_MS",
+  );
+  const original = process.env.AJRM_MARINE_AUDIO_PROCESS_TIMEOUT_MS;
+  process.env.AJRM_MARINE_AUDIO_PROCESS_TIMEOUT_MS = String(timeoutMs);
+  try {
+    return await fn();
+  } finally {
+    if (hadValue) {
+      process.env.AJRM_MARINE_AUDIO_PROCESS_TIMEOUT_MS = original;
+    } else {
+      delete process.env.AJRM_MARINE_AUDIO_PROCESS_TIMEOUT_MS;
+    }
+  }
 }
 
 async function postVolume(harness, volume) {
@@ -813,6 +831,42 @@ async function postRoute(harness, pathName) {
     pipeline.plugin.stop();
     await new Promise((resolve) => setTimeout(resolve, 50));
     fs.rmSync(pipeline.tempDir, { recursive: true, force: true });
+
+    await withAudioProcessTimeout(150, async () => {
+      const hungRenderer = createPipelineHarness({
+        piperJavascript: "setInterval(() => {}, 1000);\n",
+      });
+      sendNotification(
+        hungRenderer,
+        "notifications.system.hung-renderer-one",
+        vesselNotification("hung-renderer-one", "This renderer will hang."),
+        100,
+      );
+      sendNotification(
+        hungRenderer,
+        "notifications.system.hung-renderer-two",
+        vesselNotification("hung-renderer-two", "The queue must still move on."),
+        100,
+      );
+      const failedStatus = await waitFor(
+        () => {
+          const status = statusOf(hungRenderer);
+          return status.stats.failed >= 2 && !status.preparing ? status : null;
+        },
+        3000,
+      );
+      assert.equal(failedStatus.queueLength, 0);
+      assert.equal(
+        failedStatus.recentEvents.some(
+          (event) => event.event === "error" && /timed out/.test(event.message),
+        ),
+        true,
+        "hung external renderers are timed out instead of blocking the announcement queue",
+      );
+      hungRenderer.plugin.stop();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      fs.rmSync(hungRenderer.tempDir, { recursive: true, force: true });
+    });
 
     const nonPreempting = createPipelineHarness();
     sendNotification(
