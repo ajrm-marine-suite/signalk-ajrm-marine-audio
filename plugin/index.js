@@ -988,6 +988,7 @@ module.exports = function ajrmMarineAudio(app) {
           );
         }
         cleanupPreparedAnnouncement(next);
+        processQueue();
       } else if (shouldPreparedAnnouncementYield(next.entry)) {
         requeuePreparedAnnouncement(next);
         processQueue();

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.59
+
+- Continue processing the announcement queue after dropping an expired prepared
+  announcement, so later forced or valid announcements cannot be stranded behind
+  stale rendered audio.
+
 ## 0.5.58
 
 - Add a watchdog around external audio renderer/player processes so a hung

@@ -145,6 +145,8 @@ function sendNotification(
       preempt,
       force: value?.data?.force === true,
     },
+    expiresAt: value?.data?.audioExpiresAt || undefined,
+    audioExpiresAt: value?.data?.audioExpiresAt || undefined,
     presentation: {
       title: alertEvent.vesselName || "AJRM Marine",
       message: alertEvent.message || value?.message || "",
@@ -1068,6 +1070,52 @@ async function postRoute(harness, pathName) {
     preparationRace.plugin.stop();
     await new Promise((resolve) => setTimeout(resolve, 50));
     fs.rmSync(preparationRace.tempDir, { recursive: true, force: true });
+
+    const expiredPrepared = createPipelineHarness({ piperDelaySeconds: 0.05 });
+    sendNotification(
+      expiredPrepared,
+      "notifications.system.expired-prepared",
+      {
+        ...vesselNotification("expired-prepared", "This prepared announcement will expire."),
+        data: {
+          ...vesselNotification("expired-prepared", "This prepared announcement will expire.").data,
+          audioExpiresAt: new Date(Date.now() + 10).toISOString(),
+        },
+      },
+      500,
+    );
+    sendNotification(
+      expiredPrepared,
+      "notifications.system.valid-after-expired",
+      {
+        ...vesselNotification("valid-after-expired", "This valid announcement must still render."),
+        data: {
+          ...vesselNotification("valid-after-expired", "This valid announcement must still render.").data,
+          audioExpiresAt: new Date(Date.now() + 5000).toISOString(),
+        },
+      },
+      500,
+    );
+    const expiredPreparedStatus = await waitFor(
+      () => {
+        const status = statusOf(expiredPrepared);
+        return status.stats.rendered >= 1 && status.stats.filtered >= 1 ? status : null;
+      },
+      5000,
+    );
+    assert.equal(expiredPreparedStatus.queueLength, 0);
+    assert.equal(
+      expiredPreparedStatus.recentEvents.some(
+        (event) =>
+          event.event === "rendered" &&
+          /valid announcement must still render/i.test(event.message),
+      ),
+      true,
+      "dropping an expired prepared announcement continues the queue",
+    );
+    expiredPrepared.plugin.stop();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    fs.rmSync(expiredPrepared.tempDir, { recursive: true, force: true });
 
     const queuedMute = createSlowRenderHarness();
     sendNotification(
