@@ -2397,11 +2397,28 @@ module.exports = function ajrmMarineAudio(app) {
   }
 
   function formatMessageForSpeech(message) {
-    return String(message || "").replace(
+    const vesselFriendly = String(message || "").replace(
       /\b((?:fast\s+)?(?:large vessel|medium vessel|small craft|small vessel|vessel)\s+)(.+?)(\s+at\s+(?:[1-9]|1[0-2])\s+o'?clock\b)/gi,
       (_match, prefix, vesselName, suffix) =>
         `${prefix}${formatVesselNameForSpeech(vesselName)}${suffix}`,
     );
+    return expandUnitAbbreviationsForSpeech(vesselFriendly);
+  }
+
+  function expandUnitAbbreviationsForSpeech(message) {
+    return String(message || "")
+      .replace(/\b(-?\d+(?:\.\d+)?)\s*kn\b/gi, "$1 knots")
+      .replace(/\b(-?\d+(?:\.\d+)?)\s*kts\b/gi, "$1 knots")
+      .replace(/\b(-?\d+(?:\.\d+)?)\s*kt\b/gi, "$1 knots")
+      .replace(/\b(-?\d+(?:\.\d+)?)\s*nm\b/gi, "$1 miles")
+      .replace(/\b(-?\d+(?:\.\d+)?)\s*nmi\b/gi, "$1 miles")
+      .replace(/\b(-?\d+(?:\.\d+)?)\s*m\/s\b/gi, "$1 meters per second")
+      .replace(/\b(-?\d+(?:\.\d+)?)\s*m\b/gi, "$1 meters")
+      .replace(/\b(-?\d+(?:\.\d+)?)\s*km\b/gi, "$1 kilometers")
+      .replace(/\b(-?\d+(?:\.\d+)?)\s*ft\b/gi, "$1 feet")
+      .replace(/\b(-?\d+(?:\.\d+)?)\s*deg\b/gi, "$1 degrees")
+      .replace(/\b(-?\d+(?:\.\d+)?)\s*min\b/gi, "$1 minutes")
+      .replace(/\b(-?\d+(?:\.\d+)?)\s*sec\b/gi, "$1 seconds");
   }
 
   function formatVesselNameForSpeech(name) {

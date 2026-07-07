@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.62
+
+- Expand common marine unit abbreviations before sending text to Piper, so
+  `kn`, `m/s`, `m`, `NM`, `ft`, `deg`, `min`, and `sec` are spoken as words
+  while preserving the original written announcement text.
+
 ## 0.5.61
 
 - Make the desktop player wait briefly for a newly observed announcement's

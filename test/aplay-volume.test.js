@@ -834,6 +834,42 @@ async function postRoute(harness, pathName) {
     await new Promise((resolve) => setTimeout(resolve, 50));
     fs.rmSync(pipeline.tempDir, { recursive: true, force: true });
 
+    const speechCaptureFile = path.join(os.tmpdir(), `ajrm-marine-speech-${Date.now()}.txt`);
+    const speechFriendly = createPipelineHarness({
+      piperJavascript: `const fs = require("node:fs");
+const args = process.argv.slice(2);
+const outputIndex = args.indexOf("--output_file");
+const output = outputIndex >= 0 ? args[outputIndex + 1] : "";
+let input = "";
+process.stdin.setEncoding("utf8");
+process.stdin.on("data", (chunk) => { input += chunk; });
+process.stdin.on("end", () => {
+  fs.writeFileSync(${JSON.stringify(speechCaptureFile)}, input);
+  if (output) fs.writeFileSync(output, "wav");
+});
+`,
+    });
+    sendNotification(
+      speechFriendly,
+      "notifications.system.speech-friendly-units",
+      vesselNotification(
+        "speech-friendly-units",
+        "Position jump implies 54.6 kn over ground. Tide 1.2 m/s. Drift 300 m. Bearing 62 deg.",
+      ),
+      100,
+    );
+    await waitFor(() => statusOf(speechFriendly).stats.rendered >= 1, 2500);
+    const speechText = fs.readFileSync(speechCaptureFile, "utf8");
+    assert.match(speechText, /54\.6 knots over ground/);
+    assert.match(speechText, /1\.2 meters per second/);
+    assert.match(speechText, /300 meters/);
+    assert.match(speechText, /62 degrees/);
+    assert.doesNotMatch(speechText, /\bkn\b|m\/s\b|\bdeg\b/);
+    speechFriendly.plugin.stop();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    fs.rmSync(speechFriendly.tempDir, { recursive: true, force: true });
+    fs.rmSync(speechCaptureFile, { force: true });
+
     await withAudioProcessTimeout(150, async () => {
       const hungRenderer = createPipelineHarness({
         piperJavascript: "setInterval(() => {}, 1000);\n",
