@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.61
+
+- Make the desktop player wait briefly for a newly observed announcement's
+  generated MP3 URL before skipping it. This avoids noisy "no audio URL"
+  diagnostics when the status feed sees an announcement just before rendering
+  has finished.
+- Bump the bundled desktop player to `0.1.13`.
+
 ## 0.5.60
 
 - Add desktop-player diagnostics for connection attempts, status failures,

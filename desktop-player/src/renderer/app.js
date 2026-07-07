@@ -4,6 +4,7 @@ const STORAGE_KEY = "ajrmMarineAudioPlayer.settings";
 const POLL_MS = 1500;
 const AUTO_RETRY_MS = 60000;
 const PLAYBACK_RETRY_MS = 3000;
+const AUDIO_URL_WAIT_MS = 15000;
 const MAX_SEEN = 120;
 const MAX_HISTORY = 30;
 const MAX_DIAGNOSTICS = 120;
@@ -45,6 +46,7 @@ let queue = [];
 let history = [];
 let seenKeys = [];
 let pendingKeys = new Set();
+let waitingForAudioUrl = new Map();
 let playbackRetryTimers = new Set();
 let lastAnnouncement = null;
 let currentItem = null;
@@ -143,6 +145,7 @@ async function connect({ automatic = false } = {}) {
   statusFailureCount = 0;
   seenKeys = [];
   pendingKeys = new Set();
+  waitingForAudioUrl = new Map();
   setMessage("Connecting...");
   logDiagnostic("connect", `${automatic ? "Auto-c" : "C"}onnecting to ${settings.serverUrl}`);
   renderState();
@@ -175,6 +178,7 @@ function disconnect() {
   releasePending(currentItem);
   currentItem = null;
   pendingKeys = new Set();
+  waitingForAudioUrl = new Map();
   queue = [];
   playing = false;
   els.audio.pause();
@@ -264,11 +268,10 @@ function enqueue(announcement, { force = false } = {}) {
   if (!announcement || !announcement.message) return false;
   const audioUrl = announcement.audioUrl || announcement.publicAudioUrl || "";
   if (!audioUrl) {
-    logDiagnostic("announcement-skipped", "Announcement has no audio URL", {
-      message: announcement.message || "",
-    });
+    waitForAnnouncementAudioUrl(announcement);
     return false;
   }
+  releaseWaitingForAudioUrl(announcement);
   const key = announcementKey(announcement);
   if (!force && (seenKeys.includes(key) || pendingKeys.has(key))) {
     return false;
@@ -298,6 +301,50 @@ function enqueue(announcement, { force = false } = {}) {
   renderState();
   playNext();
   return true;
+}
+
+function waitForAnnouncementAudioUrl(announcement) {
+  const key = announcementWaitKey(announcement);
+  const now = Date.now();
+  const existing = waitingForAudioUrl.get(key);
+  if (existing?.expired) return;
+  if (!existing) {
+    waitingForAudioUrl.set(key, {
+      firstSeenAt: now,
+      lastSeenAt: now,
+      message: String(announcement.message || ""),
+      polls: 1,
+      expired: false,
+    });
+    logDiagnostic("announcement-waiting-audio-url", "Announcement is waiting for generated audio URL", {
+      message: announcement.message || "",
+      waitSeconds: Math.round(AUDIO_URL_WAIT_MS / 1000),
+    });
+    return;
+  }
+  existing.lastSeenAt = now;
+  existing.polls += 1;
+  if (now - existing.firstSeenAt < AUDIO_URL_WAIT_MS) return;
+  existing.expired = true;
+  logDiagnostic("announcement-skipped", "Announcement still has no audio URL after wait window", {
+    message: existing.message,
+    polls: existing.polls,
+    waitedMs: now - existing.firstSeenAt,
+  });
+}
+
+function releaseWaitingForAudioUrl(announcement) {
+  const key = announcementWaitKey(announcement);
+  const existing = waitingForAudioUrl.get(key);
+  if (!existing) return;
+  waitingForAudioUrl.delete(key);
+  if (!existing.expired) {
+    logDiagnostic("announcement-audio-url-ready", "Announcement audio URL became available", {
+      message: announcement.message || "",
+      waitedMs: Date.now() - existing.firstSeenAt,
+      polls: existing.polls,
+    });
+  }
 }
 
 async function playNext() {
@@ -464,6 +511,15 @@ function announcementKey(announcement) {
       announcement?.requestId ||
       announcement?.audioUrl ||
       announcement?.publicAudioUrl ||
+      announcement?.message ||
+      "",
+  );
+}
+
+function announcementWaitKey(announcement) {
+  return String(
+    announcement?.playbackId ||
+      announcement?.requestId ||
       announcement?.message ||
       "",
   );

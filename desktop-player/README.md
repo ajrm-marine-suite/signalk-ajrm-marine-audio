@@ -14,6 +14,11 @@ announcements, MP3 download, playback start/end/error, retries, and window
 focus/visibility changes. Use it to distinguish a server-side audio problem
 from a desktop-player output or background/focus problem.
 
+If the player sees a new announcement before AJRM Marine Audio has published
+the generated MP3 URL, it waits briefly for a later status poll before skipping
+that announcement. This avoids false "no audio URL" skips during busy tests or
+slow rendering.
+
 ## Lubuntu Install
 
 Install Node.js 20 or later, then clone the Audio repository and run the player

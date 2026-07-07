@@ -1,9 +1,13 @@
 "use strict";
 
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
 const { isLocalSignalKHost } = require("../src/local-hosts");
 const { isAllowedRedirect, normalizeServerUrl, requestAudioDataUrl, requestJson, statusErrorMessage, statusUrl } = require("../src/status-client");
 const http = require("node:http");
+
+const rendererSource = fs.readFileSync(path.join(__dirname, "..", "src", "renderer", "app.js"), "utf8");
 
 assert.equal(isLocalSignalKHost("localhost"), true);
 assert.equal(isLocalSignalKHost("nemo.local"), true);
@@ -27,6 +31,13 @@ assert.equal(isAllowedRedirect(new URL("http://nemo.local:3000"), new URL("https
 assert.match(statusErrorMessage(401), /read-only access/);
 assert.match(statusErrorMessage(403), /read-only access/);
 assert.match(statusErrorMessage(401, "audio"), /audio file/);
+assert.match(rendererSource, /const AUDIO_URL_WAIT_MS = 15000/);
+assert.match(rendererSource, /let waitingForAudioUrl = new Map\(\)/);
+assert.match(rendererSource, /waitForAnnouncementAudioUrl\(announcement\)/);
+assert.match(rendererSource, /announcement-waiting-audio-url/);
+assert.match(rendererSource, /announcement-audio-url-ready/);
+assert.match(rendererSource, /Announcement still has no audio URL after wait window/);
+assert.doesNotMatch(rendererSource, /Announcement has no audio URL/);
 
 async function withServer(handler, callback) {
   const server = http.createServer(handler);
