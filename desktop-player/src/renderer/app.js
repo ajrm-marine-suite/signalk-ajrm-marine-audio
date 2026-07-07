@@ -6,6 +6,7 @@ const AUTO_RETRY_MS = 60000;
 const PLAYBACK_RETRY_MS = 3000;
 const MAX_SEEN = 120;
 const MAX_HISTORY = 30;
+const MAX_DIAGNOSTICS = 120;
 
 const els = {
   serverUrl: document.getElementById("serverUrl"),
@@ -25,7 +26,9 @@ const els = {
   serverTime: document.getElementById("serverTime"),
   queueLength: document.getElementById("queueLength"),
   lastPoll: document.getElementById("lastPoll"),
+  logPath: document.getElementById("logPath"),
   announcements: document.getElementById("announcements"),
+  diagnostics: document.getElementById("diagnostics"),
   message: document.getElementById("message"),
 };
 
@@ -45,6 +48,8 @@ let pendingKeys = new Set();
 let playbackRetryTimers = new Set();
 let lastAnnouncement = null;
 let currentItem = null;
+let diagnostics = [];
+let lastStatusSummary = "";
 
 const settings = loadSettings();
 els.serverUrl.value = settings.serverUrl || "http://localhost:3000";
@@ -93,6 +98,7 @@ els.volume.addEventListener("input", () => {
   renderVolume();
 });
 els.audio.addEventListener("ended", () => {
+  logDiagnostic("playback-ended", currentItem?.message || "Audio ended");
   if (currentItem) {
     rememberSeen(currentItem.key);
     releasePending(currentItem);
@@ -102,10 +108,22 @@ els.audio.addEventListener("ended", () => {
   playNext();
 });
 els.audio.addEventListener("error", () => {
+  logDiagnostic("playback-error", "Audio element reported an error", {
+    message: currentItem?.message || "",
+    code: els.audio.error?.code || "",
+  });
   schedulePlaybackRetry(currentItem, "Audio playback failed.");
   currentItem = null;
   playing = false;
   renderState();
+});
+els.audio.addEventListener("playing", () => {
+  logDiagnostic("playback-playing", currentItem?.message || "Audio playback started");
+});
+window.addEventListener("focus", () => logDiagnostic("window-focus", "Audio player window gained focus"));
+window.addEventListener("blur", () => logDiagnostic("window-blur", "Audio player window lost focus"));
+document.addEventListener("visibilitychange", () => {
+  logDiagnostic("visibility", `Document visibility changed to ${document.visibilityState}`);
 });
 
 if (settings.autoConnect) {
@@ -126,11 +144,13 @@ async function connect({ automatic = false } = {}) {
   seenKeys = [];
   pendingKeys = new Set();
   setMessage("Connecting...");
+  logDiagnostic("connect", `${automatic ? "Auto-c" : "C"}onnecting to ${settings.serverUrl}`);
   renderState();
   const ok = await poll({ markExistingSeen: true, initialConnect: true });
   if (attemptId !== connectAttemptId) return;
   connecting = false;
   if (ok) {
+    logDiagnostic("connect-ok", `Connected to ${settings.serverUrl}`);
     pollTimer = window.setInterval(() => poll(), POLL_MS);
   } else {
     connected = false;
@@ -142,6 +162,7 @@ async function connect({ automatic = false } = {}) {
 }
 
 function disconnect() {
+  logDiagnostic("disconnect", "Disconnected by user or app shutdown");
   connectAttemptId += 1;
   connecting = false;
   connected = false;
@@ -173,6 +194,9 @@ async function poll({ markExistingSeen = false, initialConnect = false } = {}) {
       ? status.recentAnnouncements
       : [status.lastAnnouncement].filter(Boolean);
     if (markExistingSeen) {
+      if (announcements.length) {
+        logDiagnostic("connect-seen", `Marked ${announcements.length} existing announcement(s) as already seen on connect`);
+      }
       for (const item of announcements) rememberSeen(announcementKey(item));
       setMessage("Connected. Waiting for new announcements.");
     } else {
@@ -189,6 +213,10 @@ async function poll({ markExistingSeen = false, initialConnect = false } = {}) {
       els.connectionPill.className = "pill bad";
     }
     setMessage(`Audio status poll failed${statusFailureCount > 1 ? ` ${statusFailureCount} times` : ""}: ${formatErrorMessage(error)}`);
+    logDiagnostic("status-failed", formatErrorMessage(error), {
+      count: statusFailureCount,
+      initialConnect,
+    });
     renderState();
     return false;
   } finally {
@@ -206,6 +234,7 @@ function scheduleAutoRetry({ immediate = false } = {}) {
   }, delay);
   if (!immediate) {
     setMessage(`Auto-connect failed. Retrying in ${Math.round(AUTO_RETRY_MS / 1000)} seconds.`);
+    logDiagnostic("auto-retry", `Retrying connection in ${Math.round(AUTO_RETRY_MS / 1000)} seconds`);
   }
 }
 
@@ -234,9 +263,16 @@ async function fetchStatus(serverUrl) {
 function enqueue(announcement, { force = false } = {}) {
   if (!announcement || !announcement.message) return false;
   const audioUrl = announcement.audioUrl || announcement.publicAudioUrl || "";
-  if (!audioUrl) return false;
+  if (!audioUrl) {
+    logDiagnostic("announcement-skipped", "Announcement has no audio URL", {
+      message: announcement.message || "",
+    });
+    return false;
+  }
   const key = announcementKey(announcement);
-  if (!force && (seenKeys.includes(key) || pendingKeys.has(key))) return false;
+  if (!force && (seenKeys.includes(key) || pendingKeys.has(key))) {
+    return false;
+  }
   if (!force) pendingKeys.add(key);
   const absoluteAudioUrl = absoluteUrl(settings.serverUrl, audioUrl);
   const item = {
@@ -254,6 +290,10 @@ function enqueue(announcement, { force = false } = {}) {
   lastAnnouncement = item;
   history.unshift(item);
   history = history.slice(0, MAX_HISTORY);
+  logDiagnostic("announcement-queued", item.message, {
+    queueLength: queue.length,
+    force,
+  });
   renderHistory();
   renderState();
   playNext();
@@ -271,17 +311,26 @@ async function playNext() {
   currentItem = item;
   els.nowPlaying.textContent = item.message;
   els.nowPlaying.classList.remove("muted");
+  logDiagnostic("download-start", item.message);
   try {
     els.audio.src = await resolveAudioUrl(item);
     cacheSoundCheckIfNeeded(item);
+    logDiagnostic("download-ok", item.message);
   } catch (error) {
+    logDiagnostic("download-failed", formatErrorMessage(error), {
+      message: item.message,
+    });
     schedulePlaybackRetry(item, `Audio download failed: ${formatErrorMessage(error)}`);
     currentItem = null;
     playing = false;
     renderState();
     return;
   }
+  logDiagnostic("playback-start", item.message);
   els.audio.play().catch((error) => {
+    logDiagnostic("playback-rejected", error.message || String(error), {
+      message: item.message,
+    });
     schedulePlaybackRetry(item, `Playback needs user interaction or an available output device: ${error.message || error}`);
     currentItem = null;
     playing = false;
@@ -293,6 +342,7 @@ async function playNext() {
 function playCachedSoundCheck() {
   if (!settings.soundCheckDataUrl) {
     setMessage("No cached Sound Check audio yet. Run Sound Check from AJRM Marine Audio once while this player is connected.");
+    logDiagnostic("sound-check-missing", "No cached Sound Check audio is available");
     return;
   }
   const item = {
@@ -308,6 +358,7 @@ function playCachedSoundCheck() {
   }
   queue.unshift(item);
   setMessage("Playing cached Sound Check.");
+  logDiagnostic("sound-check", "Playing cached Sound Check");
   playNext();
 }
 
@@ -326,6 +377,23 @@ function renderStatus(status) {
   els.serverTime.textContent = status.serverTime
     ? new Date(status.serverTime).toLocaleTimeString()
     : "-";
+  const summary = [
+    status.version || "-",
+    status.muted === true ? "muted" : "unmuted",
+    status.pluginMuted === true ? "plugin-muted" : "plugin-unmuted",
+    status.engineMuted === true ? "traffic-muted" : "traffic-unmuted",
+    `recent:${status.recentAnnouncements?.length || 0}`,
+  ].join("|");
+  if (lastStatusSummary && lastStatusSummary !== summary) {
+    logDiagnostic("status-change", "Audio status changed", {
+      version: status.version || "",
+      muted: status.muted === true,
+      pluginMuted: status.pluginMuted === true,
+      trafficMuted: status.engineMuted === true,
+      recentAnnouncements: status.recentAnnouncements?.length || 0,
+    });
+  }
+  lastStatusSummary = summary;
 }
 
 function renderState() {
@@ -418,6 +486,10 @@ function schedulePlaybackRetry(item, reason) {
     return;
   }
   item.retryCount = Number(item.retryCount || 0) + 1;
+  logDiagnostic("playback-retry", reason, {
+    message: item.message,
+    retryCount: item.retryCount,
+  });
   setMessage(`${reason} Retrying in ${Math.round(PLAYBACK_RETRY_MS / 1000)} seconds.`);
   const timer = window.setTimeout(() => {
     playbackRetryTimers.delete(timer);
@@ -431,6 +503,33 @@ function schedulePlaybackRetry(item, reason) {
     playNext();
   }, PLAYBACK_RETRY_MS);
   playbackRetryTimers.add(timer);
+}
+
+function logDiagnostic(type, message, details = {}) {
+  const entry = {
+    time: new Date().toISOString(),
+    type,
+    message: String(message || ""),
+    details,
+  };
+  diagnostics.unshift(entry);
+  diagnostics = diagnostics.slice(0, MAX_DIAGNOSTICS);
+  renderDiagnostics();
+  window.ajrmPlayer?.logEvent?.(entry).catch(() => {});
+}
+
+function renderDiagnostics() {
+  if (!els.diagnostics) return;
+  els.diagnostics.innerHTML = diagnostics.length
+    ? diagnostics
+        .map((item) => {
+          const detailText = item.details && Object.keys(item.details).length
+            ? ` ${JSON.stringify(item.details)}`
+            : "";
+          return `<li><strong>${escapeHtml(new Date(item.time).toLocaleTimeString())}</strong> ${escapeHtml(item.type)}: ${escapeHtml(item.message)}${escapeHtml(detailText)}</li>`;
+        })
+        .join("")
+    : "";
 }
 
 function clearPlaybackRetryTimers() {
@@ -480,4 +579,8 @@ function formatErrorMessage(error) {
 
 window.ajrmPlayer?.appVersion?.().then((version) => {
   document.title = `AJRM Marine Audio Player ${version}`;
+});
+window.ajrmPlayer?.diagnosticLogPath?.().then((logPath) => {
+  if (els.logPath) els.logPath.textContent = logPath || "-";
+  logDiagnostic("startup", "Audio player started", { logPath });
 });

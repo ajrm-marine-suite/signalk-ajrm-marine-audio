@@ -8,6 +8,12 @@ the Signal K server renders and prioritises announcements. The desktop player
 connects to that server, watches for newly rendered announcements, and plays
 them locally in FIFO order.
 
+The player shows a short diagnostics panel and writes the same events to a
+local log file. The log records connection attempts, status failures, queued
+announcements, MP3 download, playback start/end/error, retries, and window
+focus/visibility changes. Use it to distinguish a server-side audio problem
+from a desktop-player output or background/focus problem.
+
 ## Lubuntu Install
 
 Install Node.js 20 or later, then clone the Audio repository and run the player

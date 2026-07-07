@@ -201,17 +201,29 @@ dd {
   font-weight: 800;
 }
 
-.announcements {
+.announcements,
+.diagnostics {
   display: grid;
   gap: 8px;
   margin: 0;
   padding-left: 1.25rem;
 }
 
-.announcements li {
+.announcements li,
+.diagnostics li {
   padding: 8px 10px;
   border-radius: 6px;
   background: rgba(15, 23, 42, 0.68);
+}
+
+.diagnostics {
+  max-height: 190px;
+  overflow-y: auto;
+  font-size: 0.9rem;
+}
+
+.diagnostics li {
+  color: #c6d7d2;
 }
 
 .message {

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.60
+
+- Add desktop-player diagnostics for connection attempts, status failures,
+  newly queued announcements, MP3 download, playback start/end/error, retries,
+  and window focus/visibility changes.
+- Show the desktop-player diagnostic log path in the app and persist the log to
+  Electron's user-data directory so missed-audio faults can be reviewed after a
+  soak run.
+
 ## 0.5.59
 
 - Continue processing the announcement queue after dropping an expired prepared
