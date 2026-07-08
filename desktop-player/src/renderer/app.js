@@ -43,6 +43,8 @@ const els = {
   diagnostics: document.getElementById("diagnostics"),
   message: document.getElementById("message"),
 };
+const tabButtons = Array.from(document.querySelectorAll("[data-tab]"));
+const tabPanels = Array.from(document.querySelectorAll("[data-tab-panel]"));
 
 let pollTimer = null;
 let retryTimer = null;
@@ -83,6 +85,9 @@ configureKeepAliveTimer();
 
 els.connectButton.addEventListener("click", () => connect({ automatic: false }));
 els.disconnectButton.addEventListener("click", disconnect);
+for (const button of tabButtons) {
+  button.addEventListener("click", () => selectTab(button.dataset.tab));
+}
 els.autoConnect.addEventListener("change", () => {
   settings.autoConnect = els.autoConnect.checked;
   saveSettings(settings);
@@ -198,6 +203,17 @@ document.addEventListener("visibilitychange", () => {
 
 if (settings.autoConnect) {
   window.setTimeout(() => connect({ automatic: true }), 0);
+}
+
+function selectTab(tabName) {
+  for (const button of tabButtons) {
+    button.classList.toggle("active", button.dataset.tab === tabName);
+  }
+  for (const panel of tabPanels) {
+    const active = panel.dataset.tabPanel === tabName;
+    panel.hidden = !active;
+    panel.classList.toggle("active", active);
+  }
 }
 
 async function connect({ automatic = false } = {}) {

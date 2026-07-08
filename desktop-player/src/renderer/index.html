@@ -16,54 +16,29 @@
         <div id="connectionPill" class="pill bad">Disconnected</div>
       </header>
 
-      <section class="panel connection-panel">
-        <label>
-          <span>Signal K server</span>
-          <input id="serverUrl" type="url" spellcheck="false" />
-        </label>
-        <label class="auto-connect">
-          <input id="autoConnect" type="checkbox" />
-          <span>Auto-connect</span>
-        </label>
-        <button id="connectButton" type="button">Connect</button>
-        <button id="disconnectButton" type="button">Disconnect</button>
-      </section>
+      <nav class="tabs" aria-label="Audio player sections">
+        <button id="playerTabButton" class="tab-button active" type="button" data-tab="player">Player</button>
+        <button id="statusTabButton" class="tab-button" type="button" data-tab="status">Status</button>
+        <button id="setupTabButton" class="tab-button" type="button" data-tab="setup">Setup</button>
+      </nav>
 
-      <section class="panel controls">
-        <div class="control-row primary-controls">
-          <button id="repeatButton" type="button">Repeat Last</button>
-          <button id="clearButton" type="button">Clear Queue</button>
-          <button id="soundCheckButton" type="button">Sound Check</button>
-        </div>
-        <div class="control-row secondary-controls">
-          <button id="muteButton" type="button">Mute</button>
-          <label class="volume">
-            <span>Volume</span>
-            <input id="volume" type="range" min="0" max="100" value="100" />
-            <strong id="volumeValue">100%</strong>
-          </label>
-          <label class="keep-alive">
-            <input id="keepAliveEnabled" type="checkbox" />
-            <span>Bluetooth keep-alive</span>
-          </label>
-          <label class="period">
-            <span>Every</span>
-            <input id="keepAliveSeconds" type="number" min="10" max="3600" step="5" value="60" />
-            <strong>s</strong>
-          </label>
-          <label class="keep-alive">
-            <input id="keepAliveAudible" type="checkbox" />
-            <span>Audible test</span>
-          </label>
-          <label class="test-tone-volume">
-            <span>Test tone</span>
-            <input id="keepAliveVolume" type="range" min="0" max="100" value="50" />
-            <strong id="keepAliveVolumeValue">50%</strong>
-          </label>
-        </div>
-      </section>
+      <section id="playerTab" class="tab-panel active" data-tab-panel="player">
+        <section class="panel controls">
+          <div class="control-row primary-controls">
+            <button id="repeatButton" type="button">Repeat Last</button>
+            <button id="clearButton" type="button">Clear Queue</button>
+            <button id="soundCheckButton" type="button">Sound Check</button>
+          </div>
+          <div class="control-row secondary-controls">
+            <button id="muteButton" type="button">Mute</button>
+            <label class="volume">
+              <span>Volume</span>
+              <input id="volume" type="range" min="0" max="100" value="100" />
+              <strong id="volumeValue">100%</strong>
+            </label>
+          </div>
+        </section>
 
-      <section class="grid">
         <article class="panel">
           <h2>Now Playing</h2>
           <p id="nowPlaying" class="large muted">No announcement playing.</p>
@@ -71,6 +46,14 @@
           <audio id="keepAliveAudio" preload="auto"></audio>
         </article>
 
+        <section class="panel">
+          <h2>Announcements</h2>
+          <ol id="announcements" class="announcements"></ol>
+        </section>
+      </section>
+
+      <section id="statusTab" class="tab-panel" data-tab-panel="status" hidden>
+        <section class="grid">
         <article class="panel">
           <h2>Status</h2>
           <dl>
@@ -81,16 +64,50 @@
             <div><dt>Log file</dt><dd id="logPath">-</dd></div>
           </dl>
         </article>
+
+          <article class="panel">
+            <h2>Diagnostics</h2>
+            <ol id="diagnostics" class="diagnostics"></ol>
+          </article>
+        </section>
       </section>
 
-      <section class="panel">
-        <h2>Announcements</h2>
-        <ol id="announcements" class="announcements"></ol>
-      </section>
+      <section id="setupTab" class="tab-panel" data-tab-panel="setup" hidden>
+        <section class="panel connection-panel">
+          <label>
+            <span>Signal K server</span>
+            <input id="serverUrl" type="url" spellcheck="false" />
+          </label>
+          <label class="auto-connect">
+            <input id="autoConnect" type="checkbox" />
+            <span>Auto-connect</span>
+          </label>
+          <button id="connectButton" type="button">Connect</button>
+          <button id="disconnectButton" type="button">Disconnect</button>
+        </section>
 
-      <section class="panel">
-        <h2>Diagnostics</h2>
-        <ol id="diagnostics" class="diagnostics"></ol>
+        <section class="panel controls">
+          <div class="control-row secondary-controls">
+            <label class="keep-alive">
+              <input id="keepAliveEnabled" type="checkbox" />
+              <span>Bluetooth keep-alive</span>
+            </label>
+            <label class="period">
+              <span>Every</span>
+              <input id="keepAliveSeconds" type="number" min="10" max="3600" step="5" value="60" />
+              <strong>s</strong>
+            </label>
+            <label class="keep-alive">
+              <input id="keepAliveAudible" type="checkbox" />
+              <span>Audible test</span>
+            </label>
+            <label class="test-tone-volume">
+              <span>Test tone</span>
+              <input id="keepAliveVolume" type="range" min="0" max="100" value="50" />
+              <strong id="keepAliveVolumeValue">50%</strong>
+            </label>
+          </div>
+        </section>
       </section>
 
       <p id="message" class="message">Ready.</p>

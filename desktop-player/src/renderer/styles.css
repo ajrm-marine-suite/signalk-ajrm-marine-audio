@@ -34,6 +34,25 @@ main {
   margin-bottom: 18px;
 }
 
+.tabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.tab-button {
+  min-width: 7rem;
+}
+
+.tab-button.active {
+  border-color: #6ee7b7;
+  background: linear-gradient(#1f7a61, #145542);
+}
+
+.tab-panel[hidden] {
+  display: none;
+}
+
 .eyebrow {
   margin: 0 0 4px;
   color: #6ee7b7;
@@ -264,7 +283,7 @@ dd {
 }
 
 .diagnostics {
-  max-height: 190px;
+  max-height: 360px;
   overflow-y: auto;
   font-size: 0.9rem;
 }
@@ -282,6 +301,16 @@ dd {
   .connection-panel,
   .grid {
     display: grid;
+  }
+
+  .tabs {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .tab-button {
+    min-width: 0;
+    padding-inline: 8px;
   }
 
   .control-row {
