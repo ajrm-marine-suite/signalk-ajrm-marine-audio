@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.66
+
+- Restore mute semantics after `0.5.65`: depth callouts and depth-below-keel
+  alerts obey Traffic mute/automute unless they are explicitly forced.
+
 ## 0.5.65
 
 - Let anchoring depth callouts and depth-below-keel warnings play while Traffic

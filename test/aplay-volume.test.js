@@ -1566,8 +1566,7 @@ process.stdin.on("end", () => {
     "active",
     ["audible-instruments:anchoring-depth-callout"],
   );
-  assert.equal(statusOf(trafficMute).stats.queued, 1);
-  assert.equal(statusOf(trafficMute).lastAnnouncement.message, "Depth 2.1.");
+  assert.equal(statusOf(trafficMute).queueLength, 0);
   sendNotification(
     trafficMute,
     "audible-instruments:depth-below-keel",
@@ -1582,8 +1581,7 @@ process.stdin.on("end", () => {
     "active",
     ["audible-instruments:depth-below-keel"],
   );
-  assert.equal(statusOf(trafficMute).stats.queued, 2);
-  assert.equal(statusOf(trafficMute).lastAnnouncement.message, "Danger. Depth below keel 1.0 metres.");
+  assert.equal(statusOf(trafficMute).queueLength, 0);
   const queuedBeforeForcedBite = statusOf(trafficMute).stats.queued;
   sendNotification(
     trafficMute,
