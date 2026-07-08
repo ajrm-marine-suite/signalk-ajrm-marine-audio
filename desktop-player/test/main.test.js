@@ -40,12 +40,14 @@ assert.match(rendererSource, /Announcement still has no audio URL after wait win
 assert.doesNotMatch(rendererSource, /Announcement has no audio URL/);
 assert.match(rendererSource, /const DEFAULT_KEEP_ALIVE_SECONDS = 60/);
 assert.match(rendererSource, /const MIN_KEEP_ALIVE_SECONDS = 10/);
-assert.match(rendererSource, /function playKeepAlivePulse\(\)/);
+assert.match(rendererSource, /function playKeepAlivePulse\(\{ force = false \} = \{\}\)/);
 assert.match(rendererSource, /Sent Bluetooth keep-alive pulse/);
 assert.match(rendererSource, /AUDIBLE_KEEP_ALIVE_DATA_URL/);
 assert.match(rendererSource, /Bluetooth keep-alive audible test enabled/);
 assert.match(rendererSource, /Sent audible Bluetooth keep-alive test pulse/);
-assert.match(rendererSource, /if \(!settings\.keepAliveEnabled \|\| playing\) return/);
+assert.match(rendererSource, /playKeepAlivePulse\(\{ force: true \}\)/);
+assert.match(rendererSource, /els\.keepAliveAudio\.src = settings\.keepAliveAudible/);
+assert.match(rendererSource, /if \(\(!force && !settings\.keepAliveEnabled\) \|\| playing\) return/);
 
 async function withServer(handler, callback) {
   const server = http.createServer(handler);

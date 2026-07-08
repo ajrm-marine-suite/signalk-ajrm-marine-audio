@@ -29,6 +29,7 @@ const els = {
   volume: document.getElementById("volume"),
   volumeValue: document.getElementById("volumeValue"),
   audio: document.getElementById("audio"),
+  keepAliveAudio: document.getElementById("keepAliveAudio"),
   connectionPill: document.getElementById("connectionPill"),
   nowPlaying: document.getElementById("nowPlaying"),
   pluginVersion: document.getElementById("pluginVersion"),
@@ -71,6 +72,7 @@ settings.keepAliveSeconds = clampKeepAliveSeconds(settings.keepAliveSeconds);
 els.keepAliveSeconds.value = String(settings.keepAliveSeconds);
 els.volume.value = String(settings.volume ?? 100);
 els.audio.volume = Number(els.volume.value) / 100;
+els.keepAliveAudio.volume = 1;
 renderVolume();
 renderState();
 configureKeepAliveTimer();
@@ -134,6 +136,9 @@ els.keepAliveAudible.addEventListener("change", () => {
     settings.keepAliveAudible ? "Bluetooth keep-alive audible test enabled" : "Bluetooth keep-alive audible test disabled",
     { seconds: settings.keepAliveSeconds },
   );
+  if (settings.keepAliveAudible) {
+    playKeepAlivePulse({ force: true });
+  }
 });
 els.volume.addEventListener("input", () => {
   els.audio.volume = Number(els.volume.value) / 100;
@@ -297,13 +302,14 @@ function configureKeepAliveTimer() {
   keepAliveTimer = window.setInterval(playKeepAlivePulse, intervalMs);
 }
 
-function playKeepAlivePulse() {
-  if (!settings.keepAliveEnabled || playing) return;
-  const keepAliveAudio = new Audio(
-    settings.keepAliveAudible ? AUDIBLE_KEEP_ALIVE_DATA_URL : KEEP_ALIVE_DATA_URL,
-  );
-  keepAliveAudio.volume = 1;
-  keepAliveAudio.play().then(() => {
+function playKeepAlivePulse({ force = false } = {}) {
+  if ((!force && !settings.keepAliveEnabled) || playing) return;
+  els.keepAliveAudio.pause();
+  els.keepAliveAudio.currentTime = 0;
+  els.keepAliveAudio.src = settings.keepAliveAudible
+    ? AUDIBLE_KEEP_ALIVE_DATA_URL
+    : KEEP_ALIVE_DATA_URL;
+  els.keepAliveAudio.play().then(() => {
     logDiagnostic("keep-alive", settings.keepAliveAudible
       ? "Sent audible Bluetooth keep-alive test pulse"
       : "Sent Bluetooth keep-alive pulse", {

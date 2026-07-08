@@ -23,7 +23,6 @@ main {
 
 .topbar,
 .connection-panel,
-.controls,
 .grid {
   display: flex;
   gap: 16px;
@@ -76,6 +75,22 @@ h2 {
 
 .grid > .panel {
   flex: 1 1 0;
+}
+
+.controls {
+  display: grid;
+  gap: 14px;
+}
+
+.control-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.primary-controls {
+  justify-content: flex-start;
 }
 
 label {
@@ -264,8 +279,11 @@ dd {
 @media (max-width: 760px) {
   .topbar,
   .connection-panel,
-  .controls,
   .grid {
+    display: grid;
+  }
+
+  .control-row {
     display: grid;
   }
 }
