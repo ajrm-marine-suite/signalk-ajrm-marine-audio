@@ -5,6 +5,11 @@ const POLL_MS = 1500;
 const AUTO_RETRY_MS = 60000;
 const PLAYBACK_RETRY_MS = 3000;
 const AUDIO_URL_WAIT_MS = 15000;
+const DEFAULT_KEEP_ALIVE_SECONDS = 60;
+const MIN_KEEP_ALIVE_SECONDS = 10;
+const MAX_KEEP_ALIVE_SECONDS = 3600;
+const KEEP_ALIVE_DATA_URL = createKeepAliveDataUrl();
+const AUDIBLE_KEEP_ALIVE_DATA_URL = createKeepAliveDataUrl({ audible: true });
 const MAX_SEEN = 120;
 const MAX_HISTORY = 30;
 const MAX_DIAGNOSTICS = 120;
@@ -18,6 +23,9 @@ const els = {
   soundCheckButton: document.getElementById("soundCheckButton"),
   repeatButton: document.getElementById("repeatButton"),
   clearButton: document.getElementById("clearButton"),
+  keepAliveEnabled: document.getElementById("keepAliveEnabled"),
+  keepAliveSeconds: document.getElementById("keepAliveSeconds"),
+  keepAliveAudible: document.getElementById("keepAliveAudible"),
   volume: document.getElementById("volume"),
   volumeValue: document.getElementById("volumeValue"),
   audio: document.getElementById("audio"),
@@ -35,6 +43,7 @@ const els = {
 
 let pollTimer = null;
 let retryTimer = null;
+let keepAliveTimer = null;
 let pollInFlight = false;
 let statusFailureCount = 0;
 let connected = false;
@@ -56,10 +65,15 @@ let lastStatusSummary = "";
 const settings = loadSettings();
 els.serverUrl.value = settings.serverUrl || "http://localhost:3000";
 els.autoConnect.checked = Boolean(settings.autoConnect);
+els.keepAliveEnabled.checked = settings.keepAliveEnabled !== false;
+els.keepAliveAudible.checked = settings.keepAliveAudible === true;
+settings.keepAliveSeconds = clampKeepAliveSeconds(settings.keepAliveSeconds);
+els.keepAliveSeconds.value = String(settings.keepAliveSeconds);
 els.volume.value = String(settings.volume ?? 100);
 els.audio.volume = Number(els.volume.value) / 100;
 renderVolume();
 renderState();
+configureKeepAliveTimer();
 
 els.connectButton.addEventListener("click", () => connect({ automatic: false }));
 els.disconnectButton.addEventListener("click", disconnect);
@@ -92,6 +106,34 @@ els.clearButton.addEventListener("click", () => {
   queue = [];
   renderState();
   setMessage("Queue cleared.");
+});
+els.keepAliveEnabled.addEventListener("change", () => {
+  settings.keepAliveEnabled = els.keepAliveEnabled.checked;
+  saveSettings(settings);
+  configureKeepAliveTimer();
+  logDiagnostic(
+    "keep-alive-setting",
+    settings.keepAliveEnabled ? "Bluetooth keep-alive enabled" : "Bluetooth keep-alive disabled",
+    { seconds: settings.keepAliveSeconds },
+  );
+});
+els.keepAliveSeconds.addEventListener("change", () => {
+  settings.keepAliveSeconds = clampKeepAliveSeconds(els.keepAliveSeconds.value);
+  els.keepAliveSeconds.value = String(settings.keepAliveSeconds);
+  saveSettings(settings);
+  configureKeepAliveTimer();
+  logDiagnostic("keep-alive-setting", "Bluetooth keep-alive interval changed", {
+    seconds: settings.keepAliveSeconds,
+  });
+});
+els.keepAliveAudible.addEventListener("change", () => {
+  settings.keepAliveAudible = els.keepAliveAudible.checked;
+  saveSettings(settings);
+  logDiagnostic(
+    "keep-alive-setting",
+    settings.keepAliveAudible ? "Bluetooth keep-alive audible test enabled" : "Bluetooth keep-alive audible test disabled",
+    { seconds: settings.keepAliveSeconds },
+  );
 });
 els.volume.addEventListener("input", () => {
   els.audio.volume = Number(els.volume.value) / 100;
@@ -245,6 +287,32 @@ function scheduleAutoRetry({ immediate = false } = {}) {
 function clearRetry() {
   if (retryTimer) window.clearTimeout(retryTimer);
   retryTimer = null;
+}
+
+function configureKeepAliveTimer() {
+  if (keepAliveTimer) window.clearInterval(keepAliveTimer);
+  keepAliveTimer = null;
+  if (!settings.keepAliveEnabled) return;
+  const intervalMs = clampKeepAliveSeconds(settings.keepAliveSeconds) * 1000;
+  keepAliveTimer = window.setInterval(playKeepAlivePulse, intervalMs);
+}
+
+function playKeepAlivePulse() {
+  if (!settings.keepAliveEnabled || playing) return;
+  const keepAliveAudio = new Audio(
+    settings.keepAliveAudible ? AUDIBLE_KEEP_ALIVE_DATA_URL : KEEP_ALIVE_DATA_URL,
+  );
+  keepAliveAudio.volume = 1;
+  keepAliveAudio.play().then(() => {
+    logDiagnostic("keep-alive", settings.keepAliveAudible
+      ? "Sent audible Bluetooth keep-alive test pulse"
+      : "Sent Bluetooth keep-alive pulse", {
+      seconds: settings.keepAliveSeconds,
+      audible: settings.keepAliveAudible === true,
+    });
+  }).catch((error) => {
+    logDiagnostic("keep-alive-failed", error.message || String(error));
+  });
 }
 
 async function fetchStatus(serverUrl) {
@@ -613,6 +681,56 @@ function loadSettings() {
 
 function saveSettings(value) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(value));
+}
+
+function clampKeepAliveSeconds(value) {
+  const number = Number.parseInt(value, 10);
+  if (!Number.isFinite(number)) return DEFAULT_KEEP_ALIVE_SECONDS;
+  return Math.min(MAX_KEEP_ALIVE_SECONDS, Math.max(MIN_KEEP_ALIVE_SECONDS, number));
+}
+
+function createKeepAliveDataUrl({ audible = false } = {}) {
+  const sampleRate = 8000;
+  const seconds = 0.25;
+  const samples = Math.floor(sampleRate * seconds);
+  const dataBytes = samples * 2;
+  const buffer = new ArrayBuffer(44 + dataBytes);
+  const view = new DataView(buffer);
+  writeAscii(view, 0, "RIFF");
+  view.setUint32(4, 36 + dataBytes, true);
+  writeAscii(view, 8, "WAVE");
+  writeAscii(view, 12, "fmt ");
+  view.setUint32(16, 16, true);
+  view.setUint16(20, 1, true);
+  view.setUint16(22, 1, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * 2, true);
+  view.setUint16(32, 2, true);
+  view.setUint16(34, 16, true);
+  writeAscii(view, 36, "data");
+  view.setUint32(40, dataBytes, true);
+  for (let index = 0; index < samples; index += 1) {
+    const sample = audible
+      ? Math.round(Math.sin((2 * Math.PI * 880 * index) / sampleRate) * 1200)
+      : 0;
+    view.setInt16(44 + index * 2, sample, true);
+  }
+  return `data:audio/wav;base64,${arrayBufferToBase64(buffer)}`;
+}
+
+function writeAscii(view, offset, text) {
+  for (let index = 0; index < text.length; index += 1) {
+    view.setUint8(offset + index, text.charCodeAt(index));
+  }
+}
+
+function arrayBufferToBase64(buffer) {
+  const bytes = new Uint8Array(buffer);
+  let binary = "";
+  for (let index = 0; index < bytes.length; index += 1) {
+    binary += String.fromCharCode(bytes[index]);
+  }
+  return window.btoa(binary);
 }
 
 function escapeHtml(value) {

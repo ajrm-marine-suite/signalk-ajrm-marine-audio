@@ -36,6 +36,19 @@
           <input id="volume" type="range" min="0" max="100" value="100" />
           <strong id="volumeValue">100%</strong>
         </label>
+        <label class="keep-alive">
+          <input id="keepAliveEnabled" type="checkbox" />
+          <span>Bluetooth keep-alive</span>
+        </label>
+        <label class="period">
+          <span>Every</span>
+          <input id="keepAliveSeconds" type="number" min="10" max="3600" step="5" value="60" />
+          <strong>s</strong>
+        </label>
+        <label class="keep-alive">
+          <input id="keepAliveAudible" type="checkbox" />
+          <span>Audible test</span>
+        </label>
         <button id="soundCheckButton" type="button">Sound Check</button>
         <button id="repeatButton" type="button">Repeat Last</button>
         <button id="clearButton" type="button">Clear Queue</button>
