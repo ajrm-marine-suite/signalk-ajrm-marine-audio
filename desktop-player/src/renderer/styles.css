@@ -208,7 +208,8 @@ button:disabled {
   color: #fca5a5;
 }
 
-.volume {
+.volume,
+.test-tone-volume {
   flex: 1 1 auto;
   grid-template-columns: auto 1fr auto;
   align-items: center;

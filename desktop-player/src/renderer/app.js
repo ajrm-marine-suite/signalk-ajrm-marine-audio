@@ -26,6 +26,8 @@ const els = {
   keepAliveEnabled: document.getElementById("keepAliveEnabled"),
   keepAliveSeconds: document.getElementById("keepAliveSeconds"),
   keepAliveAudible: document.getElementById("keepAliveAudible"),
+  keepAliveVolume: document.getElementById("keepAliveVolume"),
+  keepAliveVolumeValue: document.getElementById("keepAliveVolumeValue"),
   volume: document.getElementById("volume"),
   volumeValue: document.getElementById("volumeValue"),
   audio: document.getElementById("audio"),
@@ -70,9 +72,11 @@ els.keepAliveEnabled.checked = settings.keepAliveEnabled !== false;
 els.keepAliveAudible.checked = settings.keepAliveAudible === true;
 settings.keepAliveSeconds = clampKeepAliveSeconds(settings.keepAliveSeconds);
 els.keepAliveSeconds.value = String(settings.keepAliveSeconds);
+settings.keepAliveVolume = clampPercent(settings.keepAliveVolume, 50);
+els.keepAliveVolume.value = String(settings.keepAliveVolume);
 els.volume.value = String(settings.volume ?? 100);
 els.audio.volume = Number(els.volume.value) / 100;
-els.keepAliveAudio.volume = 1;
+els.keepAliveAudio.volume = settings.keepAliveVolume / 100;
 renderVolume();
 renderState();
 configureKeepAliveTimer();
@@ -149,6 +153,13 @@ els.keepAliveAudible.addEventListener("change", () => {
   if (settings.keepAliveAudible) {
     playKeepAlivePulse({ force: true });
   }
+});
+els.keepAliveVolume.addEventListener("input", () => {
+  settings.keepAliveVolume = clampPercent(els.keepAliveVolume.value, 50);
+  els.keepAliveVolume.value = String(settings.keepAliveVolume);
+  els.keepAliveAudio.volume = settings.keepAliveVolume / 100;
+  saveSettings(settings);
+  renderVolume();
 });
 els.volume.addEventListener("input", () => {
   els.audio.volume = Number(els.volume.value) / 100;
@@ -334,6 +345,7 @@ function playKeepAlivePulse({ force = false } = {}) {
   if ((!force && !settings.keepAliveEnabled) || playing) return;
   els.keepAliveAudio.pause();
   els.keepAliveAudio.currentTime = 0;
+  els.keepAliveAudio.volume = clampPercent(settings.keepAliveVolume, 50) / 100;
   els.keepAliveAudio.src = settings.keepAliveAudible
     ? AUDIBLE_KEEP_ALIVE_DATA_URL
     : KEEP_ALIVE_DATA_URL;
@@ -343,6 +355,7 @@ function playKeepAlivePulse({ force = false } = {}) {
       : "Sent Bluetooth keep-alive pulse", {
       seconds: settings.keepAliveSeconds,
       audible: settings.keepAliveAudible === true,
+      volume: clampPercent(settings.keepAliveVolume, 50),
     });
   }).catch((error) => {
     logDiagnostic("keep-alive-failed", error.message || String(error));
@@ -590,6 +603,7 @@ function renderHistory() {
 
 function renderVolume() {
   els.volumeValue.textContent = `${els.volume.value}%`;
+  els.keepAliveVolumeValue.textContent = `${els.keepAliveVolume.value}%`;
 }
 
 function setMessage(message) {
@@ -721,6 +735,12 @@ function clampKeepAliveSeconds(value) {
   const number = Number.parseInt(value, 10);
   if (!Number.isFinite(number)) return DEFAULT_KEEP_ALIVE_SECONDS;
   return Math.min(MAX_KEEP_ALIVE_SECONDS, Math.max(MIN_KEEP_ALIVE_SECONDS, number));
+}
+
+function clampPercent(value, fallback) {
+  const number = Number.parseInt(value, 10);
+  if (!Number.isFinite(number)) return fallback;
+  return Math.min(100, Math.max(0, number));
 }
 
 function createKeepAliveDataUrl({ audible = false } = {}) {
