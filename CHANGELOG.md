@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.67
+
+- Enforce mute for all announcements except Sound Check. Forced notification
+  requests, including BITE summaries, no longer bypass Traffic mute/automute.
+
 ## 0.5.66
 
 - Restore mute semantics after `0.5.65`: depth callouts and depth-below-keel

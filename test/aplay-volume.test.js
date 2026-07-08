@@ -1428,9 +1428,9 @@ process.stdin.on("end", () => {
     muteStopsPlayback.plugin.stop();
     fs.rmSync(muteStopsPlayback.tempDir, { recursive: true, force: true });
 
-    const activeForcedSurvivesMute = createPipelineHarness();
+    const activeForcedStopsOnMute = createPipelineHarness();
     sendNotification(
-      activeForcedSurvivesMute,
+      activeForcedStopsOnMute,
       "notifications.system.active-bite-summary-forced",
       {
         ...vesselNotification("active-bite-summary-forced", "Marine built in tests complete."),
@@ -1445,42 +1445,31 @@ process.stdin.on("end", () => {
       [],
       false,
     );
-    await waitFor(() => statusOf(activeForcedSurvivesMute).active);
-    sendEngineAudioPolicy(activeForcedSurvivesMute, {
+    await waitFor(() => statusOf(activeForcedStopsOnMute).active);
+    sendEngineAudioPolicy(activeForcedStopsOnMute, {
       muted: true,
       sequence: 1,
       mode: "traffic",
       sessionId: "traffic-session",
     });
-    const activeForcedRendered = await waitFor(
-      () => {
-        const status = statusOf(activeForcedSurvivesMute);
-        return status.stats.rendered >= 1 ? status : null;
-      },
-      8000,
-    );
-    assert.equal(activeForcedRendered.stats.failed, 0);
-    assert.equal(
-      activeForcedRendered.recentEvents.some((event) =>
-        event.event === "speaker-stopped" &&
-        /Marine built in tests complete/.test(event.message)
+    await waitFor(() =>
+      statusOf(activeForcedStopsOnMute).recentEvents.some(
+        (event) => event.event === "speaker-stopped",
       ),
-      false,
-      "forced BITE summary already playing is not stopped by stationary automute",
     );
-    activeForcedSurvivesMute.plugin.stop();
-    fs.rmSync(activeForcedSurvivesMute.tempDir, { recursive: true, force: true });
+    activeForcedStopsOnMute.plugin.stop();
+    fs.rmSync(activeForcedStopsOnMute.tempDir, { recursive: true, force: true });
 
-    const forcedSurvivesMute = createPipelineHarness();
+    const forcedObeysMute = createPipelineHarness();
     sendNotification(
-      forcedSurvivesMute,
+      forcedObeysMute,
       "notifications.system.long-playback-before-bite",
       vesselNotification("long-playback-before-bite", "This playback should stop when muted before BITE summary."),
       100,
     );
-    await waitFor(() => statusOf(forcedSurvivesMute).active);
+    await waitFor(() => statusOf(forcedObeysMute).active);
     sendNotification(
-      forcedSurvivesMute,
+      forcedObeysMute,
       "notifications.system.bite-summary-forced",
       {
         ...vesselNotification("bite-summary-forced", "Marine built in tests complete."),
@@ -1495,25 +1484,23 @@ process.stdin.on("end", () => {
       [],
       false,
     );
-    await waitFor(() => statusOf(forcedSurvivesMute).queueLength >= 1);
-    sendEngineAudioPolicy(forcedSurvivesMute, {
+    await waitFor(() => statusOf(forcedObeysMute).queueLength >= 1);
+    sendEngineAudioPolicy(forcedObeysMute, {
       muted: true,
       sequence: 1,
       mode: "traffic",
       sessionId: "traffic-session",
     });
-    await waitFor(() => statusOf(forcedSurvivesMute).engineMuted === true);
-    const forcedRendered = await waitFor(
-      () => statusOf(forcedSurvivesMute).recentEvents.some(
-        (event) =>
-          event.event === "rendered" &&
-          /Marine built in tests complete/.test(event.message),
+    await waitFor(() => statusOf(forcedObeysMute).engineMuted === true);
+    const forcedCleared = await waitFor(
+      () => statusOf(forcedObeysMute).recentEvents.some(
+        (event) => event.event === "queue-cleared",
       ),
       8000,
     );
-    assert.equal(forcedRendered, true, "forced BITE summary survives stationary automute queue clearing");
-    forcedSurvivesMute.plugin.stop();
-    fs.rmSync(forcedSurvivesMute.tempDir, { recursive: true, force: true });
+    assert.equal(forcedCleared, true, "forced BITE summary obeys mute and is cleared");
+    forcedObeysMute.plugin.stop();
+    fs.rmSync(forcedObeysMute.tempDir, { recursive: true, force: true });
   }
 
   const engineMute = createHarness();
@@ -1582,7 +1569,6 @@ process.stdin.on("end", () => {
     ["audible-instruments:depth-below-keel"],
   );
   assert.equal(statusOf(trafficMute).queueLength, 0);
-  const queuedBeforeForcedBite = statusOf(trafficMute).stats.queued;
   sendNotification(
     trafficMute,
     "notifications.system.bite-summary",
@@ -1595,9 +1581,12 @@ process.stdin.on("end", () => {
       },
     },
   );
-  assert.equal(statusOf(trafficMute).stats.queued, queuedBeforeForcedBite + 1);
-  assert.equal(statusOf(trafficMute).lastAnnouncement.force, true);
-  assert.equal(statusOf(trafficMute).lastAnnouncement.message, "Marine built in tests complete.");
+  assert.equal(statusOf(trafficMute).queueLength, 0);
+  assert.equal(statusOf(trafficMute).lastAnnouncement, null);
+  const soundCheck = await postRoute(trafficMute, "/sound-check");
+  assert.equal(soundCheck.ok, true);
+  assert.equal(statusOf(trafficMute).stats.queued, 1);
+  assert.equal(statusOf(trafficMute).lastAnnouncement.message, "Sound Check. Testing 1, 2, 3.");
   trafficMute.plugin.stop();
 
   const emptyProviderMute = createHarness();

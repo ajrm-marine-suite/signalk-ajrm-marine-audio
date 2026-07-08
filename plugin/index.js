@@ -951,7 +951,7 @@ module.exports = function ajrmMarineAudio(app) {
   function enqueue(entry) {
     if (!entry?.message) return;
 
-    if (!options.enabled && !entry.force) {
+    if (!options.enabled && !canBypassMute(entry)) {
       addRecent("skipped", `Audio disabled: ${entry.message}`);
       return;
     }
@@ -1344,17 +1344,17 @@ module.exports = function ajrmMarineAudio(app) {
 
   function clearQueuedAnnouncements(reason) {
     const originalQueueLength = queue.length;
-    const retainedQueue = queue.filter((entry) => entry?.force === true);
+    const retainedQueue = queue.filter((entry) => canBypassMute(entry));
     const removed = originalQueueLength - retainedQueue.length;
     const preparingEntry = preparing?.entry || null;
     const preparedEntry = prepared?.entry || null;
     const cancelledPreparing =
       preparingEntry &&
-      preparingEntry.force !== true &&
+      !canBypassMute(preparingEntry) &&
       preparingEntry.superseded !== true;
     const cancelledPrepared =
       preparedEntry &&
-      preparedEntry.force !== true &&
+      !canBypassMute(preparedEntry) &&
       preparedEntry.superseded !== true;
     queue = retainedQueue;
     if (cancelledPreparing) preparingEntry.superseded = true;
@@ -1369,7 +1369,7 @@ module.exports = function ajrmMarineAudio(app) {
       details.push(`dropped ${removed} queued announcement${removed === 1 ? "" : "s"}`);
     }
     if (retainedQueue.length > 0) {
-      details.push(`kept ${retainedQueue.length} forced announcement${retainedQueue.length === 1 ? "" : "s"}`);
+      details.push(`kept ${retainedQueue.length} sound check announcement${retainedQueue.length === 1 ? "" : "s"}`);
     }
     if (cancelledPreparing) details.push("cancelled in-flight preparation");
     if (cancelledPrepared) details.push("discarded prepared announcement");
@@ -1382,7 +1382,7 @@ module.exports = function ajrmMarineAudio(app) {
 
   function stopActiveLocalPlayback(reason) {
     if (!currentLocalPlaybackChild || !currentLocalPlaybackEntry) return false;
-    if (currentLocalPlaybackEntry.force === true) return false;
+    if (canBypassMute(currentLocalPlaybackEntry)) return false;
     currentLocalPlaybackEntry.cancelledByMute = true;
     currentLocalPlaybackEntry.superseded = true;
     currentLocalPlaybackChild.kill("SIGTERM");
@@ -1395,7 +1395,19 @@ module.exports = function ajrmMarineAudio(app) {
   }
 
   function isAudioMutedForEntry(entry) {
-    return entry?.force !== true && isAudioMuted();
+    return !canBypassMute(entry) && isAudioMuted();
+  }
+
+  function canBypassMute(entry) {
+    return entry?.force === true && isSoundCheckEntry(entry);
+  }
+
+  function isSoundCheckEntry(entry) {
+    return (
+      String(entry?.id || "").startsWith("sound-check-") ||
+      String(entry?.category || "") === "sound-check" ||
+      /^Sound Check\b/i.test(String(entry?.message || ""))
+    );
   }
 
   function buildStatus() {
