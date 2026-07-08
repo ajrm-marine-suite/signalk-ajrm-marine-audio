@@ -725,7 +725,7 @@ function clampKeepAliveSeconds(value) {
 
 function createKeepAliveDataUrl({ audible = false } = {}) {
   const sampleRate = 8000;
-  const seconds = audible ? 0.6 : 0.25;
+  const seconds = audible ? 0.3 : 0.25;
   const samples = Math.floor(sampleRate * seconds);
   const dataBytes = samples * 2;
   const buffer = new ArrayBuffer(44 + dataBytes);
@@ -745,7 +745,7 @@ function createKeepAliveDataUrl({ audible = false } = {}) {
   view.setUint32(40, dataBytes, true);
   for (let index = 0; index < samples; index += 1) {
     const sample = audible
-      ? Math.round(Math.sin((2 * Math.PI * 880 * index) / sampleRate) * 6500)
+      ? Math.round(Math.sin((2 * Math.PI * 880 * index) / sampleRate) * 2600)
       : 0;
     view.setInt16(44 + index * 2, sample, true);
   }
