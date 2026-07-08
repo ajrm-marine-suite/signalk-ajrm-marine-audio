@@ -130,11 +130,19 @@ els.keepAliveSeconds.addEventListener("change", () => {
 });
 els.keepAliveAudible.addEventListener("change", () => {
   settings.keepAliveAudible = els.keepAliveAudible.checked;
+  if (settings.keepAliveAudible && !settings.keepAliveEnabled) {
+    settings.keepAliveEnabled = true;
+    els.keepAliveEnabled.checked = true;
+  }
   saveSettings(settings);
+  configureKeepAliveTimer();
   logDiagnostic(
     "keep-alive-setting",
     settings.keepAliveAudible ? "Bluetooth keep-alive audible test enabled" : "Bluetooth keep-alive audible test disabled",
-    { seconds: settings.keepAliveSeconds },
+    {
+      seconds: settings.keepAliveSeconds,
+      enabled: settings.keepAliveEnabled,
+    },
   );
   if (settings.keepAliveAudible) {
     playKeepAlivePulse({ force: true });

@@ -45,6 +45,8 @@ assert.match(rendererSource, /Sent Bluetooth keep-alive pulse/);
 assert.match(rendererSource, /AUDIBLE_KEEP_ALIVE_DATA_URL/);
 assert.match(rendererSource, /Bluetooth keep-alive audible test enabled/);
 assert.match(rendererSource, /Sent audible Bluetooth keep-alive test pulse/);
+assert.match(rendererSource, /settings\.keepAliveAudible && !settings\.keepAliveEnabled/);
+assert.match(rendererSource, /configureKeepAliveTimer\(\)/);
 assert.match(rendererSource, /playKeepAlivePulse\(\{ force: true \}\)/);
 assert.match(rendererSource, /els\.keepAliveAudio\.src = settings\.keepAliveAudible/);
 assert.match(rendererSource, /if \(\(!force && !settings\.keepAliveEnabled\) \|\| playing\) return/);
