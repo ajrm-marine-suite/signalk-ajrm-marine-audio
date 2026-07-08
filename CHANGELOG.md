@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.63
+
+- Add an explicit **Electron/Desktop Player output** switch to Audio output
+  routing, defaulting on for existing behaviour.
+- Report Desktop Player output availability and status in the Audio status
+  contract.
+- Make the bundled desktop player stop queuing server announcements when Audio
+  disables Desktop Player output.
+- Bump the bundled desktop player to `0.1.15`.
+
 ## 0.5.62
 
 - Expand common marine unit abbreviations before sending text to Piper, so

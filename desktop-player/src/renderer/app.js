@@ -36,6 +36,7 @@ const els = {
   nowPlaying: document.getElementById("nowPlaying"),
   pluginVersion: document.getElementById("pluginVersion"),
   serverTime: document.getElementById("serverTime"),
+  desktopOutput: document.getElementById("desktopOutput"),
   queueLength: document.getElementById("queueLength"),
   lastPoll: document.getElementById("lastPoll"),
   logPath: document.getElementById("logPath"),
@@ -281,6 +282,14 @@ async function poll({ markExistingSeen = false, initialConnect = false } = {}) {
     const announcements = status.recentAnnouncements?.length
       ? status.recentAnnouncements
       : [status.lastAnnouncement].filter(Boolean);
+    if (status.desktopPlayerOutput === false) {
+      for (const item of announcements) rememberSeen(announcementKey(item));
+      clearAutomaticAnnouncements("Desktop Player output is disabled in AJRM Marine Audio.");
+      setMessage("Desktop Player output is disabled in AJRM Marine Audio.");
+      els.lastPoll.textContent = new Date().toLocaleTimeString();
+      renderState();
+      return true;
+    }
     if (markExistingSeen) {
       if (announcements.length) {
         logDiagnostic("connect-seen", `Marked ${announcements.length} existing announcement(s) as already seen on connect`);
@@ -415,6 +424,7 @@ function enqueue(announcement, { force = false } = {}) {
     playbackUrl: "",
     message: String(announcement.message || ""),
     receivedAt: new Date().toISOString(),
+    manual: force === true,
   };
   if (isSoundCheckAnnouncement(item.message)) {
     settings.soundCheckMessage = item.message;
@@ -529,6 +539,7 @@ function playCachedSoundCheck() {
     playbackUrl: settings.soundCheckDataUrl,
     message: settings.soundCheckMessage || "Sound Check. Testing 1, 2, 3.",
     receivedAt: new Date().toISOString(),
+    manual: true,
   };
   if (playing) {
     els.audio.pause();
@@ -555,11 +566,19 @@ function renderStatus(status) {
   els.serverTime.textContent = status.serverTime
     ? new Date(status.serverTime).toLocaleTimeString()
     : "-";
+  if (els.desktopOutput) {
+    els.desktopOutput.textContent = status.desktopPlayerOutput === false
+      ? "Disabled by Audio"
+      : status.desktopPlayerOutputAvailable === false
+        ? `Unavailable${status.desktopPlayerOutputUnavailableReason ? `: ${status.desktopPlayerOutputUnavailableReason}` : ""}`
+        : "Enabled";
+  }
   const summary = [
     status.version || "-",
     status.muted === true ? "muted" : "unmuted",
     status.pluginMuted === true ? "plugin-muted" : "plugin-unmuted",
     status.engineMuted === true ? "traffic-muted" : "traffic-unmuted",
+    status.desktopPlayerOutput === false ? "desktop-off" : "desktop-on",
     `recent:${status.recentAnnouncements?.length || 0}`,
   ].join("|");
   if (lastStatusSummary && lastStatusSummary !== summary) {
@@ -568,10 +587,30 @@ function renderStatus(status) {
       muted: status.muted === true,
       pluginMuted: status.pluginMuted === true,
       trafficMuted: status.engineMuted === true,
+      desktopPlayerOutput: status.desktopPlayerOutput !== false,
       recentAnnouncements: status.recentAnnouncements?.length || 0,
     });
   }
   lastStatusSummary = summary;
+}
+
+function clearAutomaticAnnouncements(message) {
+  for (const item of queue) {
+    if (!item.manual) releasePending(item);
+  }
+  queue = queue.filter((item) => item.manual);
+  for (const [key, waiting] of waitingForAudioUrl.entries()) {
+    logDiagnostic("announcement-disabled", message, {
+      message: waiting.message || "",
+    });
+    waitingForAudioUrl.delete(key);
+  }
+  if (currentItem && !currentItem.manual) {
+    releasePending(currentItem);
+    els.audio.pause();
+    currentItem = null;
+    playing = false;
+  }
 }
 
 function renderState() {

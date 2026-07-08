@@ -504,6 +504,8 @@ async function postRoute(harness, pathName) {
   assert.match(desktopPlayerApp, /pendingKeys = new Set/);
   assert.match(desktopPlayerApp, /playbackRetryTimers = new Set/);
   assert.match(desktopPlayerApp, /function schedulePlaybackRetry/);
+  assert.match(desktopPlayerApp, /status\.desktopPlayerOutput === false/);
+  assert.match(desktopPlayerApp, /clearAutomaticAnnouncements/);
   assert.match(desktopPlayerApp, /pollInFlight = false/);
   assert.match(desktopPlayerApp, /if \(pollInFlight\) return/);
   assert.match(desktopPlayerApp, /finally \{\s*pollInFlight = false;\s*\}/s);
@@ -524,6 +526,8 @@ async function postRoute(harness, pathName) {
 
   const defaults = createHarness();
   assert.equal(statusOf(defaults).localPlayback, false);
+  assert.equal(statusOf(defaults).desktopPlayerOutput, true);
+  assert.equal(statusOf(defaults).desktopPlayerOutputAvailable, false);
   assert.equal(statusOf(defaults).liveStream, false);
   assert.equal(statusOf(defaults).publicHttpStream, false);
   assert.equal(statusOf(defaults).pingEnabled, false);
@@ -705,17 +709,21 @@ async function postRoute(harness, pathName) {
   });
   const outputBody = await postOutputs(outputRouting, {
     localPlayback: false,
+    desktopPlayerOutput: false,
     liveStream: false,
   });
   assert.equal(outputBody.statusCode, 200);
   assert.deepEqual(outputBody.outputs, {
     localPlayback: false,
+    desktopPlayerOutput: false,
     liveStream: false,
   });
   assert.equal(statusOf(outputRouting).pluginMuted, false);
   assert.equal(statusOf(outputRouting).localPlayback, false);
+  assert.equal(statusOf(outputRouting).desktopPlayerOutput, false);
   assert.equal(statusOf(outputRouting).liveStream, false);
   assert.equal(outputRouting.savedOptions.at(-1).localPlayback, false);
+  assert.equal(outputRouting.savedOptions.at(-1).desktopPlayerOutput, false);
   assert.equal(outputRouting.savedOptions.at(-1).liveStream, false);
   assert.equal(Object.prototype.hasOwnProperty.call(outputRouting.savedOptions.at(-1), "muted"), false);
   outputRouting.plugin.stop();

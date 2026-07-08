@@ -38,6 +38,7 @@ const browserOutputModeInputs = Array.from(
   document.querySelectorAll('input[name="browserOutputMode"]'),
 );
 const browserOutputPiper = document.getElementById("browserOutputPiper");
+const checkDesktopPlayerOutput = document.getElementById("checkDesktopPlayerOutput");
 const checkPiOutput = document.getElementById("checkPiOutput");
 const checkStreamOutput = document.getElementById("checkStreamOutput");
 const checkMuteAll = document.getElementById("checkMuteAll");
@@ -114,6 +115,7 @@ for (const input of browserOutputModeInputs) {
   });
 }
 checkPiOutput.addEventListener("change", saveOutputRouting);
+checkDesktopPlayerOutput.addEventListener("change", saveOutputRouting);
 checkStreamOutput.addEventListener("change", saveOutputRouting);
 checkMuteAll.addEventListener("change", () => {
   browserMuted = checkMuteAll.checked;
@@ -369,6 +371,7 @@ async function saveOutputRouting() {
   try {
     outputStatus.textContent = "Saving output routing…";
     await postJson("outputs", {
+      desktopPlayerOutput: checkDesktopPlayerOutput.checked,
       localPlayback: checkPiOutput.checked,
       liveStream: checkStreamOutput.checked,
     });
@@ -438,6 +441,16 @@ function renderOutputRouting(status) {
   if (document.activeElement !== checkPiOutput) {
     checkPiOutput.checked = status.localPlayback !== false;
   }
+  if (document.activeElement !== checkDesktopPlayerOutput) {
+    checkDesktopPlayerOutput.checked = status.desktopPlayerOutput !== false;
+  }
+  const desktopPlayerAvailable = status.desktopPlayerOutputAvailable === true;
+  checkDesktopPlayerOutput.disabled = !desktopPlayerAvailable && !checkDesktopPlayerOutput.checked;
+  checkDesktopPlayerOutput.title =
+    desktopPlayerAvailable || checkDesktopPlayerOutput.checked
+      ? ""
+      : status.desktopPlayerOutputUnavailableReason ||
+        "Desktop Player output needs Piper, a voice model, and FFmpeg on the Signal K server.";
   const serverSpeakerAvailable = status.localPlaybackAvailable === true;
   checkPiOutput.disabled = !serverSpeakerAvailable && !checkPiOutput.checked;
   checkPiOutput.title =
@@ -461,6 +474,9 @@ function renderOutputRouting(status) {
   if (status.engineMuted) mutedReasons.push("muted by Traffic");
   outputStatus.textContent = [
     `Browser ${browserOutputModeLabel(browserOutputMode)}`,
+    piperPlaybackAvailable
+      ? `desktop player ${status.desktopPlayerOutput !== false ? "on" : "off"}`
+      : "desktop player unavailable",
     serverSpeakerAvailable
       ? `server speaker ${status.localPlayback !== false ? "on" : "off"}`
       : `server speaker unavailable${status.localPlaybackUnavailableReason ? ` (${status.localPlaybackUnavailableReason})` : ""}`,

@@ -177,6 +177,13 @@ module.exports = function ajrmMarineAudio(app) {
           "When enabled, this Signal K server will play the same rendered announcement audio that browser clients can fetch. Requires Piper, a voice model, and a local audio player.",
         default: false,
       },
+      desktopPlayerOutput: {
+        type: "boolean",
+        title: "Enable Electron/Desktop Player output",
+        description:
+          "Allows AJRM Marine Audio Player desktop apps on macOS, Windows, or Linux to play server-rendered announcement MP3 files from the Audio status feed.",
+        default: true,
+      },
       liveStream: {
         type: "boolean",
         title: "Enable radio-style MP3 stream",
@@ -526,6 +533,10 @@ module.exports = function ajrmMarineAudio(app) {
           req.body?.liveStream !== undefined
             ? booleanFrom(req.body.liveStream)
             : options.liveStream,
+        desktopPlayerOutput:
+          req.body?.desktopPlayerOutput !== undefined
+            ? booleanFrom(req.body.desktopPlayerOutput)
+            : options.desktopPlayerOutput,
       };
       const previous = outputSettings();
       if (next.localPlayback && !localPlaybackAvailability().available) {
@@ -554,15 +565,18 @@ module.exports = function ajrmMarineAudio(app) {
       }
       options.localPlayback = next.localPlayback;
       options.liveStream = next.liveStream;
+      options.desktopPlayerOutput = next.desktopPlayerOutput;
       try {
         await savePluginOptions({
           ...storedPluginOptions,
           localPlayback: options.localPlayback,
           liveStream: options.liveStream,
+          desktopPlayerOutput: options.desktopPlayerOutput,
         });
       } catch (error) {
         options.localPlayback = previous.localPlayback;
         options.liveStream = previous.liveStream;
+        options.desktopPlayerOutput = previous.desktopPlayerOutput;
         res.status(500).json({ error: `Output settings save failed: ${error.message}` });
         return;
       }
@@ -573,6 +587,7 @@ module.exports = function ajrmMarineAudio(app) {
         "settings",
         [
           `Audio outputs updated from webapp:`,
+          `desktop player ${options.desktopPlayerOutput ? "on" : "off"},`,
           `server speaker ${options.localPlayback ? "on" : "off"},`,
           `radio stream ${options.liveStream ? "on" : "off"}`,
         ].join(" "),
@@ -694,6 +709,7 @@ module.exports = function ajrmMarineAudio(app) {
       enabled: value.enabled !== false,
       muted: false,
       localPlayback: value.localPlayback === true,
+      desktopPlayerOutput: value.desktopPlayerOutput !== false,
       liveStream: value.liveStream === true,
       publicHttpStream: value.publicHttpStream === true,
       publicHttpStreamPort: clampInteger(value.publicHttpStreamPort, 1024, 65535, 3445),
@@ -754,6 +770,7 @@ module.exports = function ajrmMarineAudio(app) {
   function outputSettings() {
     return {
       localPlayback: options.localPlayback,
+      desktopPlayerOutput: options.desktopPlayerOutput,
       liveStream: options.liveStream,
     };
   }
@@ -1380,6 +1397,7 @@ module.exports = function ajrmMarineAudio(app) {
   function buildStatus() {
     const publicStreamBase = publicStreamBaseUrl();
     const localPlaybackState = localPlaybackAvailability();
+    const piperPlaybackState = piperPlaybackAvailability();
     const publishedLastAnnouncement = lastAnnouncement
       ? {
           ...lastAnnouncement,
@@ -1407,6 +1425,9 @@ module.exports = function ajrmMarineAudio(app) {
       localPlayback: options.localPlayback,
       localPlaybackAvailable: localPlaybackState.available,
       localPlaybackUnavailableReason: localPlaybackState.reason,
+      desktopPlayerOutput: options.desktopPlayerOutput,
+      desktopPlayerOutputAvailable: piperPlaybackState.available,
+      desktopPlayerOutputUnavailableReason: piperPlaybackState.reason,
       liveStream: options.liveStream,
       liveStreamClients: liveStreamClients.size,
       liveStreamConnections: Array.from(liveStreamClients).map((client) => ({

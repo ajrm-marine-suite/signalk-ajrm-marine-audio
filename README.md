@@ -2,7 +2,10 @@
 
 ## Version 2 baseline
 
-`v0.5.47` keeps expected desktop-player network failures, such as status
+`v0.5.63` adds an explicit Audio output-routing switch for the
+Electron/Desktop Player path and reports that route in status, so BITE and
+operators can distinguish desktop-player playback from server speaker and radio
+stream output. `v0.5.47` keeps expected desktop-player network failures, such as status
 timeouts or socket resets, in the app UI instead of logging noisy Electron IPC
 handler exceptions. `v0.5.46` adds a desktop-player **Sound Check** button that replays the latest
 cached server-rendered Sound Check MP3 for local volume setting. `v0.5.45` makes the desktop player prefer public generated-audio URLs when
