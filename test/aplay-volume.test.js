@@ -477,6 +477,8 @@ async function postRoute(harness, pathName) {
   assert.match(browserApp, /renderVoiceSelector/);
   assert.match(browserApp, /installPiperWithPiController/);
   assert.match(browserApp, /localPlaybackAvailable/);
+  assert.match(browserApp, /desktopPlayerOutputAvailable/);
+  assert.match(browserApp, /Desktop Player/);
   assert.match(browserApp, /Server speaker output needs Piper/);
   assert.match(browserApp, /piperPlaybackAvailable/);
   assert.match(browserApp, /Piper browser playback is unavailable/);

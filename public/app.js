@@ -208,8 +208,9 @@ async function postJson(path, body = null) {
     headers: authHeaders({ "Content-Type": "application/json" }),
     body: body ? JSON.stringify(body) : undefined,
   });
-  await readResponse(response, path);
+  const result = await readResponse(response, path);
   await refresh({ force: true });
+  return result;
 }
 
 function bindCommandButton(id, path, message) {
@@ -252,6 +253,12 @@ function hasServerRenderedOutput() {
     return true;
   }
   if (lastStatus?.localPlayback === true && lastStatus?.localPlaybackAvailable === true) {
+    return true;
+  }
+  if (
+    lastStatus?.desktopPlayerOutput === true &&
+    lastStatus?.desktopPlayerOutputAvailable === true
+  ) {
     return true;
   }
   if (
@@ -370,11 +377,12 @@ function renderStatus(status) {
 async function saveOutputRouting() {
   try {
     outputStatus.textContent = "Saving output routing…";
-    await postJson("outputs", {
+    const result = await postJson("outputs", {
       desktopPlayerOutput: checkDesktopPlayerOutput.checked,
       localPlayback: checkPiOutput.checked,
       liveStream: checkStreamOutput.checked,
     });
+    renderStatus(result.status || lastStatus);
   } catch (error) {
     renderCommandError(error);
   }
@@ -475,8 +483,8 @@ function renderOutputRouting(status) {
   outputStatus.textContent = [
     `Browser ${browserOutputModeLabel(browserOutputMode)}`,
     piperPlaybackAvailable
-      ? `desktop player ${status.desktopPlayerOutput !== false ? "on" : "off"}`
-      : "desktop player unavailable",
+      ? `Desktop Player ${status.desktopPlayerOutput !== false ? "on" : "off"}`
+      : "Desktop Player unavailable",
     serverSpeakerAvailable
       ? `server speaker ${status.localPlayback !== false ? "on" : "off"}`
       : `server speaker unavailable${status.localPlaybackUnavailableReason ? ` (${status.localPlaybackUnavailableReason})` : ""}`,

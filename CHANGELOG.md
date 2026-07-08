@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.5.64
+
+- Render saved output-routing status immediately so the Audio webapp shows
+  **Desktop Player off** as soon as the Electron/Desktop Player output switch
+  is disabled.
+- Treat enabled Desktop Player output as a valid server-rendered Sound Check
+  route when browser, server speaker, and radio stream outputs are off.
+
 ## 0.5.63
 
 - Add an explicit **Electron/Desktop Player output** switch to Audio output
