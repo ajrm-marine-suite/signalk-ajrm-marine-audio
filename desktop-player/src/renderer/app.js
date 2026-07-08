@@ -119,7 +119,9 @@ els.keepAliveEnabled.addEventListener("change", () => {
     { seconds: settings.keepAliveSeconds },
   );
 });
-els.keepAliveSeconds.addEventListener("change", () => {
+els.keepAliveSeconds.addEventListener("input", applyKeepAliveIntervalInput);
+els.keepAliveSeconds.addEventListener("change", applyKeepAliveIntervalInput);
+function applyKeepAliveIntervalInput() {
   settings.keepAliveSeconds = clampKeepAliveSeconds(els.keepAliveSeconds.value);
   els.keepAliveSeconds.value = String(settings.keepAliveSeconds);
   saveSettings(settings);
@@ -127,7 +129,7 @@ els.keepAliveSeconds.addEventListener("change", () => {
   logDiagnostic("keep-alive-setting", "Bluetooth keep-alive interval changed", {
     seconds: settings.keepAliveSeconds,
   });
-});
+}
 els.keepAliveAudible.addEventListener("change", () => {
   settings.keepAliveAudible = els.keepAliveAudible.checked;
   if (settings.keepAliveAudible && !settings.keepAliveEnabled) {
@@ -303,11 +305,29 @@ function clearRetry() {
 }
 
 function configureKeepAliveTimer() {
-  if (keepAliveTimer) window.clearInterval(keepAliveTimer);
+  if (keepAliveTimer) window.clearTimeout(keepAliveTimer);
   keepAliveTimer = null;
   if (!settings.keepAliveEnabled) return;
-  const intervalMs = clampKeepAliveSeconds(settings.keepAliveSeconds) * 1000;
-  keepAliveTimer = window.setInterval(playKeepAlivePulse, intervalMs);
+  scheduleNextKeepAlivePulse();
+}
+
+function scheduleNextKeepAlivePulse() {
+  if (keepAliveTimer) window.clearTimeout(keepAliveTimer);
+  keepAliveTimer = null;
+  if (!settings.keepAliveEnabled) return;
+  const seconds = clampKeepAliveSeconds(settings.keepAliveSeconds);
+  settings.keepAliveSeconds = seconds;
+  els.keepAliveSeconds.value = String(seconds);
+  keepAliveTimer = window.setTimeout(() => {
+    keepAliveTimer = null;
+    playKeepAlivePulse();
+    scheduleNextKeepAlivePulse();
+  }, seconds * 1000);
+  logDiagnostic("keep-alive-armed", "Bluetooth keep-alive timer armed", {
+    seconds,
+    milliseconds: seconds * 1000,
+    audible: settings.keepAliveAudible === true,
+  });
 }
 
 function playKeepAlivePulse({ force = false } = {}) {
