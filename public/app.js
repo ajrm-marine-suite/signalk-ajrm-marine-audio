@@ -479,7 +479,7 @@ function renderOutputRouting(status) {
   }
   const mutedReasons = [];
   if (browserMuted) mutedReasons.push("browser muted on this device");
-  if (status.engineMuted) mutedReasons.push("muted by Traffic");
+  if (status.trafficMuted) mutedReasons.push("muted by Traffic");
   outputStatus.textContent = [
     `Browser ${browserOutputModeLabel(browserOutputMode)}`,
     piperPlaybackAvailable

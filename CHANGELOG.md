@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.5.69
+
+- Rename Audio's consumed mute-policy status from legacy Engine wording to
+  Traffic wording, and require the explicit AJRM Marine Traffic policy contract.
+- Update Instrument Alerts notification fixture identifiers to the current
+  AJRM Marine provider/category names.
+- Bump the bundled desktop player to `0.1.16` for the Traffic mute-status
+  renderer update.
+
 ## 0.5.68
 
 - Use explicit Traffic notification context for directional ping clock and

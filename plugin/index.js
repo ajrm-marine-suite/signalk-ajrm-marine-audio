@@ -10,10 +10,7 @@ const packageInfo = require("../package.json");
 const PLUGIN_ID = "signalk-ajrm-marine-audio";
 const DEFAULT_AUDIO_DIR = "~/.signalk/ajrm-marine-audio";
 const LEGACY_AUDIO_DIR = ["~/.signalk/ais", "-plus-audio"].join("");
-const TRAFFIC_AUDIO_POLICY_CONTRACTS = new Set([
-  "ajrm-marine-traffic-audio-policy",
-  ["ais", "plus-engine-audio-policy"].join("-"),
-]);
+const TRAFFIC_AUDIO_POLICY_CONTRACT = "ajrm-marine-traffic-audio-policy";
 const STATUS_PATH = "plugins.ajrmMarineAudio";
 const MIN_APLAY_VOLUME_LEVEL_PERCENT = 0;
 const MAX_APLAY_VOLUME_LEVEL_PERCENT = 100;
@@ -27,7 +24,7 @@ const DEFAULT_APLAY_VOLUME_COMMAND = "amixer";
 const APLAY_VOLUME_FALLBACK_CONTROLS = ["PCM", "Master", "Headphone", "Speaker"];
 const AJRM_MARINE_NOTIFICATIONS_PATH = "plugins.ajrmMarineNotifications";
 const AJRM_MARINE_NOTIFICATIONS_AUDIO_PATH = "plugins.ajrmMarineNotifications.audio";
-const ENGINE_AUDIO_POLICY_PATH = "plugins.ajrmMarineTraffic.audioPolicy";
+const TRAFFIC_AUDIO_POLICY_PATH = "plugins.ajrmMarineTraffic.audioPolicy";
 const PIPER_INSTALL_ENDPOINT = "/plugins/signalk-ajrm-marine-pi-controller/actions/install-piper";
 const DEFAULT_PROCESS_TIMEOUT_MS = 60000;
 
@@ -44,10 +41,10 @@ module.exports = function ajrmMarineAudio(app) {
   let currentLocalPlaybackEntry = null;
   let lastAnnouncement = null;
   let recentAnnouncements = [];
-  let engineMuted = false;
-  let engineAudioPolicy = null;
-  let engineSessionId = "";
-  let lastEngineAudioPolicySequence = 0;
+  let trafficMuted = false;
+  let trafficAudioPolicy = null;
+  let trafficSessionId = "";
+  let lastTrafficAudioPolicySequence = 0;
   let ajrmMarineNotificationsSessionId = "";
   let lastNotificationsPlusAudioSequence = 0;
   let processedNotificationsPlusAudioRequests = new Set();
@@ -104,10 +101,10 @@ module.exports = function ajrmMarineAudio(app) {
     ajrmMarineNotificationsSessionId = "";
     lastNotificationsPlusAudioSequence = 0;
     processedNotificationsPlusAudioRequests = new Set();
-    engineMuted = false;
-    engineAudioPolicy = null;
-    engineSessionId = "";
-    lastEngineAudioPolicySequence = 0;
+    trafficMuted = false;
+    trafficAudioPolicy = null;
+    trafficSessionId = "";
+    lastTrafficAudioPolicySequence = 0;
     options = normalizeOptions(initialPluginOptions);
     storedPluginOptions = {
       ...initialPluginOptions,
@@ -150,8 +147,8 @@ module.exports = function ajrmMarineAudio(app) {
     currentLocalPlaybackChild = null;
     currentLocalPlaybackEntry = null;
     activeNotificationSubjects = new Set();
-    engineMuted = false;
-    engineAudioPolicy = null;
+    trafficMuted = false;
+    trafficAudioPolicy = null;
     stopLiveStreamSilence();
     for (const client of Array.from(liveStreamClients)) {
       closeLiveStreamClient(client, "plugin stop");
@@ -792,7 +789,7 @@ module.exports = function ajrmMarineAudio(app) {
       subscribe: [
         { path: AJRM_MARINE_NOTIFICATIONS_PATH, policy: "instant", format: "delta" },
         { path: AJRM_MARINE_NOTIFICATIONS_AUDIO_PATH, policy: "instant", format: "delta" },
-        { path: ENGINE_AUDIO_POLICY_PATH, policy: "instant", format: "delta" },
+        { path: TRAFFIC_AUDIO_POLICY_PATH, policy: "instant", format: "delta" },
       ],
     };
 
@@ -810,8 +807,8 @@ module.exports = function ajrmMarineAudio(app) {
   function handleDelta(delta) {
     for (const update of delta.updates || []) {
       for (const value of update.values || []) {
-        if (value?.path === ENGINE_AUDIO_POLICY_PATH) {
-          handleEngineAudioPolicy(value.value);
+        if (value?.path === TRAFFIC_AUDIO_POLICY_PATH) {
+          handleTrafficAudioPolicy(value.value);
         } else if (value?.path === AJRM_MARINE_NOTIFICATIONS_AUDIO_PATH) {
           handleNotificationsPlusAudioDelivery(value.value);
         } else {
@@ -821,24 +818,24 @@ module.exports = function ajrmMarineAudio(app) {
     }
   }
 
-  function handleEngineAudioPolicy(projection) {
-    if (!TRAFFIC_AUDIO_POLICY_CONTRACTS.has(projection?.contract)) return;
+  function handleTrafficAudioPolicy(projection) {
+    if (projection?.contract !== TRAFFIC_AUDIO_POLICY_CONTRACT) return;
     const sessionId = String(projection.sessionId || "");
-    if (sessionId && sessionId !== engineSessionId) {
-      engineSessionId = sessionId;
-      lastEngineAudioPolicySequence = 0;
+    if (sessionId && sessionId !== trafficSessionId) {
+      trafficSessionId = sessionId;
+      lastTrafficAudioPolicySequence = 0;
     }
     const sequence = Number(projection.sequence) || 0;
-    if (sequence <= lastEngineAudioPolicySequence) return;
-    lastEngineAudioPolicySequence = sequence;
-    engineAudioPolicy = projection;
-    const wasMuted = engineMuted;
-    engineMuted =
+    if (sequence <= lastTrafficAudioPolicySequence) return;
+    lastTrafficAudioPolicySequence = sequence;
+    trafficAudioPolicy = projection;
+    const wasMuted = trafficMuted;
+    trafficMuted =
       projection.authoritative === true &&
-      (projection.mode === "engine" || projection.mode === "traffic") &&
+      projection.mode === "traffic" &&
       projection.muted === true;
-    if (!wasMuted && engineMuted) {
-      clearAudibleWork("Engine audio policy muted audio");
+    if (!wasMuted && trafficMuted) {
+      clearAudibleWork("Traffic audio policy muted audio");
     }
     publishStatus();
   }
@@ -1393,7 +1390,7 @@ module.exports = function ajrmMarineAudio(app) {
   }
 
   function isAudioMuted() {
-    return engineMuted === true;
+    return trafficMuted === true;
   }
 
   function isAudioMutedForEntry(entry) {
@@ -1435,10 +1432,10 @@ module.exports = function ajrmMarineAudio(app) {
       enabled: options.enabled,
       muted: isAudioMuted(),
       pluginMuted: false,
-      engineMuted,
-      engineAudioPolicy,
-      engineSessionId,
-      engineAudioPolicySequence: lastEngineAudioPolicySequence,
+      trafficMuted,
+      trafficAudioPolicy,
+      trafficSessionId,
+      trafficAudioPolicySequence: lastTrafficAudioPolicySequence,
       aisPlusMuted: false,
       localPlayback: options.localPlayback,
       localPlaybackAvailable: localPlaybackState.available,

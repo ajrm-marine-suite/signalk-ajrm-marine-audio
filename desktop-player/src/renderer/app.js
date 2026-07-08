@@ -577,7 +577,7 @@ function renderStatus(status) {
     status.version || "-",
     status.muted === true ? "muted" : "unmuted",
     status.pluginMuted === true ? "plugin-muted" : "plugin-unmuted",
-    status.engineMuted === true ? "traffic-muted" : "traffic-unmuted",
+    status.trafficMuted === true ? "traffic-muted" : "traffic-unmuted",
     status.desktopPlayerOutput === false ? "desktop-off" : "desktop-on",
     `recent:${status.recentAnnouncements?.length || 0}`,
   ].join("|");
@@ -586,7 +586,7 @@ function renderStatus(status) {
       version: status.version || "",
       muted: status.muted === true,
       pluginMuted: status.pluginMuted === true,
-      trafficMuted: status.engineMuted === true,
+      trafficMuted: status.trafficMuted === true,
       desktopPlayerOutput: status.desktopPlayerOutput !== false,
       recentAnnouncements: status.recentAnnouncements?.length || 0,
     });

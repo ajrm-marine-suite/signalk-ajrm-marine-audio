@@ -216,12 +216,12 @@ function soundStateNotification(muted) {
   };
 }
 
-function sendEngineAudioPolicy(harness, {
+function sendTrafficAudioPolicy(harness, {
   muted,
   sequence,
-  sessionId = "engine-session",
-  correlationId = "engine-policy",
-  mode = "engine",
+  sessionId = "traffic-session",
+  correlationId = "traffic-policy",
+  mode = "traffic",
 } = {}) {
   harness.subscriptionCallbacks[0]({
     updates: [
@@ -999,13 +999,13 @@ process.stdin.on("end", () => {
     ]) {
       sendNotification(
         depthSupersede,
-        "audible-instruments:depth-below-keel",
+        "ajrm-marine-instrument-alerts:depth-below-keel",
         {
           state: score >= 500 ? "warn" : "alert",
           method: ["visual", "sound"],
           message,
           data: {
-            category: "audible-instrument",
+            category: "instrument-alert",
             alertEvent: {
               id: `depth-${score}-${message.match(/[0-9.]+/)?.[0]}`,
               message,
@@ -1014,7 +1014,7 @@ process.stdin.on("end", () => {
         },
         score,
         "active",
-        ["audible-instruments:depth-below-keel"],
+        ["ajrm-marine-instrument-alerts:depth-below-keel"],
       );
     }
     const depthQueued = statusOf(depthSupersede);
@@ -1415,7 +1415,7 @@ process.stdin.on("end", () => {
   }
 
   const mutedSkip = createHarness();
-  sendEngineAudioPolicy(mutedSkip, { muted: true, sequence: 1 });
+  sendTrafficAudioPolicy(mutedSkip, { muted: true, sequence: 1 });
   sendNotification(
     mutedSkip,
     "notifications.system.gps-received",
@@ -1434,7 +1434,7 @@ process.stdin.on("end", () => {
   );
   assert.equal(statusOf(mutedRepeat).stats.queued, 1);
   assert.equal(statusOf(mutedRepeat).lastAnnouncement.message, "First repeatable announcement.");
-  sendEngineAudioPolicy(mutedRepeat, { muted: true, sequence: 1 });
+  sendTrafficAudioPolicy(mutedRepeat, { muted: true, sequence: 1 });
   const beforeRepeat = statusOf(mutedRepeat).stats.queued;
   const mutedRepeatBody = await postRepeatLast(mutedRepeat);
   assert.equal(mutedRepeatBody.statusCode, 409);
@@ -1450,7 +1450,7 @@ process.stdin.on("end", () => {
       vesselNotification("long-playback", "This playback should stop when muted."),
     );
     await waitFor(() => statusOf(muteStopsPlayback).active);
-    sendEngineAudioPolicy(muteStopsPlayback, { muted: true, sequence: 1 });
+    sendTrafficAudioPolicy(muteStopsPlayback, { muted: true, sequence: 1 });
     await waitFor(() =>
       statusOf(muteStopsPlayback).recentEvents.some(
         (event) => event.event === "speaker-stopped",
@@ -1479,7 +1479,7 @@ process.stdin.on("end", () => {
       false,
     );
     await waitFor(() => statusOf(activeForcedStopsOnMute).active);
-    sendEngineAudioPolicy(activeForcedStopsOnMute, {
+    sendTrafficAudioPolicy(activeForcedStopsOnMute, {
       muted: true,
       sequence: 1,
       mode: "traffic",
@@ -1518,13 +1518,13 @@ process.stdin.on("end", () => {
       false,
     );
     await waitFor(() => statusOf(forcedObeysMute).queueLength >= 1);
-    sendEngineAudioPolicy(forcedObeysMute, {
+    sendTrafficAudioPolicy(forcedObeysMute, {
       muted: true,
       sequence: 1,
       mode: "traffic",
       sessionId: "traffic-session",
     });
-    await waitFor(() => statusOf(forcedObeysMute).engineMuted === true);
+    await waitFor(() => statusOf(forcedObeysMute).trafficMuted === true);
     const forcedCleared = await waitFor(
       () => statusOf(forcedObeysMute).recentEvents.some(
         (event) => event.event === "queue-cleared",
@@ -1537,8 +1537,8 @@ process.stdin.on("end", () => {
   }
 
   const engineMute = createHarness();
-  sendEngineAudioPolicy(engineMute, { muted: true, sequence: 1 });
-  assert.equal(statusOf(engineMute).engineMuted, true);
+  sendTrafficAudioPolicy(engineMute, { muted: true, sequence: 1 });
+  assert.equal(statusOf(engineMute).trafficMuted, true);
   assert.equal(statusOf(engineMute).muted, true);
   sendNotification(
     engineMute,
@@ -1546,25 +1546,25 @@ process.stdin.on("end", () => {
     vesselNotification("engine-muted", "This must remain silent."),
   );
   assert.equal(statusOf(engineMute).queueLength, 0);
-  sendEngineAudioPolicy(engineMute, { muted: false, sequence: 2 });
-  assert.equal(statusOf(engineMute).engineMuted, false);
+  sendTrafficAudioPolicy(engineMute, { muted: false, sequence: 2 });
+  assert.equal(statusOf(engineMute).trafficMuted, false);
   assert.equal(statusOf(engineMute).muted, false);
-  sendEngineAudioPolicy(engineMute, { muted: true, sequence: 1 });
+  sendTrafficAudioPolicy(engineMute, { muted: true, sequence: 1 });
   assert.equal(
-    statusOf(engineMute).engineMuted,
+    statusOf(engineMute).trafficMuted,
     false,
     "non-monotonic Engine Audio Policy sequence is ignored",
   );
   engineMute.plugin.stop();
 
   const trafficMute = createHarness();
-  sendEngineAudioPolicy(trafficMute, {
+  sendTrafficAudioPolicy(trafficMute, {
     muted: true,
     sequence: 1,
     mode: "traffic",
     sessionId: "traffic-session",
   });
-  assert.equal(statusOf(trafficMute).engineMuted, true);
+  assert.equal(statusOf(trafficMute).trafficMuted, true);
   assert.equal(statusOf(trafficMute).muted, true);
   sendNotification(
     trafficMute,
@@ -1574,7 +1574,7 @@ process.stdin.on("end", () => {
   assert.equal(statusOf(trafficMute).queueLength, 0);
   sendNotification(
     trafficMute,
-    "audible-instruments:anchoring-depth-callout",
+    "ajrm-marine-instrument-alerts:anchoring-depth-callout",
     {
       ...vesselNotification("depth-callout", "Depth 2.1."),
       data: {
@@ -1584,22 +1584,22 @@ process.stdin.on("end", () => {
     },
     250,
     "active",
-    ["audible-instruments:anchoring-depth-callout"],
+    ["ajrm-marine-instrument-alerts:anchoring-depth-callout"],
   );
   assert.equal(statusOf(trafficMute).queueLength, 0);
   sendNotification(
     trafficMute,
-    "audible-instruments:depth-below-keel",
+    "ajrm-marine-instrument-alerts:depth-below-keel",
     {
       ...vesselNotification("depth-below-keel", "Danger. Depth below keel 1.0 metres."),
       data: {
         ...vesselNotification("depth-below-keel", "Danger. Depth below keel 1.0 metres.").data,
-        category: "audible-instrument",
+        category: "instrument-alert",
       },
     },
     850,
     "active",
-    ["audible-instruments:depth-below-keel"],
+    ["ajrm-marine-instrument-alerts:depth-below-keel"],
   );
   assert.equal(statusOf(trafficMute).queueLength, 0);
   sendNotification(
