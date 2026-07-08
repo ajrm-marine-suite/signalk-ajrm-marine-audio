@@ -1554,6 +1554,39 @@ process.stdin.on("end", () => {
   assert.equal(statusOf(trafficMute).queueLength, 0);
   sendNotification(
     trafficMute,
+    "audible-instruments:anchoring-depth-callout",
+    {
+      ...vesselNotification("depth-callout", "Depth 2.1."),
+      data: {
+        ...vesselNotification("depth-callout", "Depth 2.1.").data,
+        category: "instrument-depth-callout",
+      },
+    },
+    250,
+    "active",
+    ["audible-instruments:anchoring-depth-callout"],
+  );
+  assert.equal(statusOf(trafficMute).stats.queued, 1);
+  assert.equal(statusOf(trafficMute).lastAnnouncement.message, "Depth 2.1.");
+  sendNotification(
+    trafficMute,
+    "audible-instruments:depth-below-keel",
+    {
+      ...vesselNotification("depth-below-keel", "Danger. Depth below keel 1.0 metres."),
+      data: {
+        ...vesselNotification("depth-below-keel", "Danger. Depth below keel 1.0 metres.").data,
+        category: "audible-instrument",
+      },
+    },
+    850,
+    "active",
+    ["audible-instruments:depth-below-keel"],
+  );
+  assert.equal(statusOf(trafficMute).stats.queued, 2);
+  assert.equal(statusOf(trafficMute).lastAnnouncement.message, "Danger. Depth below keel 1.0 metres.");
+  const queuedBeforeForcedBite = statusOf(trafficMute).stats.queued;
+  sendNotification(
+    trafficMute,
     "notifications.system.bite-summary",
     {
       ...vesselNotification("bite-summary", "Marine built in tests complete."),
@@ -1564,7 +1597,7 @@ process.stdin.on("end", () => {
       },
     },
   );
-  assert.equal(statusOf(trafficMute).stats.queued, 1);
+  assert.equal(statusOf(trafficMute).stats.queued, queuedBeforeForcedBite + 1);
   assert.equal(statusOf(trafficMute).lastAnnouncement.force, true);
   assert.equal(statusOf(trafficMute).lastAnnouncement.message, "Marine built in tests complete.");
   trafficMute.plugin.stop();

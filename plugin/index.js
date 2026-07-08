@@ -1344,14 +1344,20 @@ module.exports = function ajrmMarineAudio(app) {
 
   function clearQueuedAnnouncements(reason) {
     const originalQueueLength = queue.length;
-    const retainedQueue = queue.filter((entry) => entry?.force === true);
+    const retainedQueue = queue.filter((entry) => entry?.force === true || bypassesTrafficMute(entry));
     const removed = originalQueueLength - retainedQueue.length;
     const preparingEntry = preparing?.entry || null;
     const preparedEntry = prepared?.entry || null;
     const cancelledPreparing =
-      preparingEntry && preparingEntry.force !== true && preparingEntry.superseded !== true;
+      preparingEntry &&
+      preparingEntry.force !== true &&
+      !bypassesTrafficMute(preparingEntry) &&
+      preparingEntry.superseded !== true;
     const cancelledPrepared =
-      preparedEntry && preparedEntry.force !== true && preparedEntry.superseded !== true;
+      preparedEntry &&
+      preparedEntry.force !== true &&
+      !bypassesTrafficMute(preparedEntry) &&
+      preparedEntry.superseded !== true;
     queue = retainedQueue;
     if (cancelledPreparing) preparingEntry.superseded = true;
     if (cancelledPrepared) {
@@ -1378,7 +1384,7 @@ module.exports = function ajrmMarineAudio(app) {
 
   function stopActiveLocalPlayback(reason) {
     if (!currentLocalPlaybackChild || !currentLocalPlaybackEntry) return false;
-    if (currentLocalPlaybackEntry.force === true) return false;
+    if (currentLocalPlaybackEntry.force === true || bypassesTrafficMute(currentLocalPlaybackEntry)) return false;
     currentLocalPlaybackEntry.cancelledByMute = true;
     currentLocalPlaybackEntry.superseded = true;
     currentLocalPlaybackChild.kill("SIGTERM");
@@ -1391,7 +1397,17 @@ module.exports = function ajrmMarineAudio(app) {
   }
 
   function isAudioMutedForEntry(entry) {
-    return entry?.force !== true && isAudioMuted();
+    return entry?.force !== true && !bypassesTrafficMute(entry) && isAudioMuted();
+  }
+
+  function bypassesTrafficMute(entry) {
+    const subjectKey = String(entry?.subjectKey || entry?.vesselId || "").trim();
+    const category = String(entry?.category || "").trim();
+    return (
+      subjectKey === "audible-instruments:anchoring-depth-callout" ||
+      subjectKey === "audible-instruments:depth-below-keel" ||
+      category === "instrument-depth-callout"
+    );
   }
 
   function buildStatus() {

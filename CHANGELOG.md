@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.65
+
+- Let anchoring depth callouts and depth-below-keel warnings play while Traffic
+  stationary automute is active.
+
 ## 0.5.64
 
 - Render saved output-routing status immediately so the Audio webapp shows
