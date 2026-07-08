@@ -917,6 +917,7 @@ module.exports = function ajrmMarineAudio(app) {
       priorityScore: Number(envelope.priority?.score) || 0,
       preempt: envelope.delivery?.preempt !== false,
       category: envelope.presentation?.category || "notification",
+      context: envelope.context || {},
       message,
       sourcePath: AJRM_MARINE_NOTIFICATIONS_PATH,
       force: request?.force === true || envelope.delivery?.force === true,
@@ -1256,6 +1257,7 @@ module.exports = function ajrmMarineAudio(app) {
       category: String(value.category || "cpa"),
       clock: normalizeClock(value.clock),
       sizeCategory: normalizeSizeCategory(value.sizeCategory),
+      context: normalizeAnnouncementContext(value.context),
       message: String(value.message || "").trim(),
       sourcePath: String(value.sourcePath || ""),
       receivedAt: String(value.receivedAt || new Date().toISOString()),
@@ -2407,19 +2409,15 @@ module.exports = function ajrmMarineAudio(app) {
   }
 
   function extractClockPosition(entry) {
-    const direct = normalizeClock(entry?.clock ?? entry?.relativeClock);
-    if (direct != null) return direct;
-    const match = String(entry?.message || "").match(/\bat\s+([1-9]|1[0-2])\s+o'?clock\b/i);
-    return match ? Number(match[1]) : null;
+    return normalizeClock(
+      entry?.clock ??
+      entry?.context?.relativeClockHour ??
+      entry?.context?.clockHour,
+    );
   }
 
   function extractVesselSize(entry) {
-    const direct = normalizeSizeCategory(entry?.sizeCategory);
-    if (direct) return direct;
-    const message = String(entry?.message || "").toLowerCase();
-    if (message.includes("large vessel")) return "large";
-    if (message.includes("medium vessel")) return "medium";
-    return "small";
+    return normalizeSizeCategory(entry?.sizeCategory || entry?.context?.vesselSize) || "small";
   }
 
   function normalizeClock(value) {
@@ -2431,6 +2429,16 @@ module.exports = function ajrmMarineAudio(app) {
   function normalizeSizeCategory(value) {
     const clean = String(value || "").toLowerCase();
     return ["small", "medium", "large"].includes(clean) ? clean : "";
+  }
+
+  function normalizeAnnouncementContext(context) {
+    if (!context || typeof context !== "object" || Array.isArray(context)) return {};
+    return {
+      ...context,
+      relativeClockHour: normalizeClock(context.relativeClockHour),
+      clockHour: normalizeClock(context.clockHour),
+      vesselSize: normalizeSizeCategory(context.vesselSize),
+    };
   }
 
   function formatMessageForSpeech(message) {

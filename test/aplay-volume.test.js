@@ -154,6 +154,7 @@ function sendNotification(
     },
     context: {
       mmsi: alertEvent.mmsi || "",
+      ...(value?.data?.context || {}),
     },
   };
   harness.subscriptionCallbacks[0]({
@@ -503,6 +504,16 @@ async function postRoute(harness, pathName) {
     /\/signalk\/v1\/api\/ajrmMarineAudio\/audio\/\$\{mp3FileName\}/,
     "Audio publishes generated MP3s on the Signal K API read route as audioUrl",
   );
+  assert.doesNotMatch(
+    pluginSource,
+    /entry\?\.message[\s\S]{0,120}\.match\(/,
+    "Audio must not infer directional ping clock from announcement prose",
+  );
+  assert.doesNotMatch(
+    pluginSource,
+    /message\.includes\("large vessel"\)|message\.includes\("medium vessel"\)/,
+    "Audio must not infer vessel size from announcement prose",
+  );
   assert.match(desktopPlayerApp, /pendingKeys = new Set/);
   assert.match(desktopPlayerApp, /playbackRetryTimers = new Set/);
   assert.match(desktopPlayerApp, /function schedulePlaybackRetry/);
@@ -575,6 +586,28 @@ async function postRoute(harness, pathName) {
   );
   assert.equal(textOnly.errors.length, 0);
   textOnly.plugin.stop();
+
+  const contextNotification = vesselNotification(
+    "235900008",
+    "Traffic advisory. Medium vessel CONTEXT TARGET at 8 o'clock.",
+  );
+  contextNotification.data.context = {
+    relativeClockHour: 8,
+    vesselSize: "medium",
+  };
+  const contextOnly = createHarness();
+  sendNotification(
+    contextOnly,
+    "notifications.collision.235900008",
+    contextNotification,
+  );
+  const contextOnlyStatus = await waitFor(() => {
+    const status = statusOf(contextOnly);
+    return status.lastAnnouncement?.context?.relativeClockHour === 8 ? status : null;
+  });
+  assert.equal(contextOnlyStatus.lastAnnouncement.context.relativeClockHour, 8);
+  assert.equal(contextOnlyStatus.lastAnnouncement.context.vesselSize, "medium");
+  contextOnly.plugin.stop();
 
   const nestedTempDir = fs.mkdtempSync(path.join(os.tmpdir(), "ajrm-marine-audio-nested-voices-"));
   const nestedVoicesDir = path.join(nestedTempDir, "voices");

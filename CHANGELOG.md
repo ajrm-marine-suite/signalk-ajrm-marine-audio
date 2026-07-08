@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.68
+
+- Use explicit Traffic notification context for directional ping clock and
+  vessel size instead of deriving them from announcement prose.
+
 ## 0.5.67
 
 - Enforce mute for all announcements except Sound Check. Forced notification
