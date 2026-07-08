@@ -253,6 +253,20 @@ On Lubuntu, `./scripts/install-lubuntu.sh` also configures Electron's
 then creates an **AJRM Marine Audio Player** launcher in the app menu and on the
 desktop where supported.
 
+On Windows, install Git for Windows and Node.js 20 or later, then run:
+
+```powershell
+cd $HOME
+git clone https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git
+cd signalk-ajrm-marine-audio\desktop-player
+npm install
+npm run start:windows
+```
+
+The Windows player is not yet packaged as an installer and still needs
+real-machine audio testing. The full desktop-player instructions and tester
+checklist are in `desktop-player/README.md`.
+
 When Signal K security is enabled, the desktop player expects Signal K read-only
 access to be enabled. It does not store Signal K login credentials.
 
@@ -363,4 +377,3 @@ Development assistance: OpenAI Codex helped with code generation, refactoring, a
 This software is licensed under the GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later). You may use, study, share, and modify it under that licence. If you modify it and make it available to users over a network, the corresponding source code must also be made available under the AGPL.
 
 Commercial licensing is available by arrangement for organisations that want different terms.
-

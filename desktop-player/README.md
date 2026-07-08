@@ -90,6 +90,47 @@ To recreate the desktop launcher after moving or updating the repository, rerun:
 ./scripts/install-lubuntu.sh
 ```
 
+## Windows Test Install
+
+The Windows desktop player is not yet packaged as an installer. For early
+testing, install:
+
+- [Git for Windows](https://git-scm.com/download/win)
+- [Node.js](https://nodejs.org/) 20 or later; Node.js 22 LTS is recommended
+
+Open PowerShell, then run:
+
+```powershell
+cd $HOME
+git clone https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git
+cd signalk-ajrm-marine-audio\desktop-player
+npm install
+npm run start:windows
+```
+
+If the repository is already cloned:
+
+```powershell
+cd $HOME\signalk-ajrm-marine-audio
+git pull --ff-only
+cd desktop-player
+npm install
+npm run start:windows
+```
+
+Windows may ask whether to allow network access. The player needs to reach the
+Signal K server on the local/private network. If `.local` name resolution is not
+working, use the Signal K server's IP address instead, for example:
+
+```text
+http://192.168.1.42:3000
+https://192.168.1.42:3443
+```
+
+Windows audio playback still needs real-machine testing. Use **Sound Check** to
+confirm announcement playback, then enable **Audible test** under **Setup** to
+confirm the Bluetooth keep-alive tone repeats at the configured interval.
+
 ## First Run
 
 ```sh
@@ -160,3 +201,21 @@ backfill old browser/audio history when the app starts.
 - Add tray/menu-bar mode and start-at-login.
 - Add a dedicated Audio plugin endpoint for player clients if polling status
   proves too coarse.
+
+## Windows Tester Checklist
+
+1. Confirm Node.js and npm:
+   ```powershell
+   node --version
+   npm --version
+   ```
+2. Start the player with `npm run start:windows`.
+3. In **Setup**, enter the Signal K server URL and connect.
+4. In **Player**, run **Sound Check** from AJRM Marine Audio and confirm it is
+   heard through the Windows default audio output.
+5. In **Setup**, enable **Bluetooth keep-alive**, set **Every** to `10`, enable
+   **Audible test**, and confirm the test tone repeats every 10 seconds.
+6. Switch Windows to the intended Bluetooth speaker and repeat Sound Check plus
+   audible keep-alive testing.
+7. Check **Status > Diagnostics** for `keep-alive-armed`, `keep-alive`, status
+   failures, or playback errors.

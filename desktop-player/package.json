@@ -6,6 +6,7 @@
   "private": true,
   "scripts": {
     "start": "electron .",
+    "start:windows": "electron .",
     "start:no-sandbox": "electron --no-sandbox .",
     "test": "node --check src/main.js && node --check src/preload.js && node --check src/local-hosts.js && node --check src/status-client.js && node --check src/renderer/app.js && node test/main.test.js"
   },
