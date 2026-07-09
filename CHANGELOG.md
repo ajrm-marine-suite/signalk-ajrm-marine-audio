@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.70
+
+- Clear the desktop player's transient status-poll failure banner after a
+  later status request succeeds, and log a `status-recovered` diagnostic.
+- Bump the bundled desktop player to `0.1.17`.
+
 ## 0.5.69
 
 - Rename Audio's consumed mute-policy status from legacy Engine wording to

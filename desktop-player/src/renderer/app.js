@@ -67,6 +67,7 @@ let lastAnnouncement = null;
 let currentItem = null;
 let diagnostics = [];
 let lastStatusSummary = "";
+let statusFailureMessageActive = false;
 
 const settings = loadSettings();
 els.serverUrl.value = settings.serverUrl || "http://localhost:3000";
@@ -266,6 +267,7 @@ function disconnect() {
   waitingForAudioUrl = new Map();
   queue = [];
   playing = false;
+  statusFailureMessageActive = false;
   els.audio.pause();
   renderState();
   setMessage("Disconnected.");
@@ -277,6 +279,7 @@ async function poll({ markExistingSeen = false, initialConnect = false } = {}) {
   pollInFlight = true;
   try {
     const status = await fetchStatus(settings.serverUrl);
+    const recoveredFromStatusFailure = statusFailureCount > 0 || statusFailureMessageActive;
     statusFailureCount = 0;
     renderStatus(status);
     const announcements = status.recentAnnouncements?.length
@@ -286,6 +289,7 @@ async function poll({ markExistingSeen = false, initialConnect = false } = {}) {
       for (const item of announcements) rememberSeen(announcementKey(item));
       clearAutomaticAnnouncements("Desktop Player output is disabled in AJRM Marine Audio.");
       setMessage("Desktop Player output is disabled in AJRM Marine Audio.");
+      statusFailureMessageActive = false;
       els.lastPoll.textContent = new Date().toLocaleTimeString();
       renderState();
       return true;
@@ -296,8 +300,14 @@ async function poll({ markExistingSeen = false, initialConnect = false } = {}) {
       }
       for (const item of announcements) rememberSeen(announcementKey(item));
       setMessage("Connected. Waiting for new announcements.");
+      statusFailureMessageActive = false;
     } else {
       for (const item of announcements) enqueue(item);
+      if (recoveredFromStatusFailure && statusFailureMessageActive) {
+        setMessage("Audio status poll recovered.");
+        logDiagnostic("status-recovered", "Audio status polling recovered");
+        statusFailureMessageActive = false;
+      }
     }
     els.lastPoll.textContent = new Date().toLocaleTimeString();
     renderState();
@@ -310,6 +320,7 @@ async function poll({ markExistingSeen = false, initialConnect = false } = {}) {
       els.connectionPill.className = "pill bad";
     }
     setMessage(`Audio status poll failed${statusFailureCount > 1 ? ` ${statusFailureCount} times` : ""}: ${formatErrorMessage(error)}`);
+    statusFailureMessageActive = true;
     logDiagnostic("status-failed", formatErrorMessage(error), {
       count: statusFailureCount,
       initialConnect,
