@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.3
+
+- Expose bounded structured queue evidence in Audio status, including stable
+  notification identity, priority, and timing fields, so safety checks can
+  verify retained announcements without parsing spoken wording.
+- Include the provider event ID in Audio timeline events.
+
 ## 0.5.70
 
 - Clear the desktop player's transient status-poll failure banner after a

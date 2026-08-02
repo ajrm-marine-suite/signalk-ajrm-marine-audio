@@ -850,6 +850,23 @@ async function postRoute(harness, pathName) {
       "First pipeline announcement.",
       "higher-priority announcement does not interrupt current speaker playback",
     );
+    assert.deepEqual(
+      waitingPipelineStatus.queueEntries.map((entry) => ({
+        state: entry.state,
+        subjectKey: entry.subjectKey,
+        priorityScore: entry.priorityScore,
+      })),
+      [{
+        state: "queued",
+        subjectKey: "notifications.system.second",
+        priorityScore: 900,
+      }],
+      "status exposes structured identity for retained queued audio without parsing its message",
+    );
+    assert.match(
+      waitingPipelineStatus.queueEntries[0].eventId,
+      /^notifications\.system\.second-/,
+    );
     assert.equal(
       waitingPipelineStatus.recentEvents.some((event) => event.event === "preempting"),
       false,

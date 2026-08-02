@@ -1485,6 +1485,7 @@ module.exports = function ajrmMarineAudio(app) {
       pingEnabled: options.pingEnabled,
       pingVolumePercent: options.pingVolumePercent,
       queueLength: queue.length,
+      queueEntries: queue.map((entry) => audioEvidenceEntry(entry, "queued")),
       active,
       preparing: preparing?.entry || null,
       prepared: prepared?.entry || null,
@@ -2519,6 +2520,7 @@ module.exports = function ajrmMarineAudio(app) {
       sequence: audioTimelineSequence,
       event: {
         state,
+        eventId: String(entry.id || ""),
         playbackId: String(entry.playbackId || ""),
         requestId: String(entry.requestId || ""),
         correlationId: String(entry.correlationId || ""),
@@ -2534,6 +2536,24 @@ module.exports = function ajrmMarineAudio(app) {
       },
     };
     publishStatus();
+  }
+
+  function audioEvidenceEntry(entry = {}, state = "") {
+    return {
+      state: String(state || ""),
+      eventId: String(entry.id || ""),
+      requestId: String(entry.requestId || ""),
+      playbackId: String(entry.playbackId || ""),
+      correlationId: String(entry.correlationId || ""),
+      subjectKey: String(entry.subjectKey || entry.vesselId || ""),
+      mmsi: String(entry.mmsi || ""),
+      priorityScore: Number(entry.priorityScore) || 0,
+      message: String(entry.message || ""),
+      timestamp: String(entry.timestamp || ""),
+      receivedAt: String(entry.receivedAt || ""),
+      queuedAt: String(entry.queuedAt || ""),
+      expiresAt: String(entry.expiresAt || ""),
+    };
   }
 
   function addRecent(event, message) {
