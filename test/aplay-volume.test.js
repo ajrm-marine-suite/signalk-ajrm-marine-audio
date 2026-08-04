@@ -143,6 +143,7 @@ function sendNotification(
       streamOutput: true,
       muteState,
       preempt,
+      retainUntilDelivered: value?.data?.retainUntilDelivered === true,
       force: value?.data?.force === true,
     },
     expiresAt: value?.data?.audioExpiresAt || undefined,
@@ -1429,6 +1430,58 @@ process.stdin.on("end", () => {
     gpsStateSupersede.plugin.stop();
     await new Promise((resolve) => setTimeout(resolve, 50));
     fs.rmSync(gpsStateSupersede.tempDir, { recursive: true, force: true });
+
+    const retainedGpsJump = createPipelineHarness({ piperDelaySeconds: 0.2 });
+    sendNotification(
+      retainedGpsJump,
+      "navigation.gnss.integrity",
+      {
+        state: "alarm",
+        method: ["sound"],
+        message: "GPS position changed impossibly fast.",
+        data: {
+          category: "Navigation",
+          retainUntilDelivered: true,
+          alertEvent: { message: "GPS position changed impossibly fast." },
+        },
+      },
+      750,
+      "active",
+    );
+    await waitFor(() => statusOf(retainedGpsJump).preparing);
+    sendNotification(
+      retainedGpsJump,
+      "navigation.gnss.integrity",
+      {
+        state: "warn",
+        method: ["sound"],
+        message: "GPS position shifted, but the new track is now smooth.",
+        data: {
+          category: "Navigation",
+          alertEvent: {
+            message: "GPS position shifted, but the new track is now smooth.",
+          },
+        },
+      },
+      500,
+      "active",
+    );
+    const retainedGpsStatus = await waitFor(() => {
+      const status = statusOf(retainedGpsJump);
+      const messages = status.recentAnnouncements.map((entry) => entry.message);
+      return messages.includes("GPS position changed impossibly fast.") &&
+        messages.includes("GPS position shifted, but the new track is now smooth.")
+        ? status
+        : null;
+    }, 8000);
+    assert.equal(
+      retainedGpsStatus.recentEvents.some((event) => event.event === "retained"),
+      true,
+      "provider-protected jump warning is retained through a same-subject state update",
+    );
+    retainedGpsJump.plugin.stop();
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    fs.rmSync(retainedGpsJump.tempDir, { recursive: true, force: true });
   }
 
   const mutedSkip = createHarness();

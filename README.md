@@ -69,6 +69,11 @@ output and clarifies that the built-in Piper install action is only for 64-bit
 Raspberry Pi OS/Linux aarch64 through AJRM Marine Pi Controller. It is not a
 Windows or macOS installer.
 
+Providers may protect safety-critical queued audio with
+`delivery.retainUntilDelivered: true`. Audio then keeps that item while it is
+queued, rendering, or ready, until delivery or the provider-defined expiry,
+even if a newer state for the same subject arrives.
+
 `v0.5.3` prefers the broker audio-request message for speech, so written
 notifications can keep identifiers such as MMSI without Piper reading them out.
 

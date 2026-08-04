@@ -913,6 +913,9 @@ module.exports = function ajrmMarineAudio(app) {
       severity: envelope.priority?.level || "information",
       priorityScore: Number(envelope.priority?.score) || 0,
       preempt: envelope.delivery?.preempt !== false,
+      retainUntilDelivered:
+        request?.retainUntilDelivered === true ||
+        envelope.delivery?.retainUntilDelivered === true,
       category: envelope.presentation?.category || "notification",
       context: envelope.context || {},
       message,
@@ -962,11 +965,17 @@ module.exports = function ajrmMarineAudio(app) {
 
     const supersedeKey = announcementSupersedeKey(entry);
     if (supersedeKey) {
-      const removed = supersedeAnnouncementsWithKey(supersedeKey);
+      const { removed, retained } = supersedeAnnouncementsWithKey(supersedeKey);
       if (removed > 0) {
         addRecent(
           "superseded",
           `Dropped ${removed} stale queued announcement${removed === 1 ? "" : "s"} for ${announcementDisplayName(entry)}`,
+        );
+      }
+      if (retained > 0) {
+        addRecent(
+          "retained",
+          `Retained ${retained} provider-protected announcement${retained === 1 ? "" : "s"} until delivery or expiry`,
         );
       }
     }
@@ -1251,6 +1260,7 @@ module.exports = function ajrmMarineAudio(app) {
       severity: String(value.severity || "alert"),
       priorityScore: Number(value.priorityScore) || 0,
       preempt: value.preempt !== false,
+      retainUntilDelivered: value.retainUntilDelivered === true,
       category: String(value.category || "cpa"),
       clock: normalizeClock(value.clock),
       sizeCategory: normalizeSizeCategory(value.sizeCategory),
@@ -1282,20 +1292,30 @@ module.exports = function ajrmMarineAudio(app) {
 
   function supersedeAnnouncementsWithKey(supersedeKey) {
     const key = String(supersedeKey || "");
-    if (!key) return 0;
-    const previousLength = queue.length;
-    queue = queue.filter(
-      (queuedEntry) => announcementSupersedeKey(queuedEntry) !== key,
-    );
-    let removed = previousLength - queue.length;
+    if (!key) return { removed: 0, retained: 0 };
+    let removed = 0;
+    let retained = 0;
+    queue = queue.filter((queuedEntry) => {
+      if (announcementSupersedeKey(queuedEntry) !== key) return true;
+      if (queuedEntry.retainUntilDelivered === true) {
+        retained += 1;
+        return true;
+      }
+      removed += 1;
+      return false;
+    });
     const preparingEntry = preparing?.entry || null;
     if (
       preparingEntry &&
       preparingEntry.superseded !== true &&
       announcementSupersedeKey(preparingEntry) === key
     ) {
-      preparingEntry.superseded = true;
-      removed += 1;
+      if (preparingEntry.retainUntilDelivered === true) {
+        retained += 1;
+      } else {
+        preparingEntry.superseded = true;
+        removed += 1;
+      }
     }
     const preparedEntry = prepared?.entry || null;
     if (
@@ -1303,12 +1323,16 @@ module.exports = function ajrmMarineAudio(app) {
       preparedEntry.superseded !== true &&
       announcementSupersedeKey(preparedEntry) === key
     ) {
-      preparedEntry.superseded = true;
-      cleanupPreparedAnnouncement(prepared);
-      prepared = null;
-      removed += 1;
+      if (preparedEntry.retainUntilDelivered === true) {
+        retained += 1;
+      } else {
+        preparedEntry.superseded = true;
+        cleanupPreparedAnnouncement(prepared);
+        prepared = null;
+        removed += 1;
+      }
     }
-    return removed;
+    return { removed, retained };
   }
 
   function gpsAnnouncementSupersedeKey(entry) {
@@ -2548,6 +2572,7 @@ module.exports = function ajrmMarineAudio(app) {
       subjectKey: String(entry.subjectKey || entry.vesselId || ""),
       mmsi: String(entry.mmsi || ""),
       priorityScore: Number(entry.priorityScore) || 0,
+      retainUntilDelivered: entry.retainUntilDelivered === true,
       message: String(entry.message || ""),
       timestamp: String(entry.timestamp || ""),
       receivedAt: String(entry.receivedAt || ""),

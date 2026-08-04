@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.4
+
+- Honour the provider-owned `delivery.retainUntilDelivered` policy so a
+  safety-critical announcement is not discarded when the same subject changes
+  state while speech is queued or rendering.
+- Expose retained queue policy in structured Audio evidence and record an
+  explicit `retained` queue event.
+
 ## 0.6.3
 
 - Expose bounded structured queue evidence in Audio status, including stable
