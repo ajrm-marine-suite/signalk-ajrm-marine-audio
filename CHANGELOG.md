@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.5
+
+- Replace obsolete version and Companion wording with the current Audio
+  architecture, output routes, and installation guidance.
+
 ## 0.6.4
 
 - Honour the provider-owned `delivery.retainUntilDelivered` policy so a

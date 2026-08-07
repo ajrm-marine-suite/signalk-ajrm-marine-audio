@@ -1,6 +1,14 @@
 # AJRM Marine Audio
 
-## Version 2 baseline
+## Current release
+
+Version `0.6.5` is the current public release. It renders the provider-neutral
+AJRM Marine Notifications audio projection and supports browser speech,
+server-rendered Piper audio, an optional server speaker, the radio stream, and
+the standalone desktop player. Output routes remain independently selectable;
+shared mute policy comes from AJRM Marine Traffic.
+
+## Release history
 
 `v0.5.63` adds an explicit Audio output-routing switch for the
 Electron/Desktop Player path and reports that route in status, so BITE and
@@ -150,37 +158,37 @@ It replaces the older `announce-ais-messages` and standalone Lubuntu speaker pat
 
 ```text
 Standards-compatible Signal K notification
-  -> Notifications Plus audio projection
+  -> AJRM Marine Notifications audio projection
   -> Piper speech
   -> stereo directional ping
   -> stereo browser-friendly audio file
-  -> server speaker playback, Companion playback, and/or native radio player stream
+  -> server speaker, browser/desktop-player playback, and/or radio stream
 ```
 
-## Current State
+## Architecture
 
-Version `1.4.7` consumes the Notifications Plus audio projection. This gives all providers common priority ordering, subject supersession, freshness, and output instructions without Audio interpreting message content. It creates Piper WAV speech, can prepend the stereo directional ping, creates a browser-friendly MP3, serves generated files from the plugin router, publishes read-only status at `vessels.self.plugins.ajrmMarineAudio`, can play the combined WAV locally on the Signal K server, and exposes generated files plus a continuous radio-style MP3 stream on the public stream port for read-only clients.
+The current implementation consumes the AJRM Marine Notifications audio projection. This gives all providers common priority ordering, subject supersession, freshness, and output instructions without Audio interpreting message content. It creates Piper WAV speech, can prepend the stereo directional ping, creates a browser-friendly MP3, serves generated files from the plugin router, publishes read-only status at `vessels.self.plugins.ajrmMarineAudio`, can play the combined WAV locally on the Signal K server, and exposes generated files plus a continuous radio-style MP3 stream on the public stream port for read-only clients.
 
 The status projection also carries an additive
 `plugins.ajrmMarineAudio.timeline` contract with an Audio `sessionId`, monotonic
 `sequence`, broker `requestId`, provider `correlationId`, playback identity, and
 accepted/queued/synthesis/audio-ready/speaker lifecycle events. Existing
-playback behavior is unchanged; Companion should observe and measure this
-timeline before using it as its playback authority.
+playback behavior is unchanged; diagnostic clients can observe this timeline
+without becoming playback authorities.
 
 Local speaker playback starts as soon as Piper speech and the combined WAV are ready. MP3 encoding and live-stream publication proceed alongside speaker playback instead of delaying it. Recent events and the published status include provider, receipt, queue, processing, synthesis, WAV-ready, speaker-start, speaker-finish, and MP3 timestamps so a slow provider, queue backlog, Piper, ALSA, or stream stage can be identified directly.
 
-Version `1.4.2` also pre-renders one queued announcement while the current announcement is playing. The prepared WAV starts as soon as the speaker becomes free, while superseded, muted, or expired prepared announcements are still discarded before playback.
+Audio can pre-render one queued announcement while the current announcement is playing. The prepared WAV starts as soon as the speaker becomes free, while superseded, muted, or expired prepared announcements are still discarded before playback.
 
-Version `1.4.3` adds local-speaker priority pre-emption. Once a higher-priority prepared notification is ready, it interrupts a lower-priority announcement currently playing and takes the speaker. Equal-priority announcements remain sequential. The event log records both the interrupted and interrupting messages.
+Local-speaker priority pre-emption lets a higher-priority prepared notification interrupt a lower-priority announcement. Equal-priority announcements remain sequential, and the event log records both messages.
 
-Version `1.4.4` restarts an interrupted lower-priority announcement from the beginning after the urgent announcement, but only when its stable broker subject remains active and it is still fresh, audible, and unsuperseded.
+An interrupted lower-priority announcement restarts after the urgent announcement only while its stable broker subject remains active, fresh, audible, and unsuperseded.
 
-Version `1.4.5` follows the provider's explicit `delivery.preempt` instruction. Routine informational announcements may be queued and pre-rendered but cannot interrupt any message already using the speaker.
+Audio follows the provider's explicit `delivery.preempt` instruction. Routine informational announcements may be queued and pre-rendered but cannot interrupt a message already using the speaker.
 
-Version `1.4.6` closes a preparation race: when a higher-priority event arrives while Piper is synthesizing a lower-priority event, the completed lower-priority WAV must rejoin the queue instead of claiming the speaker ahead of the newer urgent event.
+When a higher-priority event arrives while Piper is synthesizing a lower-priority event, the completed lower-priority WAV rejoins the queue instead of claiming the speaker ahead of the urgent event.
 
-Version `1.4.7` keeps the local speaker reserved for 500 ms after `aplay` exits. This protects the final buffered words before the next queued announcement starts. The gap is configurable in the plugin settings.
+The local speaker remains reserved for 500 ms after `aplay` exits by default. This protects the final buffered words before the next queued announcement starts; the gap is configurable.
 
 Volume settings are shown as percentages in the Signal K configuration page. Existing pre-`0.2.2` gain settings are migrated automatically, so an old value of `1` becomes `100%`. The local speaker level setting uses a logarithmic curve and applies the matching ALSA mixer volume at AJRM Marine Audio startup and before local `aplay` playback. Level `0%` maps to `66%` on the mixer, level `100%` maps to `100%`, and old linear mixer-volume settings are migrated onto the new curve. It tries the configured mixer control first, then common Pi/ALSA controls such as `PCM`, `Master`, `Headphone`, and `Speaker`. Paths beginning with `~` are expanded for Piper, FFmpeg, audio player, voice, and generated-audio paths.
 
@@ -190,7 +198,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.5.57 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.6.5 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
@@ -354,9 +362,9 @@ For normal use, keep the phone on the boat Wi-Fi and use the local `.local` addr
 ## Responsibilities
 
 - Providers decide notification meaning and publish standard Signal K notifications.
-- Notifications Plus applies priority, lifecycle, supersession, history, and delivery mechanics.
+- AJRM Marine Notifications applies priority, lifecycle, supersession, history, and delivery mechanics.
 - AJRM Marine Audio renders the broker's audio projection without classifying content.
-- AJRM Marine Companion can play the rendered audio while open.
+- Browsers and the standalone desktop player can play rendered audio.
 - A native radio player can play the live stream while the phone or tablet is locked.
 
 ## Queue Behaviour
