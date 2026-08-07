@@ -2,153 +2,16 @@
 
 ## Current release
 
-Version `0.6.5` is the current public release. It renders the provider-neutral
+Version `0.7.0` is the current public release. It renders the provider-neutral
 AJRM Marine Notifications audio projection and supports browser speech,
 server-rendered Piper audio, an optional server speaker, the radio stream, and
 the standalone desktop player. Output routes remain independently selectable;
 shared mute policy comes from AJRM Marine Traffic.
 
-## Release history
-
-`v0.5.63` adds an explicit Audio output-routing switch for the
-Electron/Desktop Player path and reports that route in status, so BITE and
-operators can distinguish desktop-player playback from server speaker and radio
-stream output. `v0.5.47` keeps expected desktop-player network failures, such as status
-timeouts or socket resets, in the app UI instead of logging noisy Electron IPC
-handler exceptions. `v0.5.46` adds a desktop-player **Sound Check** button that replays the latest
-cached server-rendered Sound Check MP3 for local volume setting. `v0.5.45` makes the desktop player prefer public generated-audio URLs when
-Signal K security is enabled. `v0.5.44` fetches desktop-player announcement MP3 files through Electron's main
-process so local self-signed Signal K HTTPS certificates do not stop playback.
-`v0.5.43` keeps desktop-player connection simple and gives a clear message when
-Signal K security blocks read-only status access. `v0.5.42` lets the desktop player follow Signal K's HTTP-to-HTTPS redirect,
-shows clearer connection-refused messages, and quits when the window is closed.
-`v0.5.41` adds a desktop-player **Auto-connect** option with one-minute retry
-when the Signal K server is not yet available. `v0.5.40` moves desktop-player status polling through Electron's main process
-so local self-signed Signal K HTTPS certificates do not produce repeated
-Chromium `net_error -202` terminal noise while idle. `v0.5.39` lets the desktop player recover cleanly from a failed first
-connection attempt so the server address can be corrected and Connect pressed
-again. `v0.5.38` configures the Electron Linux sandbox helper in the Lubuntu player
-installer and creates a desktop/app-menu launcher. `v0.5.37` adds the
-standalone AJRM Marine Audio Player under `desktop-player/`, so Lubuntu, macOS,
-and Windows clients can play server-rendered announcements without relying on
-browser audio.
-`v0.5.56` makes `en_GB-alba-medium` the default Piper voice for new
-installations. `v0.5.36` clarifies the announcement freshness setting used to drop stale
-queued or prepared announcements. `v0.5.35` keeps browser audio deliberately
-simple after the abandoned `v0.5.34` queueing experiment: browser playback is
-convenience output, while reliable FIFO playback belongs in the standalone AJRM
-Marine Audio Player.
-`v0.5.33` removes Audio's server-wide manual mute from output routing: shared
-muting follows AJRM Marine Traffic Audio Policy, while the Audio webapp's mute
-control is local to that browser/device. `v0.5.27` treats AJRM Marine Traffic's current
-`traffic` audio-policy mode as the shared mute source, so stationary automute
-silences normal suite announcements. `v0.5.26` updates the built-in Piper install prompt to match the three-voice
-catalogue installed by AJRM Marine Pi Controller. `v0.5.24` drops stale queued or prepared announcements when newer active
-updates arrive for the same instrument or traffic subject. `v0.5.23` exposes
-recent rendered announcements to browser clients so rapid traffic-alert bursts
-are not hidden behind a later status item. `v0.5.22`
-reduces Audio page status polling noise and updates the static asset
-cache-busting version. `v0.5.21` treats announcements as text-only when Piper is unavailable, so
-browser-speech-only installs do not fail while trying to spawn the missing
-Piper executable. `v0.5.20` keeps passive status polling away from Signal K login-status checks
-after authentication failures and retries unauthenticated status checks more
-slowly, so stale or unauthenticated Audio tabs are much less chatty in the
-Signal K log. `v0.5.19` throttles status polling after Signal K authentication
-failures. `v0.5.18` clarifies
-that mute-all does not suppress Sound Check. `v0.5.17` clarifies that AJRM Marine Pi Controller is a Signal K app when
-explaining the optional built-in Piper installer. `v0.5.16` greys disabled buttons and removes their pressed/3D interaction
-state. `v0.5.15` moves directional ping beside AJRM Marine Piper playback, defaults it
-off, and keeps it disabled until Piper playback is selected and available.
-`v0.5.14` tightens the Audio page so browser speech can run Sound check and
-Repeat last locally, stream-only controls are disabled unless the radio stream
-can work, the radio stream panel explains off/unavailable states, and missing
-dependency wording is friendlier. `v0.5.13` disables radio stream output until the Piper speech render chain is
-available and makes Sound check report clearly when no output is selected.
-`v0.5.12` uses clearer wording when Piper is missing. `v0.5.11` removes the
-non-actionable Renderer information panel from the Audio webapp, renames the
-remaining dependency heading to Speech dependencies, and disables Piper browser
-playback plus the local speaker level slider until the required server-side
-speech/local playback tools are present.
-`v0.5.10` defaults server speaker and radio stream output to off for fresh
-installs, keeps server speaker unavailable until Piper, a voice model, and a
-local audio player are present, and does not silently enable it after Piper
-installation. `v0.5.9` renames visible Pi speaker wording to server speaker
-output and clarifies that the built-in Piper install action is only for 64-bit
-Raspberry Pi OS/Linux aarch64 through AJRM Marine Pi Controller. It is not a
-Windows or macOS installer.
-
 Providers may protect safety-critical queued audio with
 `delivery.retainUntilDelivered: true`. Audio then keeps that item while it is
 queued, rendering, or ready, until delivery or the provider-defined expiry,
 even if a newer state for the same subject arrives.
-
-`v0.5.3` prefers the broker audio-request message for speech, so written
-notifications can keep identifiers such as MMSI without Piper reading them out.
-
-`v0.5.0` treats GPS received/lost announcements as mutually exclusive GPS
-state messages, so a later GPS lost event drops any stale queued or prepared
-GPS received announcement before it can be spoken.
-
-`v0.5.0` adds runtime dependency checks for Piper, FFmpeg, the configured
-voice model, and local audio playback. The webapp shows missing renderer
-dependencies and can ask AJRM Marine Pi Controller to install Piper as an explicit user
-action; npm/AppStore installation does not run OS-level installers silently.
-
-`v0.5.0` gives AJRM Marine Audio command buttons raised/pressed visual states
-and a short command-sent pulse so touchscreen taps are visibly acknowledged.
-
-`v0.5.0` lets AJRM Marine Console host browser announcement playback from its
-root window. When Audio is embedded by Console it still shows and saves browser
-output settings, but suppresses its own iframe playback to avoid double speech.
-Opened directly, AJRM Marine Audio remains fully standalone.
-
-`v0.5.0` makes Audio mute authority explicit: shared muting comes from AJRM
-Marine Traffic Audio Policy, with browser output choices kept local. Provider
-`delivery.muteState` flags are ignored by Audio.
-
-`v0.5.0` removes old AJRM Marine wording from visible Audio status and
-configuration labels.
-
-`v0.5.0` replaces the browser playback checkbox with an explicit browser output
-mode: Off, browser speech synthesis, or AJRM Marine Piper playback. Server speaker,
-radio stream, and browser-local mute remain independent switches.
-
-`v0.5.0` keeps AJRM Marine Audio as the browser-audio authority on each device
-so the older simple browser speech setting cannot clash with Piper browser
-playback.
-
-`v0.5.0` deduplicates repeated Notifications Plus audio requests by request ID
-and prevents the webapp from autoplaying an old last announcement when the
-AJRM Marine Audio tab is reopened from Console.
-
-`v0.5.0` completes the public webapp naming pass: visible labels now say
-AJRM Marine Audio, and the main page no longer presents Piper as the app name.
-
-`v0.5.0` promotes the current Notifications Plus renderer, server speaker pipeline,
-and live-stream implementation as the working audio baseline. It does not yet
-implement the proposed authoritative synchronized playback contract and does
-not intentionally change runtime behavior from `v0.5.0`.
-
-`v0.5.0` carries rendered authenticated/public asset URLs in the authoritative
-timeline as soon as MP3 rendering completes. Server speaker playback remains on
-the fastest WAV-ready path and is never delayed for Companion.
-
-`v0.5.0` observes the versioned AJRM Marine Traffic Audio Policy projection.
-Traffic mute and stationary automute are enforced only when that projection is
-explicitly authoritative in Traffic mode. Shadow policy remains observable but
-cannot mute Audio. Session changes reset sequence tracking and stale or
-non-monotonic policy updates are ignored.
-
-`v0.5.0` suppressed repeated no-op provider-mute queue-clear events; provider
-mute flags are ignored entirely by Audio from `v0.5.0`.
-
-`v0.5.0` restores output routing controls in the AJRM Marine Audio webapp. Browser
-playback is a local per-device setting, while server speaker output, radio stream
-output, and mute-all are saved on the Signal K server as Audio-owned settings.
-
-`v0.5.0` added a session-scoped playback lifecycle timeline for observation and
-measurement. Existing server speaker, stream, and browser playback behavior is
-unchanged.
 
 > **Alpha Release disclaimer:** This software is Alpha Release and has not been tested in live environments and must not be relied upon for navigation or safety. The Authors do not accept any responsibility for loss or damage as a result of using this software.
 
@@ -198,7 +61,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.6.5 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.7.0 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
@@ -371,10 +234,9 @@ For normal use, keep the phone on the boat Wi-Fi and use the local `.local` addr
 
 AJRM Marine Audio keeps the current speaker announcement uninterrupted. When a new vessel announcement is queued, any older queued announcements for the same vessel are dropped before the new one is added. This keeps busy-area speech focused on the latest known state, including de-escalations from collision alarm back to advisory.
 
-When AJRM Marine Audio is manually muted or AJRM Marine Traffic Audio Policy is muted,
-AJRM Marine Audio suppresses further non-forced announcements until sounds are
-enabled again. It does not interrupt an announcement already playing on the local
-speaker.
+When AJRM Marine Traffic Audio Policy is muted, AJRM Marine Audio suppresses
+further announcements except Sound Check and stops active playback so stale
+speech cannot continue after muting.
 
 ## Notes
 

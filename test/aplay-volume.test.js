@@ -539,6 +539,7 @@ async function postRoute(harness, pathName) {
   assert.match(browserCss, /box-shadow/);
 
   const defaults = createHarness();
+  assert.equal(statusOf(defaults).running, true);
   assert.equal(statusOf(defaults).localPlayback, false);
   assert.equal(statusOf(defaults).desktopPlayerOutput, true);
   assert.equal(statusOf(defaults).desktopPlayerOutputAvailable, false);
@@ -563,7 +564,34 @@ async function postRoute(harness, pathName) {
     },
     { level: 53, mixer: 75 },
   );
-  defaults.plugin.stop();
+  const openApi = defaults.plugin.getOpenApi();
+  assert.equal(openApi.openapi, "3.0.3");
+  assert.ok(openApi.paths["/status"]?.get);
+  assert.ok(openApi.paths["/live.mp3"]?.get);
+  assert.ok(openApi.paths["/audio/{file}"]?.get);
+  assert.ok(openApi.paths["/sound-check"]?.$ref);
+  assert.ok(openApi.paths["/outputs"]?.post);
+
+  let deniedWrite;
+  await defaults.posts.get("/sound-check")(
+    { skIsAuthenticated: false },
+    {
+      statusCode: 200,
+      status(code) {
+        this.statusCode = code;
+        return this;
+      },
+      json(value) {
+        deniedWrite = { statusCode: this.statusCode, ...value };
+      },
+    },
+  );
+  assert.equal(deniedWrite.statusCode, 403);
+  assert.match(deniedWrite.error, /read\/write|admin/i);
+
+  const stopResult = defaults.plugin.stop();
+  assert.equal(typeof stopResult?.then, "function");
+  await stopResult;
 
   const textOnly = createHarness();
   sendNotification(
@@ -1253,7 +1281,6 @@ process.stdin.on("end", () => {
       soundStateNotification(true),
     );
     assert.ok(statusOf(queuedMute).queueLength >= 2);
-    assert.equal(statusOf(queuedMute).aisPlusMuted, false);
     assert.equal(statusOf(queuedMute).muted, false);
     assert.equal(
       statusOf(queuedMute).recentEvents.filter((event) => event.event === "queue-cleared").length,
@@ -1281,7 +1308,6 @@ process.stdin.on("end", () => {
       "notifications.collision.soundState",
       soundStateNotification(false),
     );
-    assert.equal(statusOf(queuedMute).aisPlusMuted, false);
     assert.equal(statusOf(queuedMute).muted, false);
     await new Promise((resolve) => setTimeout(resolve, 1100));
     queuedMute.plugin.stop();
@@ -1699,7 +1725,6 @@ process.stdin.on("end", () => {
     soundStateNotification(true),
   );
   assert.equal(statusOf(emptyProviderMute).muted, false);
-  assert.equal(statusOf(emptyProviderMute).aisPlusMuted, false);
   assert.equal(emptyProviderMute.savedOptions.length, 0);
   assert.equal(
     statusOf(emptyProviderMute).recentEvents.some(

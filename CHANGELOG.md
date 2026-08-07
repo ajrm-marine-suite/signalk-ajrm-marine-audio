@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.7.0
+
+- Publish an OpenAPI 3.0 description for the current Signal K and plugin-router
+  read and command routes.
+- Require Signal K write access for commands on both route surfaces.
+- Make plugin shutdown wait for the public stream server and terminate active
+  Piper, FFmpeg, and local-player child processes.
+- Prevent queued work and status publication from continuing after shutdown,
+  and expose the current running state in status.
+- Use only the current AJRM Marine Audio data directory and remove the retired
+  AIS Plus status alias.
+- Reuse dependency checks while building status instead of repeatedly scanning
+  executables and voice files.
+- Replace accumulated release-history prose in the README with the current
+  architecture and operating guidance; detailed history remains here.
+
 ## 0.6.5
 
 - Replace obsolete version and Companion wording with the current Audio

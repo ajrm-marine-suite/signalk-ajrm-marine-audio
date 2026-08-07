@@ -1,0 +1,181 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "AJRM Marine Audio API",
+    "version": "0.7.0",
+    "description": "Audio delivery status, generated assets, live stream, and authenticated output controls."
+  },
+  "servers": [
+    { "url": "/signalk/v1/api/ajrmMarineAudio", "description": "Signal K API route" },
+    { "url": "/plugins/signalk-ajrm-marine-audio", "description": "Plugin route" }
+  ],
+  "paths": {
+    "/status": {
+      "get": {
+        "summary": "Get Audio delivery status",
+        "responses": {
+          "200": {
+            "description": "Current Audio status",
+            "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Status" } } }
+          }
+        }
+      }
+    },
+    "/live.mp3": {
+      "get": {
+        "summary": "Open the continuous MP3 stream",
+        "responses": {
+          "200": { "description": "Streaming MP3 audio", "content": { "audio/mpeg": {} } },
+          "404": { "description": "Live stream is disabled" }
+        }
+      }
+    },
+    "/live.m3u": {
+      "get": {
+        "summary": "Get an M3U playlist for the continuous stream",
+        "responses": {
+          "200": { "description": "M3U playlist", "content": { "audio/x-mpegurl": { "schema": { "type": "string" } } } }
+        }
+      }
+    },
+    "/audio/{file}": {
+      "get": {
+        "summary": "Get one generated MP3 announcement",
+        "parameters": [
+          { "name": "file", "in": "path", "required": true, "schema": { "type": "string", "pattern": "^[^/]+\\.mp3$" } }
+        ],
+        "responses": {
+          "200": { "description": "Generated MP3", "content": { "audio/mpeg": {} } },
+          "404": { "description": "Audio file not found" }
+        }
+      }
+    },
+    "/sound-check": { "$ref": "#/components/pathItems/Command" },
+    "/clear-queue": { "$ref": "#/components/pathItems/Command" },
+    "/restart-streams": { "$ref": "#/components/pathItems/Command" },
+    "/stream-time-check": { "$ref": "#/components/pathItems/Command" },
+    "/repeat-last": { "$ref": "#/components/pathItems/Command" },
+    "/ping-enabled": {
+      "post": {
+        "summary": "Enable or disable the directional ping",
+        "parameters": [
+          { "name": "enabled", "in": "query", "required": true, "schema": { "type": "boolean" } }
+        ],
+        "responses": {
+          "200": { "description": "Setting updated" },
+          "403": { "$ref": "#/components/responses/Forbidden" }
+        }
+      }
+    },
+    "/aplay-volume": {
+      "post": {
+        "summary": "Set and persist the local speaker level",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["volumeLevelPercent"],
+                "properties": { "volumeLevelPercent": { "type": "number", "minimum": 0, "maximum": 100 } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Level saved and application attempted" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "500": { "description": "Setting could not be saved" }
+        }
+      }
+    },
+    "/outputs": {
+      "post": {
+        "summary": "Set and persist Audio output routes",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "localPlayback": { "type": "boolean" },
+                  "desktopPlayerOutput": { "type": "boolean" },
+                  "liveStream": { "type": "boolean" }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Outputs updated" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "409": { "description": "Requested output is unavailable" },
+          "500": { "description": "Settings could not be saved" }
+        }
+      }
+    },
+    "/voice": {
+      "post": {
+        "summary": "Select and persist an installed Piper voice",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["voice"],
+                "properties": { "voice": { "type": "string", "minLength": 1 } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Voice selected" },
+          "400": { "description": "Voice is not installed" },
+          "403": { "$ref": "#/components/responses/Forbidden" },
+          "500": { "description": "Setting could not be saved" }
+        }
+      }
+    }
+  },
+  "components": {
+    "pathItems": {
+      "Command": {
+        "post": {
+          "summary": "Run an Audio command",
+          "responses": {
+            "200": { "description": "Command accepted" },
+            "403": { "$ref": "#/components/responses/Forbidden" },
+            "404": { "description": "Required prior audio is unavailable" },
+            "409": { "description": "Command is unavailable in the current state" }
+          }
+        }
+      }
+    },
+    "responses": {
+      "Forbidden": { "description": "Signal K read/write or admin access is required" }
+    },
+    "schemas": {
+      "Status": {
+        "type": "object",
+        "required": ["plugin", "version", "contract", "contractVersion", "sessionId", "running", "enabled", "muted"],
+        "properties": {
+          "plugin": { "type": "string", "enum": ["signalk-ajrm-marine-audio"] },
+          "version": { "type": "string" },
+          "contract": { "type": "string", "enum": ["ajrm-marine-audio-status"] },
+          "contractVersion": { "type": "integer", "enum": [1] },
+          "sessionId": { "type": "string" },
+          "running": { "type": "boolean" },
+          "enabled": { "type": "boolean" },
+          "muted": { "type": "boolean" },
+          "trafficMuted": { "type": "boolean" },
+          "queueLength": { "type": "integer" },
+          "timeline": { "type": "object", "nullable": true },
+          "lastAnnouncement": { "type": "object", "nullable": true },
+          "dependencies": { "type": "object" }
+        }
+      }
+    }
+  }
+}

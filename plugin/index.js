@@ -6,10 +6,10 @@ const os = require("node:os");
 const path = require("node:path");
 const { spawn } = require("node:child_process");
 const packageInfo = require("../package.json");
+const openApi = require("./openApi.json");
 
 const PLUGIN_ID = "signalk-ajrm-marine-audio";
 const DEFAULT_AUDIO_DIR = "~/.signalk/ajrm-marine-audio";
-const LEGACY_AUDIO_DIR = ["~/.signalk/ais", "-plus-audio"].join("");
 const TRAFFIC_AUDIO_POLICY_CONTRACT = "ajrm-marine-traffic-audio-policy";
 const STATUS_PATH = "plugins.ajrmMarineAudio";
 const MIN_APLAY_VOLUME_LEVEL_PERCENT = 0;
@@ -64,6 +64,8 @@ module.exports = function ajrmMarineAudio(app) {
   let publicStreamIsHttps = false;
   let streamHealthTimer = null;
   let statusPublishTimer = null;
+  let running = false;
+  const childProcesses = new Set();
   let lastRealAnnouncementAt = 0;
   let lastStreamHealthAt = 0;
   const liveStreamClients = new Set();
@@ -93,6 +95,7 @@ module.exports = function ajrmMarineAudio(app) {
     "Renders AJRM Marine announcement events into Piper audio for local speaker and browser clients.";
 
   plugin.start = (initialPluginOptions = {}) => {
+    running = true;
     audioSessionId = randomUUID();
     audioTimelineSequence = 0;
     audioPlaybackSequence = 0;
@@ -125,12 +128,13 @@ module.exports = function ajrmMarineAudio(app) {
     startPublicStreamServer();
     startStreamHealthTimer();
     startStatusPublisher();
-    subscribeToAisPlusAnnouncements();
+    subscribeToNotificationAudio();
     publishStatus();
     app.setPluginStatus(`Started v${packageInfo.version}`);
   };
 
-  plugin.stop = () => {
+  plugin.stop = async () => {
+    running = false;
     for (const unsubscribe of unsubscribes) {
       try {
         unsubscribe();
@@ -142,7 +146,11 @@ module.exports = function ajrmMarineAudio(app) {
     queue = [];
     active = null;
     preparing = null;
+    cleanupPreparedAnnouncement(prepared);
     prepared = null;
+    for (const child of childProcesses) {
+      if (!child.killed) child.kill("SIGTERM");
+    }
     currentLocalPlaybackChild?.kill("SIGTERM");
     currentLocalPlaybackChild = null;
     currentLocalPlaybackEntry = null;
@@ -153,10 +161,10 @@ module.exports = function ajrmMarineAudio(app) {
     for (const client of Array.from(liveStreamClients)) {
       closeLiveStreamClient(client, "plugin stop");
     }
-    stopPublicStreamServer();
+    await stopPublicStreamServer();
     stopStreamHealthTimer();
     stopStatusPublisher();
-    publishStatus();
+    publishStatus(true);
   };
 
   plugin.schema = {
@@ -392,7 +400,7 @@ module.exports = function ajrmMarineAudio(app) {
   };
 
   plugin.registerWithRouter = (router) => {
-    registerRoutes(router);
+    registerRoutes(router, { requireWriteAccess: true });
   };
 
   plugin.signalKApiRoutes = (router) => {
@@ -402,6 +410,7 @@ module.exports = function ajrmMarineAudio(app) {
     });
     return router;
   };
+  plugin.getOpenApi = () => openApi;
 
   return plugin;
 
@@ -734,7 +743,7 @@ module.exports = function ajrmMarineAudio(app) {
         ).trim() || DEFAULT_APLAY_VOLUME_CONTROL,
       voicesDir: String(value.voicesDir || "~/piper-voices"),
       voice: String(value.voice || "en_GB-alba-medium"),
-      audioDirectory: String(value.audioDirectory || defaultAudioDirectory()),
+      audioDirectory: String(value.audioDirectory || DEFAULT_AUDIO_DIR),
       maxAudioFiles: clampInteger(value.maxAudioFiles, 1, 200, 30),
       maxQueueLength: clampInteger(value.maxQueueLength, 1, 100, 10),
       mp3BitrateKbps: clampInteger(value.mp3BitrateKbps, 32, 192, 64),
@@ -758,12 +767,6 @@ module.exports = function ajrmMarineAudio(app) {
     };
   }
 
-  function defaultAudioDirectory() {
-    const preferred = expandHome(DEFAULT_AUDIO_DIR);
-    const legacy = expandHome(LEGACY_AUDIO_DIR);
-    return !fs.existsSync(preferred) && fs.existsSync(legacy) ? LEGACY_AUDIO_DIR : DEFAULT_AUDIO_DIR;
-  }
-
   function outputSettings() {
     return {
       localPlayback: options.localPlayback,
@@ -778,7 +781,7 @@ module.exports = function ajrmMarineAudio(app) {
     return text === "true" || text === "1" || text === "yes" || text === "on";
   }
 
-  function subscribeToAisPlusAnnouncements() {
+  function subscribeToNotificationAudio() {
     if (!app.subscriptionmanager?.subscribe) {
       addRecent("warning", "Signal K subscription manager is not available");
       return;
@@ -950,7 +953,7 @@ module.exports = function ajrmMarineAudio(app) {
   }
 
   function enqueue(entry) {
-    if (!entry?.message) return;
+    if (!running || !entry?.message) return;
 
     if (!options.enabled && !canBypassMute(entry)) {
       addRecent("skipped", `Audio disabled: ${entry.message}`);
@@ -998,7 +1001,7 @@ module.exports = function ajrmMarineAudio(app) {
   }
 
   async function processQueue() {
-    if (active || preparing) return;
+    if (!running || active || preparing) return;
 
     if (prepared) {
       const next = prepared;
@@ -1045,18 +1048,19 @@ module.exports = function ajrmMarineAudio(app) {
     try {
       const next = await prepareAnnouncement(entry);
       preparing = null;
-      if (entry.superseded) {
+      if (!running || entry.superseded) {
         cleanupPreparedAnnouncement(next);
       } else {
         prepared = next;
       }
     } catch (error) {
       preparing = null;
+      if (!running) return;
       stats.failed += 1;
       addRecent("error", `Render failed: ${error.message}`);
       app.error(`[${PLUGIN_ID}] render failed: ${error.stack || error.message}`);
     }
-    processQueue();
+    if (running) processQueue();
   }
 
   async function prepareAnnouncement(entry) {
@@ -1086,30 +1090,38 @@ module.exports = function ajrmMarineAudio(app) {
       };
     }
 
-    entry.synthesisStartedAt = new Date().toISOString();
-    publishTimeline("synthesis-started", entry);
-    await synthesizePiperWav(formatMessageForSpeech(entry.message), speechWav);
-    entry.synthesisCompletedAt = new Date().toISOString();
-    entry.synthesisMs = elapsedMs(entry.synthesisStartedAt, entry.synthesisCompletedAt);
-    const clock = extractClockPosition(entry);
-    const shouldPing = options.pingEnabled && clock != null;
-    if (shouldPing) {
-      await fs.promises.writeFile(
-        pingWav,
-        createPingWav(clock, extractVesselSize(entry), pingCountForClock(clock)),
-      );
-    }
+    try {
+      entry.synthesisStartedAt = new Date().toISOString();
+      publishTimeline("synthesis-started", entry);
+      await synthesizePiperWav(formatMessageForSpeech(entry.message), speechWav);
+      entry.synthesisCompletedAt = new Date().toISOString();
+      entry.synthesisMs = elapsedMs(entry.synthesisStartedAt, entry.synthesisCompletedAt);
+      const clock = extractClockPosition(entry);
+      const shouldPing = options.pingEnabled && clock != null;
+      if (shouldPing) {
+        await fs.promises.writeFile(
+          pingWav,
+          createPingWav(clock, extractVesselSize(entry), pingCountForClock(clock)),
+        );
+      }
 
-    await createCombinedWav({
-      speechWav,
-      pingWav: shouldPing ? pingWav : null,
-      combinedWav,
-    });
-    entry.wavReadyAt = new Date().toISOString();
-    entry.preparedAt = entry.wavReadyAt;
-    entry.generatedToWavReadyMs = elapsedMs(entry.timestamp, entry.wavReadyAt);
-    fs.rm(speechWav, { force: true }, () => {});
-    fs.rm(pingWav, { force: true }, () => {});
+      await createCombinedWav({
+        speechWav,
+        pingWav: shouldPing ? pingWav : null,
+        combinedWav,
+      });
+      entry.wavReadyAt = new Date().toISOString();
+      entry.preparedAt = entry.wavReadyAt;
+      entry.generatedToWavReadyMs = elapsedMs(entry.timestamp, entry.wavReadyAt);
+    } catch (error) {
+      for (const file of [speechWav, pingWav, combinedWav, mp3File, metadataFile]) {
+        fs.rm(file, { force: true }, () => {});
+      }
+      throw error;
+    } finally {
+      fs.rm(speechWav, { force: true }, () => {});
+      fs.rm(pingWav, { force: true }, () => {});
+    }
 
     const mp3Promise = (async () => {
       entry.mp3StartedAt = new Date().toISOString();
@@ -1134,6 +1146,10 @@ module.exports = function ajrmMarineAudio(app) {
   async function deliverPreparedAnnouncement(preparation) {
     const { entry, combinedWav, mp3File, mp3FileName, metadataFile, mp3Promise } =
       preparation;
+    if (!running) {
+      cleanupPreparedAnnouncement(preparation);
+      return;
+    }
     active = entry;
     try {
       const shouldPlayLocally =
@@ -1191,9 +1207,12 @@ module.exports = function ajrmMarineAudio(app) {
       }
       stats.rendered += 1;
       addRecent("rendered", rendered.message);
+      preparation.keepPublishedArtifacts = true;
       return rendered;
     } catch (error) {
-      if (entry.cancelledByMute) {
+      if (!running) {
+        // Expected when Signal K stops the plugin during rendering or playback.
+      } else if (entry.cancelledByMute) {
         publishTimeline("muted", entry);
         addRecent("muted", `${entry.message} stopped because audio was muted`);
       } else {
@@ -1205,13 +1224,17 @@ module.exports = function ajrmMarineAudio(app) {
     } finally {
       cleanupPreparedAnnouncement(preparation);
       active = null;
-      processQueue();
+      if (running) processQueue();
     }
   }
 
   function cleanupPreparedAnnouncement(preparation) {
     if (!preparation) return;
     if (preparation.combinedWav) fs.rm(preparation.combinedWav, { force: true }, () => {});
+    if (!preparation.keepPublishedArtifacts) {
+      if (preparation.mp3File) fs.rm(preparation.mp3File, { force: true }, () => {});
+      if (preparation.metadataFile) fs.rm(preparation.metadataFile, { force: true }, () => {});
+    }
   }
 
   function shouldPreparedAnnouncementYield(entry) {
@@ -1435,8 +1458,9 @@ module.exports = function ajrmMarineAudio(app) {
 
   function buildStatus() {
     const publicStreamBase = publicStreamBaseUrl();
-    const localPlaybackState = localPlaybackAvailability();
-    const piperPlaybackState = piperPlaybackAvailability();
+    const dependencies = checkDependencies();
+    const localPlaybackState = localPlaybackAvailability(dependencies);
+    const piperPlaybackState = piperPlaybackAvailability(dependencies);
     const publishedLastAnnouncement = lastAnnouncement
       ? {
           ...lastAnnouncement,
@@ -1451,6 +1475,7 @@ module.exports = function ajrmMarineAudio(app) {
       contract: "ajrm-marine-audio-status",
       contractVersion: 1,
       sessionId: audioSessionId,
+      running,
       timeline,
       serverTime: new Date().toISOString(),
       enabled: options.enabled,
@@ -1460,7 +1485,6 @@ module.exports = function ajrmMarineAudio(app) {
       trafficAudioPolicy,
       trafficSessionId,
       trafficAudioPolicySequence: lastTrafficAudioPolicySequence,
-      aisPlusMuted: false,
       localPlayback: options.localPlayback,
       localPlaybackAvailable: localPlaybackState.available,
       localPlaybackUnavailableReason: localPlaybackState.reason,
@@ -1524,7 +1548,7 @@ module.exports = function ajrmMarineAudio(app) {
       streamStats,
       audioDirectory: expandHome(options.audioDirectory),
       voices: listVoices(),
-      dependencies: checkDependencies(),
+      dependencies,
     };
   }
 
@@ -1545,7 +1569,8 @@ module.exports = function ajrmMarineAudio(app) {
     if (options.localPlayback && audioPlayer.status !== "ok") {
       missing.push("Server audio player is not installed yet");
     }
-    const piperPlaybackAvailable = piperPlaybackAvailability().available;
+    const piperPlaybackAvailable =
+      piper.status === "ok" && Boolean(voice) && ffmpeg.status === "ok";
     const piperInstallAvailable = piper.status !== "ok" || !voice;
     return {
       ok: missing.length === 0,
@@ -1577,32 +1602,32 @@ module.exports = function ajrmMarineAudio(app) {
     };
   }
 
-  function localPlaybackAvailability() {
-    const piper = checkExecutable(options.piperBinary);
+  function localPlaybackAvailability(dependencies = checkDependencies()) {
+    const piper = dependencies.piper;
     if (piper.status !== "ok") {
       return { available: false, reason: "Speech engine Piper is not installed yet" };
     }
-    const voice = selectedVoiceFromList(listVoices());
+    const voice = dependencies.voice?.status === "ok" ? dependencies.voice : null;
     if (!voice) {
       return { available: false, reason: "Piper voice model is not installed yet" };
     }
-    const audioPlayer = checkExecutable(options.audioPlayer);
+    const audioPlayer = dependencies.audioPlayer;
     if (audioPlayer.status !== "ok") {
       return { available: false, reason: "Server audio player is not installed yet" };
     }
     return { available: true, reason: "" };
   }
 
-  function piperPlaybackAvailability() {
-    const piper = checkExecutable(options.piperBinary);
+  function piperPlaybackAvailability(dependencies = checkDependencies()) {
+    const piper = dependencies.piper;
     if (piper.status !== "ok") {
       return { available: false, reason: "Speech engine Piper is not installed yet" };
     }
-    const voice = selectedVoiceFromList(listVoices());
+    const voice = dependencies.voice?.status === "ok" ? dependencies.voice : null;
     if (!voice) {
       return { available: false, reason: "Piper voice model is not installed yet" };
     }
-    const ffmpeg = checkExecutable(options.ffmpegBinary);
+    const ffmpeg = dependencies.ffmpeg;
     if (ffmpeg.status !== "ok") {
       return { available: false, reason: "Audio converter FFmpeg is not installed yet" };
     }
@@ -1853,10 +1878,14 @@ module.exports = function ajrmMarineAudio(app) {
   }
 
   function stopPublicStreamServer() {
-    if (!publicStreamServer) return;
-    publicStreamServer.close();
+    if (!publicStreamServer) return Promise.resolve();
+    const server = publicStreamServer;
     publicStreamServer = null;
     publicStreamIsHttps = false;
+    return new Promise((resolve) => {
+      server.close(() => resolve());
+      server.closeAllConnections?.();
+    });
   }
 
   function sendJsonResponse(res, statusCode, body) {
@@ -1937,6 +1966,7 @@ module.exports = function ajrmMarineAudio(app) {
         );
       }
     }, 1000);
+    liveSilenceTimer.unref?.();
   }
 
   function stopLiveStreamSilence() {
@@ -2046,6 +2076,7 @@ module.exports = function ajrmMarineAudio(app) {
       if (lastAudioAt && Date.now() - lastAudioAt < intervalMs) return;
       enqueue(createStreamTimeCheckAnnouncement(false));
     }, 30 * 1000);
+    streamHealthTimer.unref?.();
   }
 
   function stopStreamHealthTimer() {
@@ -2288,6 +2319,7 @@ module.exports = function ajrmMarineAudio(app) {
         }
         stdinFd = null;
         stderrFd = null;
+        if (child) childProcesses.delete(child);
         fs.rm(stdinFile, { force: true }, () => {});
         fs.rm(stderrFile, { force: true }, () => {});
       };
@@ -2332,6 +2364,7 @@ module.exports = function ajrmMarineAudio(app) {
 
       try {
         child = spawn(command, args, { stdio: [stdinFd ?? "ignore", "ignore", stderrFd] });
+        childProcesses.add(child);
         onSpawn?.(child);
       } catch (error) {
         rejectOnce(error);
@@ -2603,8 +2636,8 @@ module.exports = function ajrmMarineAudio(app) {
     }
   }
 
-  function publishStatus() {
-    if (!options || !Object.keys(options).length) return;
+  function publishStatus(force = false) {
+    if ((!running && !force) || !options || !Object.keys(options).length) return;
     app.handleMessage(PLUGIN_ID, {
       context: "vessels.self",
       updates: [
