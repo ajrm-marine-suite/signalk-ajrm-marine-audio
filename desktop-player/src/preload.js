@@ -1,3 +1,7 @@
+/**
+ * Exposes the restricted Electron IPC bridge used by the AJRM Marine Audio desktop player.
+ */
+
 "use strict";
 
 const { contextBridge, ipcRenderer } = require("electron");

@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "AJRM Marine Audio API",
-    "version": "0.7.0",
+    "version": "0.7.4",
     "description": "Audio delivery status, generated assets, live stream, and authenticated output controls."
   },
   "servers": [

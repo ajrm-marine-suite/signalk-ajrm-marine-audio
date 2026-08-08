@@ -1,3 +1,7 @@
+/**
+ * Implements the desktop player download responsibilities of the AJRM Marine Audio browser application.
+ */
+
 (function desktopPlayerDownloadModule(root, factory) {
   const api = factory();
   if (typeof module === "object" && module.exports) module.exports = api;

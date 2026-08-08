@@ -1,3 +1,7 @@
+/**
+ * Starts and manages the Electron main process for the AJRM Marine Audio desktop player.
+ */
+
 "use strict";
 
 const { app, BrowserWindow, ipcMain } = require("electron");

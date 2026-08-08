@@ -1,3 +1,7 @@
+/**
+ * Implements the local hosts responsibilities of the AJRM Marine Audio desktop player.
+ */
+
 "use strict";
 
 function isLocalSignalKHost(hostname) {

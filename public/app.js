@@ -1,3 +1,7 @@
+/**
+ * Browser entry point for AJRM Marine Audio; binds operator controls and renders server state.
+ */
+
 window.__ajrmMarineAudioAppStarted = true;
 
 const API = "/signalk/v1/api/ajrmMarineAudio";

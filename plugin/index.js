@@ -1,3 +1,7 @@
+/**
+ * Signal K server entry point for AJRM Marine Audio; registers lifecycle, subscriptions, routes, and status.
+ */
+
 const fs = require("node:fs");
 const { randomUUID } = require("node:crypto");
 const http = require("node:http");

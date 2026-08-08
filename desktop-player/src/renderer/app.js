@@ -1,3 +1,7 @@
+/**
+ * Runs the renderer UI for the AJRM Marine Audio desktop player.
+ */
+
 "use strict";
 
 const STORAGE_KEY = "ajrmMarineAudioPlayer.settings";

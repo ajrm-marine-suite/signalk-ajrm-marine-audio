@@ -1,3 +1,7 @@
+/**
+ * Implements the status client responsibilities of the AJRM Marine Audio desktop player.
+ */
+
 "use strict";
 
 const http = require("node:http");

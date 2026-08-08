@@ -1,4 +1,6 @@
 #!/usr/bin/env bash
+# Installs the operating-system support required by AJRM Marine Audio.
+
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
