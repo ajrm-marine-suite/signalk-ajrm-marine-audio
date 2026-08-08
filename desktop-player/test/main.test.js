@@ -8,6 +8,7 @@ const { isAllowedRedirect, normalizeServerUrl, requestAudioDataUrl, requestJson,
 const http = require("node:http");
 
 const rendererSource = fs.readFileSync(path.join(__dirname, "..", "src", "renderer", "app.js"), "utf8");
+const mainSource = fs.readFileSync(path.join(__dirname, "..", "src", "main.js"), "utf8");
 
 assert.equal(isLocalSignalKHost("localhost"), true);
 assert.equal(isLocalSignalKHost("nemo.local"), true);
@@ -60,6 +61,9 @@ assert.match(rendererSource, /keep-alive-armed/);
 assert.match(rendererSource, /playKeepAlivePulse\(\{ force: true \}\)/);
 assert.match(rendererSource, /els\.keepAliveAudio\.src = settings\.keepAliveAudible/);
 assert.match(rendererSource, /if \(\(!force && !settings\.keepAliveEnabled\) \|\| playing\) return/);
+assert.match(mainSource, /sandbox: true/);
+assert.match(mainSource, /setWindowOpenHandler\(\(\) => \(\{ action: "deny" \}\)\)/);
+assert.match(mainSource, /will-navigate/);
 
 async function withServer(handler, callback) {
   const server = http.createServer(handler);

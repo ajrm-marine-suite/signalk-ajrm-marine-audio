@@ -158,6 +158,55 @@ button:focus-visible {
   outline-offset: 3px;
 }
 
+.button-link {
+  background: linear-gradient(180deg, #7dd3fc 0%, #38bdf8 48%, #0284c7 100%);
+  border: 1px solid #7dd3fc;
+  border-bottom-color: #075985;
+  border-radius: 10px;
+  box-shadow: 0 4px 0 #075985, 0 8px 16px rgb(0 0 0 / 28%);
+  color: #06111f;
+  display: inline-block;
+  font-weight: 900;
+  padding: 11px 14px;
+  text-decoration: none;
+}
+
+.button-link.secondary {
+  background: linear-gradient(180deg, #334155 0%, #1e293b 50%, #0f172a 100%);
+  border-color: #475569;
+  border-bottom-color: #020617;
+  box-shadow: 0 4px 0 #020617, 0 8px 16px rgb(0 0 0 / 30%);
+  color: #f8fafc;
+}
+
+.button-link:active {
+  box-shadow: 0 1px 0 #020617;
+  transform: translateY(3px);
+}
+
+.button-link:focus-visible {
+  outline: 3px solid #facc15;
+  outline-offset: 3px;
+}
+
+.desktop-player-actions {
+  margin: 14px 0;
+}
+
+.download-list {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 0;
+}
+
+.download-list a {
+  color: #7dd3fc;
+}
+
+.warning {
+  color: #fcd34d;
+}
+
 .toggle-row {
   align-items: center;
   display: flex;

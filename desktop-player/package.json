@@ -1,6 +1,6 @@
 {
   "name": "ajrm-marine-audio-player",
-  "version": "0.6.2",
+  "version": "0.8.0",
   "description": "Standalone desktop player for AJRM Marine Audio announcements.",
   "main": "src/main.js",
   "private": true,
@@ -8,7 +8,11 @@
     "start": "electron .",
     "start:windows": "electron .",
     "start:no-sandbox": "electron --no-sandbox .",
-    "test": "node --check src/main.js && node --check src/preload.js && node --check src/local-hosts.js && node --check src/status-client.js && node --check src/renderer/app.js && node test/main.test.js"
+    "test": "node --check src/main.js && node --check src/preload.js && node --check src/local-hosts.js && node --check src/status-client.js && node --check src/renderer/app.js && node test/main.test.js",
+    "dist": "electron-builder",
+    "dist:linux": "electron-builder --linux AppImage deb",
+    "dist:mac": "electron-builder --mac dmg zip",
+    "dist:windows": "electron-builder --win nsis"
   },
   "keywords": [
     "ajrm-marine-suite",
@@ -18,8 +22,38 @@
     "electron"
   ],
   "author": "Anthony McDonald, with assistance from William McAusland",
-  "license": "MIT",
+  "license": "AGPL-3.0-or-later",
   "devDependencies": {
-    "electron": "^43.0.0"
+    "electron": "^43.0.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "uk.co.ajrm.marine.audio-player",
+    "productName": "AJRM Marine Audio Player",
+    "icon": "build/icon.png",
+    "artifactName": "ajrm-marine-audio-player-${version}-${os}-${arch}.${ext}",
+    "asar": true,
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "linux": {
+      "category": "AudioVideo;Utility",
+      "target": ["AppImage", "deb"]
+    },
+    "mac": {
+      "category": "public.app-category.utilities",
+      "target": ["dmg", "zip"]
+    },
+    "win": {
+      "target": ["nsis"]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
   }
 }

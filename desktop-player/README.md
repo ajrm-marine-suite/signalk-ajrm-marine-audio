@@ -3,6 +3,11 @@
 Standalone desktop player for AJRM Marine Audio announcements on Lubuntu,
 macOS, and Windows.
 
+Version 0.8.0 is the canonical packaged-player baseline. Its source lives only
+in the `desktop-player` directory of the public AJRM Marine Audio repository.
+The earlier unpublished standalone repository is not a release source.
+It is covered by the repository's AGPL-3.0-or-later licence.
+
 This app is deliberately a player, not an alert engine. AJRM Marine Audio on
 the Signal K server renders and prioritises announcements. The desktop player
 connects to that server, watches for newly rendered announcements, and plays
@@ -19,7 +24,21 @@ the generated MP3 URL, it waits briefly for a later status poll before skipping
 that announcement. This avoids false "no audio URL" skips during busy tests or
 slow rendering.
 
-## Lubuntu Install
+## Packaged install
+
+Open AJRM Marine Audio in Signal K on the computer where announcements should
+play, then use its **Desktop Audio Player** panel. It recommends one of:
+
+- Windows x64 installer;
+- universal macOS DMG;
+- Linux x64 AppImage or `.deb`;
+- Linux ARM64 AppImage or `.deb`.
+
+The initial packages are unsigned previews. Windows and macOS may warn until
+code-signing and Apple notarisation are configured. Always confirm the download
+is from the official AJRM Marine Audio GitHub Release.
+
+## Lubuntu source install
 
 Install Node.js 20 or later, then clone the Audio repository and run the player
 from the `desktop-player` directory:
@@ -197,7 +216,8 @@ backfill old browser/audio history when the app starts.
 ## Next Steps
 
 - Add Signal K authentication/device-token flow.
-- Add packaging for Linux `.deb`, macOS `.dmg`, and Windows installer.
+- Configure Windows signing plus macOS signing/notarisation for production
+  installers.
 - Add tray/menu-bar mode and start-at-login.
 - Add a dedicated Audio plugin endpoint for player clients if polling status
   proves too coarse.

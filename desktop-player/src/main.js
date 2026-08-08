@@ -42,10 +42,14 @@ function createWindow() {
       backgroundThrottling: false,
       contextIsolation: true,
       nodeIntegration: false,
-      sandbox: false,
+      sandbox: true,
     },
   });
 
+  mainWindow.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
+  mainWindow.webContents.on("will-navigate", (event, url) => {
+    if (!url.startsWith("file:")) event.preventDefault();
+  });
   mainWindow.loadFile(path.join(__dirname, "renderer", "index.html"));
 }
 

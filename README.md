@@ -2,7 +2,7 @@
 
 ## Current release
 
-Version `0.7.0` is the current public release. It renders the provider-neutral
+Version `0.7.1` is the current public release. It renders the provider-neutral
 AJRM Marine Notifications audio projection and supports browser speech,
 server-rendered Piper audio, an optional server speaker, the radio stream, and
 the standalone desktop player. Output routes remain independently selectable;
@@ -61,7 +61,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.7.0 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.7.1 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
@@ -103,10 +103,23 @@ provides the startup defaults and ping volume/frequency settings.
 
 ## Standalone Desktop Player
 
-The repository also includes a separate Electron desktop player in
-`desktop-player/`. It is intended for Lubuntu, macOS, and Windows machines that
+The repository includes the canonical Electron desktop player in
+`desktop-player/`. It is intended for Linux, macOS, and Windows machines that
 should play AJRM Marine Audio announcements locally without depending on a
 browser tab staying awake.
+
+Open AJRM Marine Audio on the computer that should play announcements. Its
+**Desktop Audio Player** panel recommends the appropriate installer for that
+browser device and also lists every available platform package. Downloading an
+installer does not alter the Signal K Raspberry Pi. Operating systems require
+the user to open and approve native installers; a web page cannot silently
+install software.
+
+The first packaged builds are unsigned previews. Windows and macOS may show a
+security warning until project code-signing and Apple notarisation credentials
+are configured. Verify that the URL is an official
+`ajrm-marine-suite/signalk-ajrm-marine-audio` GitHub Release before opening an
+unsigned package.
 
 On Lubuntu:
 
@@ -132,7 +145,7 @@ On Lubuntu, `./scripts/install-lubuntu.sh` also configures Electron's
 then creates an **AJRM Marine Audio Player** launcher in the app menu and on the
 desktop where supported.
 
-On Windows, install Git for Windows and Node.js 20 or later, then run:
+The source-based Windows procedure remains available for development:
 
 ```powershell
 cd $HOME
@@ -142,9 +155,10 @@ npm install
 npm run start:windows
 ```
 
-The Windows player is not yet packaged as an installer and still needs
-real-machine audio testing. The full desktop-player instructions and tester
-checklist are in `desktop-player/README.md`.
+Windows, macOS, AppImage, and Debian/Ubuntu packages are built by the
+`audio-player-v*` release workflow. Windows and macOS still need real-machine
+audio and installer testing. Full player instructions and the tester checklist
+are in `desktop-player/README.md`.
 
 When Signal K security is enabled, the desktop player expects Signal K read-only
 access to be enabled. It does not store Signal K login credentials.

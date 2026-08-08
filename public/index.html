@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AJRM Marine Audio</title>
-    <link rel="stylesheet" href="/signalk-ajrm-marine-audio/styles.css?v=0.6.2" />
+    <link rel="stylesheet" href="/signalk-ajrm-marine-audio/styles.css?v=0.7.1" />
   </head>
   <body>
     <main>
@@ -127,6 +127,31 @@
         </dl>
       </section>
 
+      <section class="panel" id="desktopPlayerPanel">
+        <h2>Desktop Audio Player</h2>
+        <p class="muted">
+          Install the companion player on this browser's computer for reliable
+          announcements outside the browser. The download is for this computer,
+          not the Raspberry Pi running Signal K.
+        </p>
+        <p id="desktopPlayerRecommendation" class="message muted">
+          Checking available desktop packages…
+        </p>
+        <div class="button-row desktop-player-actions">
+          <a id="buttonDownloadDesktopPlayer" class="button-link" href="#" hidden>
+            Download recommended player
+          </a>
+          <a id="buttonDesktopPlayerRelease" class="button-link secondary" href="#" target="_blank" rel="noopener" hidden>
+            Release details
+          </a>
+        </div>
+        <details>
+          <summary>Other operating systems</summary>
+          <ul id="desktopPlayerOptions" class="download-list"></ul>
+        </details>
+        <p id="desktopPlayerSecurity" class="muted warning"></p>
+      </section>
+
       <section class="panel">
         <h2>Radio stream</h2>
         <p class="muted">
@@ -164,6 +189,7 @@
         }
       }, 3000);
     </script>
-    <script src="/signalk-ajrm-marine-audio/app.js?v=0.6.2"></script>
+    <script src="/signalk-ajrm-marine-audio/desktop-player-download.js?v=0.7.1"></script>
+    <script src="/signalk-ajrm-marine-audio/app.js?v=0.7.1"></script>
   </body>
 </html>

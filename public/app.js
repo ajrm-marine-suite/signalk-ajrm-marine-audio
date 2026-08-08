@@ -53,6 +53,11 @@ const voiceStatus = document.getElementById("voiceStatus");
 const aplayVolumeRange = document.getElementById("aplayVolumeRange");
 const aplayVolumeValue = document.getElementById("aplayVolumeValue");
 const aplayVolumeStatus = document.getElementById("aplayVolumeStatus");
+const desktopPlayerRecommendation = document.getElementById("desktopPlayerRecommendation");
+const buttonDownloadDesktopPlayer = document.getElementById("buttonDownloadDesktopPlayer");
+const buttonDesktopPlayerRelease = document.getElementById("buttonDesktopPlayerRelease");
+const desktopPlayerOptions = document.getElementById("desktopPlayerOptions");
+const desktopPlayerSecurity = document.getElementById("desktopPlayerSecurity");
 let accessToken = readStoredValue(ACCESS_TOKEN_STORAGE_KEY);
 let accessRequestTimer = null;
 let localNotice = null;
@@ -73,6 +78,7 @@ window.addEventListener("unhandledrejection", (event) => {
 });
 
 bindSoundCheckButton();
+loadDesktopPlayerRelease();
 bindRepeatLastButton();
 bindCommandButton("buttonClearQueue", "clear-queue", "Clear queue sent.");
 bindStreamCommandButton("buttonRestartStreams", "restart-streams", "Restart streams sent.");
@@ -136,6 +142,54 @@ aplayVolumeRange.addEventListener("change", () => {
 refresh({ force: true });
 resumeAccessRequestPolling();
 setInterval(() => refresh(), STATUS_REFRESH_MS);
+
+async function loadDesktopPlayerRelease() {
+  try {
+    const response = await fetch("/signalk-ajrm-marine-audio/desktop-player-release.json", {
+      cache: "no-store",
+    });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    renderDesktopPlayerRelease(await response.json());
+  } catch (error) {
+    desktopPlayerRecommendation.textContent =
+      `Desktop package information is unavailable: ${error.message || error}`;
+  }
+}
+
+function renderDesktopPlayerRelease(manifest) {
+  const helper = window.AjrmMarineDesktopPlayerDownload;
+  const environment = {
+    platform: navigator.userAgentData?.platform || navigator.platform || "",
+    architecture: navigator.userAgentData?.architecture || "",
+    userAgent: navigator.userAgent || "",
+  };
+  const recommended = helper?.recommendedAsset(manifest, environment) || null;
+  const assets = Array.isArray(manifest.assets) ? manifest.assets : [];
+  desktopPlayerRecommendation.textContent = recommended
+    ? `Version ${manifest.version}: ${recommended.label} is recommended for this device.`
+    : `Version ${manifest.version} is available. Choose your operating system below.`;
+  if (recommended) {
+    buttonDownloadDesktopPlayer.href = recommended.url;
+    buttonDownloadDesktopPlayer.textContent = `Download ${recommended.label}`;
+    buttonDownloadDesktopPlayer.hidden = false;
+  }
+  if (manifest.releaseUrl) {
+    buttonDesktopPlayerRelease.href = manifest.releaseUrl;
+    buttonDesktopPlayerRelease.hidden = false;
+  }
+  desktopPlayerOptions.innerHTML = "";
+  for (const asset of assets) {
+    const item = document.createElement("li");
+    const link = document.createElement("a");
+    link.href = asset.url;
+    link.textContent = asset.label;
+    item.appendChild(link);
+    desktopPlayerOptions.appendChild(item);
+  }
+  desktopPlayerSecurity.textContent = manifest.signed === true
+    ? "The installer is code-signed. Your operating system will still ask you to approve installation."
+    : "Preview installers are not yet code-signed. Windows and macOS may show a security warning; verify the download came from the official AJRM Marine GitHub release before opening it.";
+}
 
 async function refresh({ force = false } = {}) {
   if (!force && Date.now() < nextStatusRefreshAt) return;

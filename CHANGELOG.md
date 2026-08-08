@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.7.1
+
+- Add a Desktop Audio Player download panel to the Audio webapp. It recommends
+  the appropriate browser-device package and clearly distinguishes that device
+  from the Signal K Raspberry Pi.
+- Publish a versioned desktop-player release manifest with explicit Windows,
+  macOS, Linux x64, and Linux ARM64 downloads and unsigned-preview warnings.
+- Make the maintained `desktop-player` directory the canonical player source
+  and add cross-platform Electron packaging and release automation.
+
 ## 0.7.0
 
 - Publish an OpenAPI 3.0 description for the current Signal K and plugin-router

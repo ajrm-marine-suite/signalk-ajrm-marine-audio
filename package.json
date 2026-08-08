@@ -1,10 +1,10 @@
 {
   "name": "signalk-ajrm-marine-audio",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Speech and audio delivery for AJRM Marine Suite notifications.",
   "main": "plugin/index.js",
   "scripts": {
-    "test": "node --check plugin/index.js && node --check public/app.js && node --check test/aplay-volume.test.js && node test/aplay-volume.test.js"
+    "test": "node --check plugin/index.js && node --check public/app.js && node --check public/desktop-player-download.js && node --check test/aplay-volume.test.js && node test/desktop-player-download.test.js && node test/aplay-volume.test.js"
   },
   "keywords": [
     "signalk-node-server-plugin",
