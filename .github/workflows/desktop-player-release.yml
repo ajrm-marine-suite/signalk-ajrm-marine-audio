@@ -18,16 +18,16 @@ jobs:
         include:
           - name: Linux x64
             os: ubuntu-latest
-            command: npm run dist:linux -- --x64
+            command: npm run dist:linux -- --x64 --publish never
           - name: Linux ARM64
             os: ubuntu-24.04-arm
-            command: npm run dist:linux -- --arm64
+            command: npm run dist:linux -- --arm64 --publish never
           - name: macOS universal
             os: macos-latest
-            command: npm run dist:mac -- --universal
+            command: npm run dist:mac -- --universal --publish never
           - name: Windows x64
             os: windows-latest
-            command: npm run dist:windows -- --x64
+            command: npm run dist:windows -- --x64 --publish never
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -47,7 +47,12 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.name }}
-          path: desktop-player/dist/*
+          path: |
+            desktop-player/dist/*.AppImage
+            desktop-player/dist/*.deb
+            desktop-player/dist/*.dmg
+            desktop-player/dist/*.exe
+            desktop-player/dist/*.zip
           if-no-files-found: error
 
   release:

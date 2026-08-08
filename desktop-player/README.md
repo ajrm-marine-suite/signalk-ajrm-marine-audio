@@ -3,7 +3,7 @@
 Standalone desktop player for AJRM Marine Audio announcements on Lubuntu,
 macOS, and Windows.
 
-Version 0.8.0 is the canonical packaged-player baseline. Its source lives only
+Version 0.8.1 is the canonical packaged-player baseline. Its source lives only
 in the `desktop-player` directory of the public AJRM Marine Audio repository.
 The earlier unpublished standalone repository is not a release source.
 It is covered by the repository's AGPL-3.0-or-later licence.

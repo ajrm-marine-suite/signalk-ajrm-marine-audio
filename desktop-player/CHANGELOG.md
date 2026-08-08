@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.8.1
+
+- Add the homepage, maintainer, and desktop-name metadata required to build
+  Debian packages, and restrict release artifacts to finished installers.
+
 ## 0.8.0
 
 - Establish the maintained Audio-repository implementation as the canonical

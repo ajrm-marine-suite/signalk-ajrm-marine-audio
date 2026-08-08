@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "version": "0.8.0",
-  "releaseTag": "audio-player-v0.8.0",
-  "releaseUrl": "https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio/releases/tag/audio-player-v0.8.0",
+  "version": "0.8.1",
+  "releaseTag": "audio-player-v0.8.1",
+  "releaseUrl": "https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio/releases/tag/audio-player-v0.8.1",
   "signed": false,
   "assets": [
     {
@@ -10,42 +10,42 @@
       "label": "Windows 10/11 (x64 installer)",
       "platform": "windows",
       "arch": "x64",
-      "url": "https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio/releases/download/audio-player-v0.8.0/ajrm-marine-audio-player-0.8.0-win-x64.exe"
+      "url": "https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio/releases/download/audio-player-v0.8.1/ajrm-marine-audio-player-0.8.1-win-x64.exe"
     },
     {
       "id": "mac-universal",
       "label": "macOS (Intel and Apple silicon DMG)",
       "platform": "macos",
       "arch": "universal",
-      "url": "https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio/releases/download/audio-player-v0.8.0/ajrm-marine-audio-player-0.8.0-mac-universal.dmg"
+      "url": "https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio/releases/download/audio-player-v0.8.1/ajrm-marine-audio-player-0.8.1-mac-universal.dmg"
     },
     {
       "id": "linux-x64-appimage",
       "label": "Linux x64 (AppImage)",
       "platform": "linux",
       "arch": "x64",
-      "url": "https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio/releases/download/audio-player-v0.8.0/ajrm-marine-audio-player-0.8.0-linux-x64.AppImage"
+      "url": "https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio/releases/download/audio-player-v0.8.1/ajrm-marine-audio-player-0.8.1-linux-x86_64.AppImage"
     },
     {
       "id": "linux-x64-deb",
       "label": "Debian/Ubuntu x64 (.deb)",
       "platform": "linux",
       "arch": "x64",
-      "url": "https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio/releases/download/audio-player-v0.8.0/ajrm-marine-audio-player-0.8.0-linux-x64.deb"
+      "url": "https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio/releases/download/audio-player-v0.8.1/ajrm-marine-audio-player-0.8.1-linux-amd64.deb"
     },
     {
       "id": "linux-arm64-appimage",
       "label": "Linux ARM64 (AppImage)",
       "platform": "linux",
       "arch": "arm64",
-      "url": "https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio/releases/download/audio-player-v0.8.0/ajrm-marine-audio-player-0.8.0-linux-arm64.AppImage"
+      "url": "https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio/releases/download/audio-player-v0.8.1/ajrm-marine-audio-player-0.8.1-linux-arm64.AppImage"
     },
     {
       "id": "linux-arm64-deb",
       "label": "Debian/Ubuntu ARM64 (.deb)",
       "platform": "linux",
       "arch": "arm64",
-      "url": "https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio/releases/download/audio-player-v0.8.0/ajrm-marine-audio-player-0.8.0-linux-arm64.deb"
+      "url": "https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio/releases/download/audio-player-v0.8.1/ajrm-marine-audio-player-0.8.1-linux-arm64.deb"
     }
   ]
 }

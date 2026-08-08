@@ -1,7 +1,8 @@
 {
   "name": "ajrm-marine-audio-player",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "Standalone desktop player for AJRM Marine Audio announcements.",
+  "desktopName": "uk.co.ajrm.marine.audio-player.desktop",
   "main": "src/main.js",
   "private": true,
   "scripts": {
@@ -21,7 +22,11 @@
     "audio",
     "electron"
   ],
-  "author": "Anthony McDonald, with assistance from William McAusland",
+  "author": {
+    "name": "Anthony McDonald, with assistance from William McAusland",
+    "email": "anthony.mcdonald@btinternet.com"
+  },
+  "homepage": "https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio/tree/main/desktop-player#readme",
   "license": "AGPL-3.0-or-later",
   "devDependencies": {
     "electron": "^43.0.0",
@@ -42,6 +47,8 @@
     ],
     "linux": {
       "category": "AudioVideo;Utility",
+      "syncDesktopName": true,
+      "maintainer": "Anthony McDonald <anthony.mcdonald@btinternet.com>",
       "target": ["AppImage", "deb"]
     },
     "mac": {

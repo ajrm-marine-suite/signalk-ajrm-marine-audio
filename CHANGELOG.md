@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.2
+
+- Correct the desktop-player release manifest to use Electron Builder's actual
+  Linux architecture filenames and point it at the completed 0.8.1 release.
+
 ## 0.7.1
 
 - Add a Desktop Audio Player download panel to the Audio webapp. It recommends

@@ -2,7 +2,7 @@
 
 ## Current release
 
-Version `0.7.1` is the current public release. It renders the provider-neutral
+Version `0.7.2` is the current public release. It renders the provider-neutral
 AJRM Marine Notifications audio projection and supports browser speech,
 server-rendered Piper audio, an optional server speaker, the radio stream, and
 the standalone desktop player. Output routes remain independently selectable;
@@ -61,7 +61,7 @@ The radio stream is intended for iPhone/iPad/Android apps that can keep a stream
 
 ```sh
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.7.1 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-audio.git#v0.7.2 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
