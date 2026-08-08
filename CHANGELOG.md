@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.7.3
+
+- Replace installation-specific Signal K hostnames in Audio and desktop-player
+  documentation and tests with a generic boat Pi hostname.
+
 ## 0.7.2
 
 - Correct the desktop-player release manifest to use Electron Builder's actual

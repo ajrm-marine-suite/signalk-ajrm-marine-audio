@@ -135,7 +135,7 @@ npm start
 ```
 
 Enter the Signal K server URL when the player opens, for example
-`https://nemo.local:3443`, `http://nemo.local:3000`, or a numeric address such
+`https://boat-pi.local:3443`, `http://boat-pi.local:3000`, or a numeric address such
 as `https://192.168.1.50:3443`.
 
 The desktop player is not part of the Signal K plugin package installed by npm;
@@ -232,7 +232,7 @@ The interval is configurable as **Live stream time-check interval (minutes)**. T
 
 The AJRM Marine Audio webapp shows current stream clients, total connects/disconnects, client uptime, server-side write buffer size, and the last disconnect reason. The stream also sends basic ICY radio headers (`icy-name`, `icy-genre`, `icy-br`) so native radio players can recognise it as a radio-style stream.
 
-This traffic should stay on the local boat LAN when the stream URL uses the local Pi hostname, for example `nemo.local`. It should not use the boat router's cellular data unless the phone is no longer on the boat Wi-Fi, the hostname is being resolved through a remote/VPN route, or the router is configured to hairpin local traffic through an internet service.
+This traffic should stay on the local boat LAN when the stream URL uses the local Pi hostname, for example `boat-pi.local`. It should not use the boat router's cellular data unless the phone is no longer on the boat Wi-Fi, the hostname is being resolved through a remote/VPN route, or the router is configured to hairpin local traffic through an internet service.
 
 For normal use, keep the phone on the boat Wi-Fi and use the local `.local` address. Do not publish or port-forward the stream port to the internet.
 

@@ -1737,16 +1737,16 @@ process.stdin.on("end", () => {
   );
   emptyProviderMute.plugin.stop();
 
-  withoutExternalHost(() => withHostname("nemo", () => {
+  withoutExternalHost(() => withHostname("boat-pi", () => {
     const streamHost = createHarness({
       publicHttpStream: true,
       publicHttpStreamPort: 3456,
       publicStreamUseHttps: false,
     });
     try {
-      assert.equal(statusOf(streamHost).publicStreamUrl, "http://nemo.local:3456/live.mp3");
-      assert.equal(statusOf(streamHost).publicStreamHost, "nemo.local");
-      assert.doesNotMatch(statusOf(streamHost).publicStreamUrl, /nemo3/);
+      assert.equal(statusOf(streamHost).publicStreamUrl, "http://boat-pi.local:3456/live.mp3");
+      assert.equal(statusOf(streamHost).publicStreamHost, "boat-pi.local");
+      assert.doesNotMatch(statusOf(streamHost).publicStreamUrl, /another-host/);
     } finally {
       streamHost.plugin.stop();
     }

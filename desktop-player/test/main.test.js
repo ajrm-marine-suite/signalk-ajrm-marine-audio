@@ -11,7 +11,7 @@ const rendererSource = fs.readFileSync(path.join(__dirname, "..", "src", "render
 const mainSource = fs.readFileSync(path.join(__dirname, "..", "src", "main.js"), "utf8");
 
 assert.equal(isLocalSignalKHost("localhost"), true);
-assert.equal(isLocalSignalKHost("nemo.local"), true);
+assert.equal(isLocalSignalKHost("boat-pi.local"), true);
 assert.equal(isLocalSignalKHost("192.168.1.42"), true);
 assert.equal(isLocalSignalKHost("192.168.3.42"), true);
 assert.equal(isLocalSignalKHost("10.0.0.9"), true);
@@ -22,13 +22,13 @@ assert.equal(isLocalSignalKHost("172.32.0.9"), false);
 assert.equal(isLocalSignalKHost("example.com"), false);
 assert.equal(isLocalSignalKHost("github.com"), false);
 
-assert.equal(normalizeServerUrl("https://nemo.local:3443/"), "https://nemo.local:3443");
+assert.equal(normalizeServerUrl("https://boat-pi.local:3443/"), "https://boat-pi.local:3443");
 assert.equal(statusUrl("https://192.168.3.10:3443/"), "https://192.168.3.10:3443/signalk/v1/api/ajrmMarineAudio/status");
 assert.throws(() => normalizeServerUrl("file:///tmp/test"), /http/);
 
-assert.equal(isAllowedRedirect(new URL("http://nemo.local:3000"), new URL("https://nemo.local:3443")), true);
+assert.equal(isAllowedRedirect(new URL("http://boat-pi.local:3000"), new URL("https://boat-pi.local:3443")), true);
 assert.equal(isAllowedRedirect(new URL("http://192.168.1.20:3000"), new URL("https://192.168.1.20:3443")), true);
-assert.equal(isAllowedRedirect(new URL("http://nemo.local:3000"), new URL("https://github.com")), false);
+assert.equal(isAllowedRedirect(new URL("http://boat-pi.local:3000"), new URL("https://github.com")), false);
 assert.match(statusErrorMessage(401), /read-only access/);
 assert.match(statusErrorMessage(403), /read-only access/);
 assert.match(statusErrorMessage(401, "audio"), /audio file/);

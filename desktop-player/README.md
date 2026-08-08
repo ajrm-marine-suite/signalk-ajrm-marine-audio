@@ -161,8 +161,8 @@ Enter the Signal K server URL, for example:
 
 ```text
 http://localhost:3000
-http://nemo.local:3000
-https://nemo.local:3443
+http://boat-pi.local:3000
+https://boat-pi.local:3443
 ```
 
 Enable **Auto-connect** if the player should connect automatically when it
